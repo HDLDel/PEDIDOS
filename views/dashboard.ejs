@@ -70,6 +70,11 @@
             cursor: pointer;
         }
 
+        .stat-pill.active {
+            border-color: var(--accent-red);
+            background: rgba(229, 9, 20, 0.1);
+        }
+
         .stat-pill strong { color: var(--accent-red); margin: 0 4px; }
 
         .requests-grid {
@@ -222,9 +227,10 @@
     </nav>
 
     <div class="stats-summary">
-        <div class="stat-pill">📊 PENDENTES: <strong><%= stats.pending %></strong></div>
-        <div class="stat-pill">✅ APROVADOS: <strong><%= stats.approved %></strong></div>
-        <div class="stat-pill">❌ REJEITADOS: <strong><%= stats.rejected %></strong></div>
+        <div onclick="filterStatus('all')" id="stat-all" class="stat-pill active">📋 TODOS</div>
+        <div onclick="filterStatus('pending')" id="stat-pending" class="stat-pill">📊 PENDENTES: <strong><%= stats.pending %></strong></div>
+        <div onclick="filterStatus('approved')" id="stat-approved" class="stat-pill">✅ APROVADOS: <strong><%= stats.approved %></strong></div>
+        <div onclick="filterStatus('rejected')" id="stat-rejected" class="stat-pill">❌ REJEITADOS: <strong><%= stats.rejected %></strong></div>
     </div>
 
     <main class="requests-grid">
@@ -300,18 +306,34 @@
     <script>
         let currentRequestId = null;
         let currentRequestType = null; // Para armazenar o tipo (movie/series)
+        let activeCategory = 'all';
+        let activeStatus = 'all';
 
-        function filterCategory(category) {
-            document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
-            document.getElementById(`tab-${category}`).classList.add('active');
-
+        function applyFilters() {
             document.querySelectorAll('.request-card').forEach(card => {
-                if (category === 'all' || card.dataset.category === category) {
+                const categoryMatch = activeCategory === 'all' || card.dataset.category === activeCategory;
+                const statusMatch = activeStatus === 'all' || card.dataset.status === activeStatus;
+
+                if (categoryMatch && statusMatch) {
                     card.classList.remove('hidden');
                 } else {
                     card.classList.add('hidden');
                 }
             });
+        }
+
+        function filterCategory(category) {
+            activeCategory = category;
+            document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+            document.getElementById(`tab-${category}`).classList.add('active');
+            applyFilters();
+        }
+
+        function filterStatus(status) {
+            activeStatus = status;
+            document.querySelectorAll('.stat-pill').forEach(p => p.classList.remove('active'));
+            document.getElementById(`stat-${status}`).classList.add('active');
+            applyFilters();
         }
 
         function openRejectModal(id, type) {
