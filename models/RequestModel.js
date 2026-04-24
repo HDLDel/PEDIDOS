@@ -6,6 +6,7 @@ export class RequestModel {
     return db.prepare(`
       SELECT 
         r.id,
+        r.reseller_id,
         r.title,
         r.type,
         r.status,
@@ -28,6 +29,32 @@ export class RequestModel {
       LEFT JOIN tmdb_contents t ON r.id = t.request_id
       ORDER BY r.id DESC
     `).all();
+  }
+
+  // Busca pedidos específicos de um revendedor
+  static getByReseller(resellerId) {
+    return db.prepare(`
+      SELECT 
+        r.id,
+        r.reseller_id,
+        r.title,
+        r.type,
+        r.status,
+        r.action,
+        r.season,
+        r.episode,
+        r.request_type as requestType,
+        r.description,
+        r.rejection_reason as rejectionReason,
+        r.date,
+        r.time,
+        COALESCE(t.poster_path, 'https://via.placeholder.com/500x750?text=Sem+Poster') as poster,
+        t.year
+      FROM requests r
+      LEFT JOIN tmdb_contents t ON r.id = t.request_id
+      WHERE r.reseller_id = ?
+      ORDER BY r.id DESC
+    `).all(resellerId);
   }
 
   static getById(id) {

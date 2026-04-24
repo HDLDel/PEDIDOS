@@ -99,7 +99,7 @@ app.get('/revenda/dashboard', checkResellerAuth, (req, res) => {
         req.session.destroy(() => res.redirect('/revenda/login'));
         return;
     }
-    const requests = RequestModel.getAll().filter(r => r.reseller_id === resellerId);
+    const requests = RequestModel.getByReseller(resellerId);
     const stats = {
         pending: requests.filter(r => r.status === 'pending').length,
         approved: requests.filter(r => r.status === 'approved').length,
@@ -112,7 +112,7 @@ app.get('/revenda/dashboard', checkResellerAuth, (req, res) => {
 app.get('/revenda/solicitar', checkResellerAuth, (req, res) => {
     const resellerId = req.session.resellerId;
     const reseller = ResellerModel.getById(resellerId);
-    const requests = RequestModel.getAll().filter(r => r.reseller_id === resellerId);
+    const requests = RequestModel.getByReseller(resellerId);
     res.render('revenda/solicitar', { reseller, requests });
 });
 app.get('/revenda/solicitar/filme', (req, res) => res.render('revenda/buscar-filme'));
@@ -209,11 +209,20 @@ app.post('/api/requests', (req, res) => {
         return res.status(401).json({ error: 'Sessão expirada. Faça login novamente.' });
     }
     
+    // Mapeia o tipo de solicitação para um texto legível
+    const actionMap = {
+        'content': 'Adicionar ao catálogo',
+        'season': 'Solicitar nova temporada',
+        'episode': 'Solicitar episódios faltando',
+        'error': 'Reportar erro de reprodução'
+    };
+    const finalAction = action || actionMap[requestType] || 'Solicitação';
+
     const request = RequestModel.create({
         resellerId: resellerId,
         title,
         type,
-        action,
+        action: finalAction,
         season,
         episode,
         requestType,
@@ -221,6 +230,9 @@ app.post('/api/requests', (req, res) => {
         date,
         time
     });
+
+    // Busca posters e dados do TMDB em segundo plano
+    TmdbModel.fetchAndSave(request.id, title, type).catch(e => console.error("Erro TMDB:", e));
     
     res.status(201).json(request);
 });

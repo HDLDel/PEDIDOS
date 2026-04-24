@@ -44,6 +44,21 @@ Segurança da API Key: A chave do TMDB está "hardcoded" nos arquivos. O ideal s
 Tratamento de Erros: As chamadas de fetch no frontend e fs no backend podem ser reforçadas com blocos try/catch mais granulares para evitar que o servidor pare em caso de falha na API externa.
 IDs Únicos: Como você está usando JSON, recomendo usar uma biblioteca como crypto.randomUUID() para gerar IDs únicos para novos pedidos, evitando conflitos se dois revendedores enviarem algo ao mesmo tempo.
 
+
+
+se clicar em FILME
+tem um campo para preencher o nome do FILME dai aparece uma lista de resultados vindos do tmdb ele clica noque ele quer adicionar ao catalogo
+apos isso e enviado para os pedidos que ficam na tela do painel de admin
+e também fica visível na tela do revenda com o status abaixo apenas
+o revenda não tem poder de aprovar ou rejeitar.
+
+se clicar em SERIE
+tem um campo para preencher o nome da serie dai aparece uma lista de resultados vindos do tmdb ele clica noque ele quer
+dai vai pra uma tela com o capo para ele preencher a temporada e capitulo se for o caso 
+apos isso e enviado para os pedidos que ficam na tela do painel de admin
+e também fica visível na tela do revenda com o status abaixo apenas
+o revenda não tem poder de aprovar ou rejeitar.
+
 se clicar em ERRO
 tem um campo para preencher o nome da serie ou FILME dai aparece uma lista de resultados vindos do tmdb ele clica noque ele quer
 dai vai pra uma tela com o capo para ele descrever o erro detalhadamente
