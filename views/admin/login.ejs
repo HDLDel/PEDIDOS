@@ -1,0 +1,53 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Acesso Restrito - Gestão VOD</title>
+  <link rel="stylesheet" href="/css/style.css">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;900&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+  <style>
+    .admin-login-container { min-height: 100vh; display: flex; align-items: center; justify-content: center; background: #000; padding: 1rem; }
+    .login-box { background: #111; border: 1px solid #222; border-radius: 1.5rem; padding: 3rem; width: 100%; max-width: 400px; text-align: center; }
+    .login-icon { font-size: 3rem; color: var(--accent-red); margin-bottom: 1.5rem; }
+    .login-title { font-size: 1.5rem; font-weight: 900; margin-bottom: 0.5rem; text-transform: uppercase; }
+    .login-title span { color: var(--accent-red); }
+    .login-subtitle { color: #666; font-size: 0.85rem; margin-bottom: 2.5rem; }
+    .form-group { margin-bottom: 1.5rem; text-align: left; }
+    .form-group label { display: block; font-size: 0.75rem; font-weight: 700; margin-bottom: 0.5rem; color: #444; text-transform: uppercase; }
+    .form-control { width: 100%; padding: 1rem; border: 1px solid #333; border-radius: 0.75rem; background: #050505; color: #fff; font-size: 1rem; }
+    .form-control:focus { outline: none; border-color: var(--accent-red); }
+    .btn-admin { width: 100%; padding: 1rem; border: none; border-radius: 0.75rem; background: var(--accent-red); color: #fff; font-size: 1rem; font-weight: 800; cursor: pointer; transition: 0.2s; margin-top: 1rem; }
+    .btn-admin:hover { background: #b91c1c; transform: translateY(-2px); }
+    .error-msg { background: rgba(220, 38, 38, 0.1); border: 1px solid var(--accent-red); color: var(--accent-red); padding: 0.75rem; border-radius: 0.5rem; font-size: 0.85rem; margin-bottom: 1.5rem; }
+  </style>
+</head>
+<body>
+  <div class="admin-login-container">
+    <div class="login-box">
+      <div class="login-icon"><i class="fas fa-shield-halved"></i></div>
+      <div class="login-title">ADMIN <span>VOD</span></div>
+      <div class="login-subtitle">Autenticação de Segurança</div>
+
+      <% if (locals.error) { %>
+        <div class="error-msg"><%= error %></div>
+      <% } %>
+      
+      <form action="/admin/login" method="POST">
+        <div class="form-group">
+          <label>Usuário Administrativo</label>
+          <input type="text" name="username" class="form-control" placeholder="Seu usuário" required>
+        </div>
+        
+        <div class="form-group">
+          <label>Chave de Segurança</label>
+          <input type="password" name="password" class="form-control" placeholder="••••••••" required>
+        </div>
+        
+        <button type="submit" class="btn-admin">ENTRAR NO PAINEL</button>
+      </form>
+    </div>
+  </div>
+</body>
+</html>

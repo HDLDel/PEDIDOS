@@ -1,0 +1,192 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Painel do Revendedor - VOD Premium</title>
+    <link rel="stylesheet" href="/css/style.css">
+    <link rel="stylesheet" href="/css/reseller.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+</head>
+<body class="dark-theme">
+    <header class="header">
+        <div class="logo">VOD<span>PREMIUM</span></div>
+        <div class="user-info">
+            <span>Olá, <strong><%= reseller.name %></strong></span>
+            <a href="/revenda/logout" class="btn-logout"><i class="fas fa-sign-out-alt"></i></a>
+        </div>
+    </header>
+
+    <main class="container">
+        <section class="request-section">
+            <h2><i class="fas fa-plus-circle"></i> Novo Pedido</h2>
+            
+            <div class="search-box">
+                <input type="text" id="tmdbSearch" placeholder="Digite o nome do filme ou série...">
+                <button id="btnSearch"><i class="fas fa-search"></i> Buscar</button>
+            </div>
+
+            <div id="tmdbResults" class="tmdb-results-grid">
+                <!-- Resultados do TMDB aparecerão aqui -->
+            </div>
+
+            <form id="requestForm" class="request-form hidden">
+                <input type="hidden" id="selectedId">
+                <input type="hidden" id="selectedTitle">
+                <input type="hidden" id="selectedType">
+                <input type="hidden" id="selectedPoster">
+
+                <div class="selected-preview">
+                    <img id="previewPoster" src="" alt="">
+                    <div class="preview-info">
+                        <h3 id="previewTitle"></h3>
+                        <span id="previewYear"></span>
+                    </div>
+                </div>
+
+                <div class="form-group">
+                    <label>O que deseja solicitar?</label>
+                    <select id="requestAction" required>
+                        <option value="content">Adicionar ao catálogo</option>
+                        <option value="season">Solicitar nova temporada</option>
+                        <option value="episode">Solicitar episódios faltando</option>
+                        <option value="error">Reportar erro de reprodução</option>
+                    </select>
+                </div>
+
+                <div id="extraFields" class="form-row">
+                    <div class="form-group">
+                        <label>Temporada</label>
+                        <input type="text" id="reqSeason" placeholder="Ex: 2">
+                    </div>
+                    <div class="form-group">
+                        <label>Episódio(s)</label>
+                        <input type="text" id="reqEpisode" placeholder="Ex: 10 a 15">
+                    </div>
+                </div>
+
+                <div id="errorField" class="form-group hidden">
+                    <label>Detalhes técnicos do erro</label>
+                    <textarea id="reqDescription" placeholder="Descreva o erro (ex: travamento aos 10:30, tela preta, sem áudio...)"></textarea>
+                </div>
+
+                <div class="form-actions">
+                    <button type="button" class="btn-cancel" onclick="resetForm()">Cancelar</button>
+                    <button type="submit" class="btn-submit">Enviar Solicitação</button>
+                </div>
+            </form>
+        </section>
+
+        <section class="my-requests">
+            <h2><i class="fas fa-history"></i> Meus Pedidos Recentes</h2>
+            <div class="requests-list">
+                <% requests.slice(0, 5).forEach(req => { %>
+                    <div class="mini-card">
+                        <div class="status-indicator status-<%= req.status %>"></div>
+                        <div class="mini-info">
+                            <strong><%= req.title %></strong>
+                            <span><%= req.date %> às <%= req.time %></span>
+                        </div>
+                        <span class="badge-status"><%= req.status.toUpperCase() %></span>
+                    </div>
+                <% }) %>
+            </div>
+        </section>
+    </main>
+
+    <script>
+        const API_KEY = '<TMDB_API_KEY>';
+
+        document.getElementById('btnSearch').addEventListener('click', async () => {
+            const query = document.getElementById('tmdbSearch').value;
+            if (query.length < 3) return alert('Digite pelo menos 3 caracteres');
+
+            const resultsDiv = document.getElementById('tmdbResults');
+            resultsDiv.innerHTML = '<div class="loader">Buscando...</div>';
+
+            try {
+                const res = await fetch(`https://api.themoviedb.org/3/search/multi?api_key=${API_KEY}&query=${encodeURIComponent(query)}&language=pt-BR`);
+                const data = await res.json();
+                
+                resultsDiv.innerHTML = '';
+                data.results.filter(i => i.media_type !== 'person').slice(0, 6).forEach(item => {
+                    const card = document.createElement('div');
+                    card.className = 'tmdb-mini-card';
+                    const title = item.title || item.name;
+                    const date = item.release_date || item.first_air_date || '';
+                    const year = date ? date.split('-')[0] : 'N/A';
+                    const poster = item.poster_path ? `https://image.tmdb.org/t/p/w200${item.poster_path}` : 'https://via.placeholder.com/200x300?text=Sem+Poster';
+
+                    card.innerHTML = `
+                        <img src="${poster}" alt="${title}">
+                        <div class="info">
+                            <h4>${title}</h4>
+                            <span>${year} • ${item.media_type === 'tv' ? 'Série' : 'Filme'}</span>
+                        </div>
+                    `;
+                    card.onclick = () => selectWork(item, poster, title, year);
+                    resultsDiv.appendChild(card);
+                });
+            } catch (e) {
+                resultsDiv.innerHTML = 'Erro ao buscar dados.';
+            }
+        });
+
+        function selectWork(item, poster, title, year) {
+            document.getElementById('tmdbResults').classList.add('hidden');
+            document.getElementById('requestForm').classList.remove('hidden');
+            
+            document.getElementById('selectedId').value = item.id;
+            document.getElementById('selectedTitle').value = title;
+            document.getElementById('selectedType').value = item.media_type;
+            document.getElementById('selectedPoster').value = poster;
+
+            document.getElementById('previewPoster').src = poster;
+            document.getElementById('previewTitle').innerText = title;
+            document.getElementById('previewYear').innerText = year;
+        }
+
+        document.getElementById('requestAction').addEventListener('change', (e) => {
+            const isError = e.target.value === 'error';
+            document.getElementById('errorField').classList.toggle('hidden', !isError);
+            document.getElementById('extraFields').classList.toggle('hidden', isError);
+        });
+
+        function resetForm() {
+            document.getElementById('requestForm').classList.add('hidden');
+            document.getElementById('tmdbResults').classList.remove('hidden');
+            document.getElementById('tmdbSearch').value = '';
+        }
+
+        document.getElementById('requestForm').onsubmit = async (e) => {
+            e.preventDefault();
+            
+            const payload = {
+                title: document.getElementById('selectedTitle').value,
+                type: document.getElementById('selectedType').value === 'tv' ? 'series' : 'movie',
+                requestType: document.getElementById('requestAction').value,
+                season: document.getElementById('reqSeason').value,
+                episode: document.getElementById('reqEpisode').value,
+                description: document.getElementById('reqDescription').value,
+                date: new Date().toLocaleDateString('pt-BR'),
+                time: new Date().toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' })
+            };
+
+            try {
+                const res = await fetch('/api/requests', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(payload)
+                });
+
+                if (res.ok) {
+                    alert('Pedido enviado com sucesso!');
+                    location.reload();
+                }
+            } catch (err) {
+                alert('Erro ao enviar pedido.');
+            }
+        };
+    </script>
+</body>
+</html>
