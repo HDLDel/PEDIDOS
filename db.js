@@ -74,6 +74,21 @@ db.exec(`
   CREATE INDEX IF NOT EXISTS idx_requests_reseller ON requests(reseller_id);
 `);
 
+// Migrações: Garante que colunas novas existam em bancos de dados antigos
+try {
+    db.prepare("ALTER TABLE requests ADD COLUMN rejection_reason TEXT").run();
+    console.log('✅ Migração: Coluna rejection_reason verificada/adicionada em requests.');
+} catch (e) {
+    // A coluna provavelmente já existe
+}
+
+try {
+    db.prepare("ALTER TABLE resellers ADD COLUMN password TEXT").run();
+    console.log('✅ Migração: Coluna password verificada/adicionada em resellers.');
+} catch (e) {
+    // A coluna provavelmente já existe
+}
+
 console.log('✅ Banco SQLite conectado em:', dbPath);
 
 export default db;
