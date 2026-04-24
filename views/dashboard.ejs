@@ -189,16 +189,16 @@
             padding: 2rem;
             border-radius: 1rem;
             width: 90%;
-            max-width: 500px;
+            max-width: 900px;
             border: 1px solid var(--border);
         }
         .modal-header { margin-bottom: 1.5rem; font-weight: 900; color: var(--accent-red); }
-        .quick-buttons { display: grid; grid-template-columns: repeat(2, 1fr); gap: 8px; margin-bottom: 1rem; }
-        .btn-quick { background: #333; color: #fff; padding: 8px; border-radius: 4px; font-size: 0.7rem; border: none; cursor: pointer; }
+        .quick-buttons { display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 1.5rem; }
+        .btn-quick { background: #333; color: #fff; padding: 10px 15px; border-radius: 6px; font-size: 0.8rem; border: 1px solid #444; cursor: pointer; transition: all 0.2s; font-weight: 600; }
         .btn-quick:hover { background: var(--accent-red); }
         .modal-footer { display: flex; justify-content: flex-end; gap: 10px; margin-top: 1.5rem; }
         
-        textarea { width: 100%; background: #000; border: 1px solid var(--border); color: #fff; padding: 10px; border-radius: 8px; resize: none; }
+        textarea { width: 100%; background: #000; border: 1px solid var(--border); color: #fff; padding: 20px; border-radius: 8px; resize: vertical; min-height: 450px; font-family: inherit; font-size: 1.05rem; line-height: 1.6; }
         textarea:focus { border-color: var(--accent-red); outline: none; }
 
         @media (max-width: 600px) {
@@ -295,7 +295,7 @@
                 <button class="btn-quick" onclick="setReason('EXTERNO')">EXTERNO</button>
                 <button class="btn-quick" onclick="setReason('RECENTE')">RECENTE</button>
             </div>
-            <textarea id="rejectionText" rows="4" placeholder="Ou digite um motivo personalizado..."></textarea>
+            <textarea id="rejectionText" rows="15" placeholder="Ou digite um motivo personalizado..."></textarea>
             <div class="modal-footer">
                 <button class="btn" style="background: #333; color: #fff;" onclick="closeRejectModal()">CANCELAR</button>
                 <button class="btn btn-reject" style="background: var(--status-rejected); color: #fff;" id="confirmRejectBtn">CONFIRMAR</button>
