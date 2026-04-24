@@ -14,6 +14,7 @@ export class RequestModel {
         r.episode,
         r.request_type as requestType,
         r.description,
+        r.rejection_reason as rejectionReason,
         r.date,
         r.time,
         r.created_at,

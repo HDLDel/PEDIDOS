@@ -46,6 +46,7 @@
             align-items: center;
             padding: 0 2rem;
             border-bottom: 1px solid var(--border);
+            box-shadow: 0 4px 10px rgba(0,0,0,0.5);
             z-index: 2000;
         }
 
@@ -56,7 +57,7 @@
             justify-content: center;
             gap: 15px;
             padding: 20px;
-            background: #050505;
+            background: #080808;
         }
 
         .stat-pill {
@@ -66,14 +67,15 @@
             border: 1px solid var(--border);
             font-size: 0.85rem;
             font-weight: 600;
+            cursor: pointer;
         }
 
         .stat-pill strong { color: var(--accent-red); margin: 0 4px; }
 
         .requests-grid {
             display: grid;
-            grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
-            gap: 20px;
+            grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+            gap: 15px;
             padding: 20px;
             max-width: 1600px;
             margin: 0 auto;
@@ -85,7 +87,7 @@
             overflow: hidden;
             border: 1px solid var(--border);
             transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-            display: flex;
+            display: block; /* Garante que o filtro não quebre o layout */
             flex-direction: column;
         }
 
@@ -98,7 +100,7 @@
         .poster-container {
             position: relative;
             width: 100%;
-            height: 320px;
+            height: 280px;
             background: #1a1a1a;
         }
 
@@ -163,8 +165,9 @@
         .btn-reject:hover { background: var(--status-rejected); color: white; }
 
         .tabs { display: flex; gap: 30px; padding: 10px 20px; justify-content: center; margin-bottom: 10px; }
-        .tab { text-decoration: none; color: var(--text-muted); font-weight: 700; font-size: 0.9rem; padding-bottom: 8px; border-bottom: 3px solid transparent; transition: 0.3s; }
+        .tab { text-decoration: none; color: var(--text-muted); font-weight: 700; font-size: 0.9rem; padding-bottom: 8px; border-bottom: 3px solid transparent; transition: 0.3s; cursor: pointer; }
         .tab.active { color: var(--accent-red); border-bottom-color: var(--accent-red); }
+        .request-card.hidden { display: none; }
 
         /* Modal Styles */
         .modal-overlay {
@@ -202,7 +205,7 @@
 <body>
     <header class="header-fixed">
         <div class="logo">
-            <h2 style="color: var(--accent-red);">IMPERIO <span style="color: white;">VOD</span></h2>
+            <h2 style="color: var(--accent-red);">IMPERIO <span style="color: white;">APPS</span></h2>
         </div>
         <div class="user-info">
             <a href="/admin/logout" style="color: var(--text-muted); text-decoration: none; font-size: 0.85rem; font-weight: 600;">
@@ -212,9 +215,10 @@
     </header>
 
     <nav class="tabs">
-        <a href="/" class="tab active">SOLICITAÇÕES</a>
-        <a href="#" class="tab">REVENDEDORES</a>
-        <a href="#" class="tab">CONFIGURAÇÕES</a>
+        <a onclick="filterCategory('all')" id="tab-all" class="tab active">TODOS</a>
+        <a onclick="filterCategory('series')" id="tab-series" class="tab">SÉRIES</a>
+        <a onclick="filterCategory('movie')" id="tab-movie" class="tab">FILMES</a>
+        <a onclick="filterCategory('error')" id="tab-error" class="tab">ERROS REPORTADOS</a>
     </nav>
 
     <div class="stats-summary">
@@ -225,9 +229,13 @@
 
     <main class="requests-grid">
         <% requests.forEach(req => { %>
-            <article class="request-card" id="card-<%= req.id %>">
+            <article class="request-card" 
+                     id="card-<%= req.id %>" 
+                     data-category="<%= req.requestType === 'error' ? 'error' : req.type %>"
+                     data-status="<%= req.status %>">
+                
                 <div class="poster-container">
-                    <img src="<%= req.poster || 'https://via.placeholder.com/500x750/111/333?text=Nenhum+Poster' %>" class="poster-img" alt="Poster">
+                    <img src="<%= req.poster %>" class="poster-img" alt="Poster">
                     <span class="badge-status status-<%= req.status %>">
                         <%= req.status === 'pending' ? 'Pendente' : (req.status === 'approved' ? 'Aprovado' : 'Rejeitado') %>
                     </span>
@@ -242,6 +250,11 @@
                     <div class="info-item" style="color: var(--status-approved);">
                         <i class="fab fa-whatsapp"></i> <%= req.whatsapp %>
                     </div>
+                    <% if(req.rejectionReason) { %>
+                        <div class="info-item" style="color: var(--status-rejected); font-weight: bold; margin-top: 5px;">
+                            <i class="fas fa-exclamation-circle"></i> <%= req.rejectionReason.substring(0, 20) %>...
+                        </div>
+                    <% } %>
                     <div class="info-item"><i class="far fa-calendar-alt"></i> <%= req.date %></div>
                 </div>
 
@@ -256,7 +269,7 @@
                     </div>
                     <div class="btn-group">
                         <button class="btn btn-approve" onclick="updateStatus(<%= req.id %>, 'approved')">Aprovar</button>
-                        <button class="btn btn-reject" onclick="openRejectModal(<%= req.id %>)">Rejeitar</button>
+                        <button class="btn btn-reject" onclick="openRejectModal(<%= req.id %>, '<%= req.type %>')">Rejeitar</button>
                     </div>
                 </div>
             </article>
@@ -287,6 +300,19 @@
     <script>
         let currentRequestId = null;
         let currentRequestType = null; // Para armazenar o tipo (movie/series)
+
+        function filterCategory(category) {
+            document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+            document.getElementById(`tab-${category}`).classList.add('active');
+
+            document.querySelectorAll('.request-card').forEach(card => {
+                if (category === 'all' || card.dataset.category === category) {
+                    card.classList.remove('hidden');
+                } else {
+                    card.classList.add('hidden');
+                }
+            });
+        }
 
         function openRejectModal(id, type) {
             currentRequestId = id;
