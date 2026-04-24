@@ -11,7 +11,7 @@ export class TmdbModel {
       (request_id, tmdb_id, title, original_title, year, poster_path, backdrop_path, overview, vote_average)
       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
     `);
-    const result = stmt.run(requestId, tmdbId, title, originalTitle, year, posterPath, backdropPath, overview, voteAverage);
+    const result = stmt.run(requestId, tmdbId, title, originalTitle, year, posterPath || null, backdropPath || null, overview, voteAverage);
     return this.getById(result.lastInsertRowid);
   }
 
@@ -40,7 +40,7 @@ export class TmdbModel {
       SET ${sets.join(', ')}, fetched_at = CURRENT_TIMESTAMP 
       WHERE request_id = ?
     `);
-    stmt.run(...values);
+    stmt.run(...values.map(val => (val === '' ? null : val))); // Converte strings vazias para null
     return this.getByRequestId(requestId);
   }
 

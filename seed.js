@@ -5,11 +5,11 @@ import { TmdbModel } from './models/TmdbModel.js';
 
 console.log('🌱 Iniciando seed do banco de dados...');
 
-// Verificar se já tem dados
-const count = db.prepare('SELECT COUNT(*) as count FROM resellers').get();
-if (count.count > 0) {
-  console.log('✅ Banco já populado. Pulando seed.');
-  process.exit(0);
+// Verificar se já tem revendedores
+const resellerCount = db.prepare('SELECT COUNT(*) as count FROM resellers').get().count;
+let resellerMap = {}; // Initialize resellerMap
+if (resellerCount > 0) {
+  console.log('✅ Revendedores já populados. Carregando existentes...');
 }
 
 // Dados dos revendedores
@@ -27,11 +27,14 @@ const resellersData = [
 ];
 
 // Criar revendedores e mapear nome -> id
-const resellerMap = {};
-for (const r of resellersData) {
-  const created = ResellerModel.create(r);
-  resellerMap[r.name] = created.id;
-  console.log(`  👤 Revendedor: ${r.name} (ID: ${created.id})`);
+if (resellerCount === 0) {
+  for (const r of resellersData) {
+    const created = ResellerModel.create(r);
+    resellerMap[r.name] = created.id;
+    console.log(`  👤 Revendedor: ${r.name} (ID: ${created.id})`);
+  }
+} else {
+  db.prepare('SELECT id, name FROM resellers').all().forEach(r => resellerMap[r.name] = r.id);
 }
 
 // Dados dos pedidos (30 registros)
@@ -73,38 +76,44 @@ const requestsData = [
   { title: 'Inception', type: 'movie', status: 'approved', reseller: '<DADO_SEED>', action: 'Adicionar ao catálogo', requestType: 'content', description: 'Christopher Nolan', date: '11/04/2024', time: '20:00', year: '2010', poster: 'https://image.tmdb.org/t/p/w500/3AywI4DpqhZvRyIn9o82p6Og22P.jpg' }
 ];
 
-// Criar pedidos e dados TMDB
-for (const req of requestsData) {
-  const resellerId = resellerMap[req.reseller];
-  
-  const created = RequestModel.create({
-    resellerId,
-    title: req.title,
-    type: req.type,
-    status: req.status,
-    action: req.action,
-    season: req.season,
-    episode: req.episode,
-    requestType: req.requestType,
-    description: req.description,
-    date: req.date,
-    time: req.time
-  });
-  
-  // Criar dados TMDB
-  TmdbModel.create({
-    requestId: created.id,
-    tmdbId: null,
-    title: req.title,
-    originalTitle: req.title,
-    year: parseInt(req.year) || null,
-    posterPath: req.poster,
-    backdropPath: null,
-    overview: req.description,
-    voteAverage: null
-  });
-  
-  console.log(`  🎬 Pedido #${created.id}: ${req.title} (${req.reseller})`);
+// Verificar se já tem pedidos
+const requestCount = db.prepare('SELECT COUNT(*) as count FROM requests').get().count;
+if (requestCount === 0) {
+  // Criar pedidos e dados TMDB
+  for (const req of requestsData) {
+    const resellerId = resellerMap[req.reseller];
+    
+    const created = RequestModel.create({
+      resellerId,
+      title: req.title,
+      type: req.type,
+      status: req.status,
+      action: req.action,
+      season: req.season,
+      episode: req.episode,
+      requestType: req.requestType,
+      description: req.description,
+      date: req.date,
+      time: req.time
+    });
+    
+    // Criar dados TMDB
+    TmdbModel.create({
+      requestId: created.id,
+      tmdbId: null,
+      title: req.title,
+      originalTitle: req.title,
+      year: parseInt(req.year) || null,
+      posterPath: req.poster,
+      backdropPath: null,
+      overview: req.description,
+      voteAverage: null
+    });
+    
+    console.log(`  🎬 Pedido #${created.id}: ${req.title} (${req.reseller})`);
+  }
+} else {
+  console.log('✅ Pedidos já populados.');
 }
 
-console.log(`\n✅ Seed completo! ${resellersData.length} revendedores, ${requestsData.length} pedidos.`);
+console.log(`\n✅ Seed completo! ${resellerCount > 0 ? resellerCount : resellersData.length} revendedores, ${requestCount > 0 ? requestCount : requestsData.length} pedidos.`);

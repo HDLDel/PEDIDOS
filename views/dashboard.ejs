@@ -242,7 +242,7 @@
                      data-status="<%= req.status %>">
                 
                 <div class="poster-container">
-                    <img src="<%= req.poster %>" class="poster-img" alt="Poster">
+                    <img src="<%= req.poster || 'https://via.placeholder.com/500x750?text=Sem+Poster' %>" class="poster-img" alt="Poster">
                     <span class="badge-status status-<%= req.status %>">
                         <%= req.status === 'pending' ? 'Pendente' : (req.status === 'approved' ? 'Aprovado' : 'Rejeitado') %>
                     </span>
