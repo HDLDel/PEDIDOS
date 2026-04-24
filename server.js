@@ -17,7 +17,7 @@ app.use(express.urlencoded({ extended: true }));
 
 // Configuração da sessão
 app.use(session({
-    secret: 'seu_segredo_muito_secreto', // Troque por uma string aleatória e complexa em produção
+    secret: process.env.SESSION_SECRET || 'fallback-para-dev', 
     resave: false,
     saveUninitialized: false,
     cookie: { secure: false } // Use 'true' em produção com HTTPS
@@ -198,7 +198,7 @@ app.post('/api/requests/:id/status', (req, res) => {
 
 // API - Criar novo pedido
 app.post('/api/requests', (req, res) => {
-    const { title, type, action, season, episode, requestType, description, date, time } = req.body;
+    const { tmdbId, title, type, action, season, episode, requestType, description, date, time } = req.body;
     
     let resellerId;
 
@@ -232,7 +232,7 @@ app.post('/api/requests', (req, res) => {
     });
 
     // Busca posters e dados do TMDB em segundo plano
-    TmdbModel.fetchAndSave(request.id, title, type).catch(e => console.error("Erro TMDB:", e));
+    TmdbModel.fetchAndSave(request.id, title, type, tmdbId).catch(e => console.error("Erro TMDB:", e));
     
     res.status(201).json(request);
 });

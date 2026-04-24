@@ -12,6 +12,7 @@
     <header class="header">
         <div class="logo">VOD<span>PREMIUM</span></div>
         <div class="user-info">
+            <a href="/revenda/dashboard" style="background: #333; color: white; border: none; padding: 0.6rem 1.2rem; border-radius: 0.5rem; font-weight: 700; font-size: 0.85rem; cursor: pointer; text-decoration: none; display: inline-flex; align-items: center; gap: 0.4rem; margin-right: 15px;"><i class="fas fa-arrow-left"></i> Voltar ao Painel</a>
             <span>Olá, <strong><%= reseller.name %></strong></span>
             <a href="/revenda/logout" class="btn-logout"><i class="fas fa-sign-out-alt"></i></a>
         </div>
@@ -162,6 +163,7 @@
             e.preventDefault();
             
             const payload = {
+                tmdbId: document.getElementById('selectedId').value,
                 title: document.getElementById('selectedTitle').value,
                 type: document.getElementById('selectedType').value === 'tv' ? 'series' : 'movie',
                 requestType: document.getElementById('requestAction').value,

@@ -14,16 +14,16 @@ if (resellerCount > 0) {
 
 // Dados dos revendedores
 const resellersData = [
-  { name: '<DADO_SEED>', email: '<DADO_SEED>', phone: '(11) 97125-8661', whatsapp: '(11) 97125-8661', password: '<SENHA>' },
-  { name: '<DADO_SEED>', email: '<DADO_SEED>', phone: '(24) 98132-9657', whatsapp: '(24) 98132-9657', password: '<SENHA>' },
-  { name: '<DADO_SEED>', email: '<DADO_SEED>@email.com', phone: '(79) 99979-4935', whatsapp: '(79) 99979-4935', password: '<SENHA>' },
-  { name: '<DADO_SEED>', email: '<DADO_SEED>', phone: '(11) 98765-4321', whatsapp: '(11) 98765-4321', password: '<SENHA>' },
-  { name: '<DADO_SEED>', email: '<DADO_SEED>', phone: '(21) 99876-5432', whatsapp: '(21) 99876-5432', password: '<SENHA>' },
-  { name: '<DADO_SEED>', email: '<DADO_SEED>', phone: '(31) 98765-<SENHA>4', whatsapp: '(31) 98765-<SENHA>4', password: '<SENHA>' },
-  { name: '<DADO_SEED>', email: '<DADO_SEED>', phone: '(41) 99988-7766', whatsapp: '(41) 99988-7766', password: '<SENHA>' },
-  { name: '<DADO_SEED>', email: '<DADO_SEED>', phone: '(51) 98877-6655', whatsapp: '(51) 98877-6655', password: '<SENHA>' },
-  { name: '<DADO_SEED>', email: '<DADO_SEED>', phone: '(61) 97766-5544', whatsapp: '(61) 97766-5544', password: '<SENHA>' },
-  { name: '<DADO_SEED>', email: '<DADO_SEED>', phone: '(71) 96655-4433', whatsapp: '(71) 96655-4433', password: '<SENHA>' }
+  { name: '<DADO_SEED>', email: '<DADO_SEED>', phone: '<DADO_SEED>', whatsapp: '<DADO_SEED>', password: '<SENHA>' },
+  { name: '<DADO_SEED>', email: '<DADO_SEED>', phone: '<DADO_SEED>', whatsapp: '<DADO_SEED>', password: '<SENHA>' },
+  { name: '<DADO_SEED>', email: '<DADO_SEED>@email.com', phone: '<DADO_SEED>', whatsapp: '<DADO_SEED>', password: '<SENHA>' },
+  { name: '<DADO_SEED>', email: '<DADO_SEED>', phone: '<DADO_SEED>', whatsapp: '<DADO_SEED>', password: '<SENHA>' },
+  { name: '<DADO_SEED>', email: '<DADO_SEED>', phone: '<DADO_SEED>', whatsapp: '<DADO_SEED>', password: '<SENHA>' },
+  { name: '<DADO_SEED>', email: '<DADO_SEED>', phone: '(06) 98765-<SENHA>4', whatsapp: '(06) 98765-<SENHA>4', password: '<SENHA>' },
+  { name: '<DADO_SEED>', email: '<DADO_SEED>', phone: '<DADO_SEED>', whatsapp: '<DADO_SEED>', password: '<SENHA>' },
+  { name: '<DADO_SEED>', email: '<DADO_SEED>', phone: '<DADO_SEED>', whatsapp: '<DADO_SEED>', password: '<SENHA>' },
+  { name: '<DADO_SEED>', email: '<DADO_SEED>', phone: '<DADO_SEED>', whatsapp: '<DADO_SEED>', password: '<SENHA>' },
+  { name: '<DADO_SEED>', email: '<DADO_SEED>', phone: '<DADO_SEED>', whatsapp: '<DADO_SEED>', password: '<SENHA>' }
 ];
 
 // Criar revendedores e mapear nome -> id

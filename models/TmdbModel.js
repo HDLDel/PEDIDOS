@@ -50,17 +50,27 @@ export class TmdbModel {
   }
 
   // Buscar na API do TMDB e salvar
-  static async fetchAndSave(requestId, title, type) {
+ ate agora  static async fetchAndSave(requestId, title, type, tmdbId = null) {
     const apiKey = process.env.TMDB_API_KEY || '<TMDB_API_KEY>';
     const endpoint = type === 'series' ? 'tv' : 'movie';
     
     try {
-      const url = `https://api.themoviedb.org/3/search/${endpoint}?api_key=${apiKey}&query=${encodeURIComponent(title)}&language=pt-BR&page=1`;
+      let url;
+      if (tmdbId) {
+        // Se temos o ID, buscamos o conteúdo exato
+        url = `https://api.themoviedb.org/3/${endpoint}/${tmdbId}?api_key=${apiKey}&language=pt-BR`;
+      } else {
+        // Fallback: busca por texto (menos preciso)
+        url = `https://api.themoviedb.org/3/search/${endpoint}?api_key=${apiKey}&query=${encodeURIComponent(title)}&language=pt-BR&page=1`;
+      }
+
       const response = await fetch(url);
       const data = await response.json();
+
+      // Se for busca por ID, os dados estão na raiz do JSON. Se for busca por texto, estão em data.results[0]
+      const item = tmdbId ? data : (data.results && data.results.length > 0 ? data.results[0] : null);
       
-      if (data.results && data.results.length > 0) {
-        const item = data.results[0];
+      if (item) {
         const itemName = item.name || item.title;
         const itemDate = item.first_air_date || item.release_date || '';
         const year = itemDate ? new Date(itemDate).getFullYear() : null;
