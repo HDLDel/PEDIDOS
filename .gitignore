@@ -1,0 +1,11 @@
+node_modules/
+data/vod.sqlite
+data/vod.sqlite-journal
+data/vod.sqlite-shm
+data/vod.sqlite-wal
+.env
+.vscode/
+npm-debug.log*
+test_output.html
+Painel Admin _ Portal VOD_files/
+*.user.js
