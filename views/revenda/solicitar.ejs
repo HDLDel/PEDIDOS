@@ -227,6 +227,7 @@
                         
                         if (releaseDate && releaseDate > today) {
                             alert(`⚠️ Pedido Bloqueado: Este conteúdo tem lançamento previsto para ${fullDate}. Não é permitido solicitar filmes ou séries que ainda não foram lançados oficialmente.`);
+                            window.location.href = '/revenda/dashboard';
                             return;
                         }
                         selectWork(item, poster, title, fullDate || 'N/A');
