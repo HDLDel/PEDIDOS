@@ -22,7 +22,7 @@ process.on('unhandledRejection', (reason, promise) => {
 process.on('uncaughtException', (err) => {
     console.error('❌ Erro crítico no processo (capturado):', err.message);
     if (err.code === 'EBUSY') {
-        console.log('ℹ️ Nota: O Windows travou um arquivo do WhatsApp. O sistema tentará limpar automaticamente na próxima conexão.');
+        console.log('ℹ️ [Windows Lock] Um arquivo de sessão está em uso. O servidor continuará ativo e tentará recuperar o acesso na próxima inicialização do WhatsApp.');
     }
     if (err.message.includes('Execution context was destroyed')) {
         console.log('ℹ️ Nota: O navegador fechou inesperadamente. O sistema de recuperação foi ativado.');
