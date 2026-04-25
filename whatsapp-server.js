@@ -14,15 +14,26 @@ let status = 'disconnected';
 let lastQR = null;
 
 async function initWhatsApp() {
-    if (client && (status === 'loading' || status === 'qr' || status === 'ready')) return;
+    // Se já estiver tentando carregar ou já estiver pronto, ignora para não duplicar
+    if (status === 'loading' || status === 'qr' || status === 'ready') {
+        console.log(`ℹ️ [WA-SERVER] Ignorando tentativa de início: Status atual é ${status}`);
+        return;
+    }
 
     status = 'loading';
     console.log('⏳ [WA-SERVER] Iniciando navegador Puppeteer...');
 
+    // Se houver um cliente antigo "sujo" na memória, tentamos destruir antes de começar
+    if (client) {
+        try {
+            await client.destroy();
+        } catch (e) {}
+        client = null;
+    }
+
     client = new Client({
         authStrategy: new LocalAuth({ dataPath: path.join(process.cwd(), '.wwebjs_auth') }),
         puppeteer: {
-            headless: true,
             args: [
                 '--no-sandbox', 
                 '--disable-setuid-sandbox', 
@@ -33,9 +44,11 @@ async function initWhatsApp() {
                 '--no-first-run',
                 '--single-process', // Reduz o uso de memória em ambientes Linux
                 '--disable-setuid-sandbox',
+                '--no-sandbox',
                 // Limita o uso de memória do motor V8 do Chrome
                 '--js-flags="--max-old-space-size=512"'
-            ]
+            ],
+            headless: true
         }
     });
 
@@ -57,9 +70,13 @@ async function initWhatsApp() {
         console.log('❌ [WA-SERVER] Desconectado.');
     });
 
-    client.initialize().catch(err => {
-        console.error('❌ [WA-SERVER] Erro:', err.message);
+    client.initialize().catch(async err => {
+        console.error('❌ [WA-SERVER] Erro Crítico na Inicialização:', err.message);
         status = 'disconnected';
+        lastQR = null;
+        if (client) {
+            await client.destroy().catch(() => {});
+        }
         client = null;
     });
 }
