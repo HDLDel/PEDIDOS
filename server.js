@@ -36,7 +36,7 @@ if (countResellers.count === 0) {
     console.log('🌱 Banco vazio. Executando seed...');
     try {
         // Criar conta admin padrão se o banco for novo
-        AdminModel.create({ username: 'admin', password: 'admin<SENHA>', name: '<ADMIN_NAME>' });
+        AdminModel.create({ username: '<ADMIN_USERNAME>', password: '<SENHA_ADMIN>', name: '<ADMIN_NAME>' });
         
         // Importar e executar seed dinamicamente
         const { execSync } = await import('child_process');
