@@ -83,6 +83,24 @@ app.get('/', checkAdminAuth, (req, res) => {
     res.render('dashboard', { requests, stats });
 });
 
+// Rota para Gestão de Revendedores
+app.get('/admin/resellers', checkAdminAuth, (req, res) => {
+    const resellers = ResellerModel.getAll();
+    
+    // Enriquecer os dados dos revendedores com estatísticas de seus pedidos
+    const resellersWithStats = resellers.map(r => {
+        const requests = RequestModel.getByReseller(r.id);
+        return {
+            ...r,
+            totalRequests: requests.length,
+            pendingRequests: requests.filter(req => req.status === 'pending').length
+        };
+    });
+
+    const stats = RequestModel.getStats();
+    res.render('admin/resellers', { resellers: resellersWithStats, stats });
+});
+
 // --- ROTAS DO PORTAL DO REVENDE-DOR ---
 const checkResellerAuth = (req, res, next) => {
     if (req.session.resellerId) {
@@ -251,6 +269,12 @@ app.post('/api/requests', (req, res) => {
 // API - Revendedores
 app.get('/api/resellers', (req, res) => {
     res.json(ResellerModel.getAll());
+});
+
+// API para Deletar Revendedor (Somente Admin)
+app.delete('/api/resellers/:id', checkAdminAuth, (req, res) => {
+    const result = db.prepare('DELETE FROM resellers WHERE id = ?').run(req.params.id);
+    res.json({ success: result.changes > 0 });
 });
 
 app.get('/api/resellers/:id', (req, res) => {

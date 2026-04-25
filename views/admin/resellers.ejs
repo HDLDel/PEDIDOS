@@ -1,0 +1,108 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Gestão de Revendedores - VOD Premium</title>
+    <link rel="stylesheet" href="/css/style.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;900&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --bg-main: #0a0a0a;
+            --bg-card: #141414;
+            --accent-red: #e50914;
+            --text-primary: #ffffff;
+            --text-muted: #b3b3b3;
+            --border: #2b2b2b;
+        }
+        body { background-color: var(--bg-main); color: var(--text-primary); font-family: 'Inter', sans-serif; padding-top: 20px; }
+        .container { max-width: 1200px; margin: 0 auto; padding: 2rem; }
+        header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 2rem; border-bottom: 1px solid var(--border); padding-bottom: 1rem; }
+        .btn-back { background: #333; color: white; padding: 0.6rem 1.2rem; border-radius: 0.5rem; text-decoration: none; font-weight: 700; font-size: 0.85rem; }
+        .reseller-table { width: 100%; border-collapse: collapse; background: var(--bg-card); border-radius: 12px; overflow: hidden; border: 1px solid var(--border); }
+        .reseller-table th, .reseller-table td { padding: 1.2rem; text-align: left; border-bottom: 1px solid var(--border); }
+        .reseller-table th { background: #000; color: var(--accent-red); text-transform: uppercase; font-size: 0.8rem; letter-spacing: 1px; }
+        .reseller-table tr:hover { background: #1a1a1a; }
+        .reseller-name { font-weight: 700; font-size: 1.1rem; }
+        .reseller-info { color: var(--text-muted); font-size: 0.9rem; }
+        .badge-requests { background: rgba(229, 9, 20, 0.1); color: var(--accent-red); padding: 4px 8px; border-radius: 6px; font-weight: 800; font-size: 0.8rem; }
+        .actions { display: flex; gap: 10px; }
+        .btn-action { background: transparent; border: 1px solid var(--border); color: var(--text-primary); padding: 6px 10px; border-radius: 6px; cursor: pointer; transition: all 0.2s; }
+        .btn-delete:hover { background: var(--accent-red); border-color: var(--accent-red); }
+        .whatsapp-link { color: #10b981; text-decoration: none; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1><i class="fas fa-users-cog"></i> Gestão de Revendedores</h1>
+            <a href="/" class="btn-back"><i class="fas fa-arrow-left"></i> Voltar à Dashboard</a>
+        </header>
+
+        <table class="reseller-table">
+            <thead>
+                <tr>
+                    <th>Revendedor</th>
+                    <th>Contato</th>
+                    <th>Pedidos</th>
+                    <th>Cadastrado em</th>
+                    <th>Ações</th>
+                </tr>
+            </thead>
+            <tbody>
+                <% resellers.forEach(res => { %>
+                    <tr id="reseller-<%= res.id %>">
+                        <td>
+                            <div class="reseller-name"><%= res.name %></div>
+                            <div class="reseller-info"><%= res.email %></div>
+                        </td>
+                        <td>
+                            <div class="reseller-info"><i class="fas fa-phone"></i> <%= res.phone %></div>
+                            <a href="https://wa.me/<%= res.whatsapp.replace(/\D/g, '') %>" target="_blank" class="whatsapp-link">
+                                <i class="fab fa-whatsapp"></i> WhatsApp
+                            </a>
+                        </td>
+                        <td>
+                            <span class="badge-requests" title="Total de pedidos"><%= res.totalRequests %> Pedidos</span>
+                            <% if(res.pendingRequests > 0) { %>
+                                <div style="font-size: 0.7rem; color: #f59e0b; margin-top: 4px;">
+                                    <%= res.pendingRequests %> Pendentes
+                                </div>
+                            <% } %>
+                        </td>
+                        <td class="reseller-info">
+                            <%= res.created_at ? new Date(res.created_at).toLocaleDateString('pt-BR') : 'N/A' %>
+                        </td>
+                        <td class="actions">
+                            <button class="btn-action" onclick="window.location.href='mailto:<%= res.email %>'" title="Enviar E-mail">
+                                <i class="fas fa-envelope"></i>
+                            </button>
+                            <button class="btn-action btn-delete" onclick="deleteReseller(<%= res.id %>, '<%= res.name %>')" title="Excluir Revendedor">
+                                <i class="fas fa-trash-alt"></i>
+                            </button>
+                        </td>
+                    </tr>
+                <% }) %>
+            </tbody>
+        </table>
+    </div>
+
+    <script>
+        async function deleteReseller(id, name) {
+            if (!confirm(`Deseja REALMENTE excluir o revendedor ${name}?\nIsso apagará permanentemente o acesso dele.`)) return;
+
+            try {
+                const res = await fetch(`/api/resellers/${id}`, { method: 'DELETE' });
+                if (res.ok) {
+                    document.getElementById(`reseller-${id}`).remove();
+                } else {
+                    alert('Erro ao excluir revendedor.');
+                }
+            } catch (e) {
+                alert('Erro na comunicação com o servidor.');
+            }
+        }
+    </script>
+</body>
+</html>
