@@ -417,7 +417,6 @@ app.get('/api/tmdb/:requestId', (req, res) => {
 // --- TRATAMENTO DE ENCERRAMENTO ---
 process.on('SIGINT', async () => {
     console.log('🛑 Encerrando servidor e limpando conexões...');
-    await WhatsAppService.logout();
     process.exit(0);
 });
 
