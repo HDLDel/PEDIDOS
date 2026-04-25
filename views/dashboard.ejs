@@ -270,8 +270,8 @@
                         <i class="fab fa-whatsapp"></i> <%= req.whatsapp %>
                     </div>
                     <% if(req.rejectionReason) { %>
-                        <div class="info-item" style="color: var(--status-rejected); font-weight: bold; margin-top: 5px;">
-                            <i class="fas fa-exclamation-circle"></i> <%= req.rejectionReason.substring(0, 20) %>...
+                        <div class="info-item" style="color: var(--status-rejected); font-weight: bold; margin-top: 5px; align-items: flex-start; white-space: pre-wrap;">
+                            <i class="fas fa-exclamation-circle" style="margin-top: 4px;"></i><span><%= req.rejectionReason %></span>
                         </div>
                     <% } %>
                     <div class="info-item"><i class="far fa-calendar-alt"></i> <%= req.date %></div>
@@ -476,6 +476,19 @@
                     const badge = card.querySelector('.badge-status');
                     badge.className = `badge-status status-${status}`;
                     badge.innerText = status === 'pending' ? 'Pendente' : (status === 'approved' ? 'Aprovado' : 'Rejeitado');
+
+                    // Se for rejeição, adiciona o motivo visualmente no card
+                    if (status === 'rejected' && reason) {
+                        const body = card.querySelector('.card-body');
+                        let reasonDiv = body.querySelector('.rejection-info');
+                        if (!reasonDiv) {
+                            reasonDiv = document.createElement('div');
+                            reasonDiv.className = 'info-item rejection-info';
+                            reasonDiv.style = 'color: var(--status-rejected); font-weight: bold; margin-top: 5px; display: flex; align-items: flex-start; gap: 10px; white-space: pre-wrap;';
+                            body.appendChild(reasonDiv);
+                        }
+                        reasonDiv.innerHTML = `<i class="fas fa-exclamation-circle" style="margin-top: 4px;"></i><span>${reason}</span>`;
+                    }
 
                     // Atualiza os contadores e re-aplica filtros para esconder o card se necessário
                     await refreshStats();

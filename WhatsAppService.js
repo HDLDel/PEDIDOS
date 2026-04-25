@@ -9,13 +9,13 @@ export class WhatsAppService {
     static lastQR = null;
     static status = 'disconnected'; // disconnected, qr, ready
 
-    static initialize() {
+    static async initialize() { // Tornar a função assíncrona para usar 'await'
         // Se já está inicializando ou pronto, evita duplicidade
         if (this.client && (this.status === 'ready' || this.status === 'qr' || this.status === 'loading')) return;
 
         if (this.client) {
             console.log('🧹 Limpando instância anterior do WhatsApp...');
-            this.client.destroy().catch(e => console.error('Erro ao destruir:', e));
+            await this.client.destroy().catch(e => console.error('Erro ao destruir instância anterior:', e));
             this.client = null;
         }
 
@@ -69,10 +69,8 @@ export class WhatsAppService {
             console.log('📡 WhatsApp desconectado via evento.');
             this.status = 'disconnected';
             this.lastQR = null;
-            if (this.client) {
-                this.client.destroy().catch(() => {});
-                this.client = null;
-            }
+            // Não é necessário chamar destroy() aqui, initialize() fará isso se for chamado novamente.
+            this.client = null; // Apenas define o cliente como nulo para indicar que não está ativo.
         });
 
         this.client.on('auth_failure', (msg) => {
@@ -100,8 +98,7 @@ export class WhatsAppService {
                 this.client = null;
             }
             
-            // Pequeno delay antes de reinicializar para garantir limpeza de arquivos
-            setTimeout(() => this.initialize(), 2000);
+            // Não reinicializa automaticamente após o logout. O usuário pode iniciar via UI.
         } catch (e) { 
             console.error('❌ Erro crítico ao deslogar WhatsApp:', e); 
         }
