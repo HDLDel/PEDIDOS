@@ -109,6 +109,9 @@
             gap: 10px;
             font-weight: 600;
         }
+        .hidden {
+            display: none !important;
+        }
         @media (max-width: 600px) {
             .form-row { grid-template-columns: 1fr; gap: 1rem; }
             .form-actions { flex-direction: column-reverse; }
@@ -306,16 +309,15 @@
             document.getElementById('previewTitle').innerText = title;
             document.getElementById('previewYear').innerText = year;
 
-            // Controle de visibilidade dos campos extras (Inputs)
-            const isError = actionSelect.value === 'error';
-            
-            // Mostra extras APENAS se for SÉRIE e NÃO for erro
-            const showExtras = isSeries && !isError;
-            document.getElementById('extraFields').classList.toggle('hidden', !showExtras);
-            
+            // Garante que campos de Série sumam se for Filme
             if (!isSeries) {
+                document.getElementById('extraFields').classList.add('hidden');
                 document.getElementById('reqSeason').value = '';
                 document.getElementById('reqEpisode').value = '';
+            } else {
+                // Se for série, mostra apenas se não for erro
+                const isError = actionSelect.value === 'error';
+                document.getElementById('extraFields').classList.toggle('hidden', isError);
             }
             
             // Força atualização do campo de erro
