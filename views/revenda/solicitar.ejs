@@ -7,6 +7,102 @@
     <link rel="stylesheet" href="/css/style.css">
     <link rel="stylesheet" href="/css/reseller.css">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <style>
+        .request-form {
+            background: #141414;
+            padding: 2.5rem;
+            border-radius: 1.2rem;
+            border: 1px solid #2b2b2b;
+            margin-top: 2rem;
+            box-shadow: 0 15px 35px rgba(0,0,0,0.6);
+        }
+        .request-form label {
+            display: block;
+            font-size: 1rem;
+            font-weight: 800;
+            margin-bottom: 0.8rem;
+            color: #b3b3b3;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+        .request-form select, 
+        .request-form input, 
+        .request-form textarea {
+            width: 100%;
+            background: #050505;
+            border: 2px solid #333;
+            color: #fff;
+            padding: 14px 18px;
+            border-radius: 10px;
+            font-size: 1.2rem; /* Fonte aumentada conforme solicitado */
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            font-family: 'Inter', sans-serif;
+        }
+        .request-form select:focus, 
+        .request-form input:focus, 
+        .request-form textarea:focus {
+            border-color: #e50914;
+            box-shadow: 0 0 0 4px rgba(229, 9, 20, 0.15);
+            outline: none;
+            background: #000;
+        }
+        .form-row {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 2rem;
+            margin-top: 1rem;
+        }
+        .form-group {
+            margin-bottom: 2rem;
+        }
+        .form-actions {
+            display: flex;
+            gap: 1.5rem;
+            margin-top: 3rem;
+        }
+        .btn-submit {
+            flex: 2;
+            background: linear-gradient(135deg, #e50914 0%, #991b1b 100%);
+            color: white;
+            border: none;
+            padding: 1.2rem;
+            border-radius: 10px;
+            font-weight: 900;
+            font-size: 1.1rem;
+            text-transform: uppercase;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            box-shadow: 0 4px 15px rgba(229, 9, 20, 0.4);
+        }
+        .btn-submit:hover {
+            transform: translateY(-2px) scale(1.01);
+            filter: brightness(1.2);
+            box-shadow: 0 8px 25px rgba(229, 9, 20, 0.5);
+        }
+        .btn-cancel {
+            flex: 1;
+            background: #262626;
+            color: #a0a0a0;
+            border: 1px solid #333;
+            padding: 1.2rem;
+            border-radius: 10px;
+            font-weight: 700;
+            font-size: 1rem;
+            text-transform: uppercase;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+        .btn-cancel:hover {
+            background: #333;
+            color: #fff;
+            border-color: #444;
+        }
+        @media (max-width: 600px) {
+            .form-row { grid-template-columns: 1fr; gap: 1rem; }
+            .form-actions { flex-direction: column-reverse; }
+            .request-form { padding: 1.5rem; }
+        }
+    </style>
 </head>
 <body class="dark-theme">
     <header class="header">
