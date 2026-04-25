@@ -206,7 +206,7 @@
                 const data = await res.json();
                 
                 resultsDiv.innerHTML = '';
-                data.results.filter(i => i.media_type !== 'person').slice(0, 6).forEach(item => {
+                data.results.filter(i => i.media_type !== 'person').slice(0, 20).forEach(item => {
                     const card = document.createElement('div');
                     card.className = 'tmdb-mini-card';
                     const title = item.title || item.name;
