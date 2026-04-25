@@ -55,23 +55,30 @@ if (countResellers.count === 0) {
     }
 }
 
-// --- AUTO-MIGRAÇÃO DE SENHAS (TEXTO PURO -> BCRYPT) ---
-const legacyAdmins = db.prepare("SELECT id, password FROM admins WHERE password NOT LIKE '$2a$%'").all();
-legacyAdmins.forEach(a => {
-    const hash = bcrypt.hashSync(a.password, 10);
-    db.prepare("UPDATE admins SET password = ? WHERE id = ?").run(hash, a.id);
-});
+// --- AUTO-MIGRAÇÃO INTELIGENTE DE SENHAS ---
+const migrateTable = (tableName) => {
+    const records = db.prepare(`SELECT id, password FROM ${tableName}`).all();
+    let migratedCount = 0;
 
-const legacyResellers = db.prepare("SELECT id, password FROM resellers WHERE password NOT LIKE '$2a$%'").all();
-legacyResellers.forEach(r => {
-    // Se a senha for nula ou vazia por erro de migração anterior, define '<SENHA>'
-    const pass = r.password || '<SENHA>';
-    const hash = bcrypt.hashSync(pass, 10);
-    db.prepare("UPDATE resellers SET password = ? WHERE id = ?").run(hash, r.id);
-});
+    records.forEach(record => {
+        const pwd = record.password || '<SENHA>';
+        // Verifica se a senha já possui o prefixo de um hash Bcrypt válido
+        const isAlreadyHashed = /^\$2[ayb]\$.*/.test(pwd);
+        
+        if (!isAlreadyHashed) {
+            const hash = bcrypt.hashSync(pwd, 10);
+            db.prepare(`UPDATE ${tableName} SET password = ? WHERE id = ?`).run(hash, record.id);
+            migratedCount++;
+        }
+    });
+    return migratedCount;
+};
 
-if (legacyAdmins.length > 0 || legacyResellers.length > 0) {
-    console.log(`🔒 Segurança: ${legacyAdmins.length + legacyResellers.length} senhas migradas para Bcrypt.`);
+const migratedAdmins = migrateTable('admins');
+const migratedResellers = migrateTable('resellers');
+
+if (migratedAdmins > 0 || migratedResellers > 0) {
+    console.log(`🔒 Segurança: ${migratedAdmins + migratedResellers} senhas legadas migradas com sucesso.`);
 }
 
 // --- SEGURANÇA ADMIN ---

@@ -32,7 +32,9 @@ db.exec(`
     id INTEGER PRIMARY KEY AUTOINCREMENT,
     username TEXT UNIQUE NOT NULL,
     password TEXT NOT NULL,
-    name TEXT
+    name TEXT,
+    email TEXT,
+    phone TEXT
   );
 
   CREATE TABLE IF NOT EXISTS requests (
@@ -87,6 +89,14 @@ try {
     console.log('✅ Migração: Coluna password verificada/adicionada em resellers.');
 } catch (e) {
     // A coluna provavelmente já existe
+}
+
+try {
+    db.prepare("ALTER TABLE admins ADD COLUMN email TEXT").run();
+    db.prepare("ALTER TABLE admins ADD COLUMN phone TEXT").run();
+    console.log('✅ Migração: Colunas email e phone adicionadas em admins.');
+} catch (e) {
+    // Colunas já existem
 }
 
 console.log('✅ Banco SQLite conectado em:', dbPath);
