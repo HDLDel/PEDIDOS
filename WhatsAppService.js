@@ -10,11 +10,12 @@ export class WhatsAppService {
     static status = 'disconnected'; // disconnected, qr, ready
 
     static initialize() {
-        // Se o cliente já existir e não estiver desconectado, não faz nada
-        if (this.client && this.status !== 'disconnected') return;
+        // Se já está inicializando ou pronto, evita duplicidade
+        if (this.client && (this.status === 'ready' || this.status === 'qr' || this.status === 'loading')) return;
 
         if (this.client) {
-            this.client.destroy().catch(() => {});
+            console.log('🧹 Limpando instância anterior do WhatsApp...');
+            this.client.destroy().catch(e => console.error('Erro ao destruir:', e));
             this.client = null;
         }
 
@@ -30,13 +31,22 @@ export class WhatsAppService {
             }
         });
 
+        // Handler de erro fundamental para evitar queda do servidor
+        this.client.on('error', (err) => {
+            console.error('❌ Erro no cliente WhatsApp:', err.message);
+            this.status = 'disconnected';
+            this.lastQR = null;
+        });
+
         this.client.on('qr', async (qr) => {
-            // Primeiro gera a imagem, depois sinaliza o status para evitar telas brancas
             console.log('⚡ Gerando imagem do QR Code...');
-            const qrImage = await qrcode.toDataURL(qr);
-            this.lastQR = qrImage;
-            this.status = 'qr';
-            console.log('✅ QR Code pronto para exibição no painel.');
+            try {
+                this.lastQR = await qrcode.toDataURL(qr);
+                this.status = 'qr';
+                console.log('✅ QR Code pronto para exibição.');
+            } catch (e) {
+                console.error('Erro ao converter QR Code:', e);
+            }
         });
 
         this.client.on('loading_screen', (percent, message) => {
@@ -56,9 +66,13 @@ export class WhatsAppService {
         });
 
         this.client.on('disconnected', () => {
-            console.log('❌ WhatsApp desconectado.');
+            console.log('📡 WhatsApp desconectado via evento.');
             this.status = 'disconnected';
             this.lastQR = null;
+            if (this.client) {
+                this.client.destroy().catch(() => {});
+                this.client = null;
+            }
         });
 
         this.client.on('auth_failure', (msg) => {
@@ -74,15 +88,23 @@ export class WhatsAppService {
     }
 
     static async logout() {
+        console.log('🚪 Iniciando processo de logout do WhatsApp...');
         try {
+            this.status = 'disconnected';
+            this.lastQR = null;
+            
             if (this.client) {
-                await this.client.logout();
-                await this.client.destroy();
+                // Tenta logout e destroy, ignorando erros se já estiver desconectado
+                await this.client.logout().catch(() => {});
+                await this.client.destroy().catch(() => {});
                 this.client = null;
-                this.status = 'disconnected';
-                this.initialize();
             }
-        } catch (e) { console.error('Erro ao deslogar WhatsApp:', e); }
+            
+            // Pequeno delay antes de reinicializar para garantir limpeza de arquivos
+            setTimeout(() => this.initialize(), 2000);
+        } catch (e) { 
+            console.error('❌ Erro crítico ao deslogar WhatsApp:', e); 
+        }
     }
 
     static async sendStatusNotification(request) {
