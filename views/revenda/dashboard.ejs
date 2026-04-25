@@ -193,9 +193,7 @@
             </div>
             <div class="info">
               <div class="title"><%= req.title %></div>
-              <div class="meta">🎬 <%= req.type === 'series' ? 'Série' : 'Filme' %> 
-                <% if (req.year) { %>| <%= req.year %><% } %>
-              </div>
+              <div class="meta">📅 Lançamento: <%= req.year || 'N/A' %></div>
               <% if (req.season) { %>
                 <div class="meta">📺 Temporada <%= req.season %></div>
               <% } %>

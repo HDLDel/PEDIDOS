@@ -251,7 +251,7 @@
                 
                 <div class="card-body">
                     <h4 class="card-title" title="<%= req.title %>"><%= req.title %></h4>
-                    <div class="info-item"><i class="fas fa-compact-disc"></i> <%= req.type === 'series' ? 'Série' : 'Filme' %></div>
+                    <div class="info-item"><i class="fas fa-calendar-day"></i> Lançamento: <%= req.year || 'N/A' %></div>
                     <div class="info-item"><i class="fas fa-tag"></i> <%= req.action %></div>
                     <% if(req.season) { %><div class="info-item"><i class="fas fa-list-ol"></i> T<%= req.season %> | E<%= req.episode || 'Full' %></div><% } %>
                     <div class="info-item"><i class="fas fa-user-tag"></i> <%= req.reseller %></div>

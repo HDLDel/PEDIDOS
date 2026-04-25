@@ -73,7 +73,7 @@ export class TmdbModel {
       if (item) {
         const itemName = item.name || item.title;
         const itemDate = item.first_air_date || item.release_date || '';
-        const year = itemDate ? new Date(itemDate).getFullYear() : null;
+        const releaseDate = itemDate ? itemDate.split('-').reverse().join('/') : null;
         
         const existing = this.getByRequestId(requestId);
         const tmdbData = {
@@ -81,7 +81,7 @@ export class TmdbModel {
           tmdbId: item.id,
           title: itemName,
           originalTitle: item.original_name || item.original_title,
-          year,
+          year: releaseDate, // Agora armazena a data completa (ex: 15/05/2024)
           posterPath: item.poster_path ? `https://image.tmdb.org/t/p/w500${item.poster_path}` : null,
           backdropPath: item.backdrop_path ? `https://image.tmdb.org/t/p/original${item.backdrop_path}` : null,
           overview: item.overview,

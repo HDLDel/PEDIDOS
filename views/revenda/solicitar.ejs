@@ -211,14 +211,14 @@
                     card.className = 'tmdb-mini-card';
                     const title = item.title || item.name;
                     const date = item.release_date || item.first_air_date || '';
-                    const year = date ? date.split('-')[0] : 'N/A';
+                    const fullDate = date ? date.split('-').reverse().join('/') : 'N/A';
                     const poster = item.poster_path ? `https://image.tmdb.org/t/p/w200${item.poster_path}` : 'https://via.placeholder.com/200x300?text=Sem+Poster';
 
                     card.innerHTML = `
                         <img src="${poster}" alt="${title}">
                         <div class="info">
                             <h4>${title}</h4>
-                            <span>${year} • ${item.media_type === 'tv' ? 'Série' : 'Filme'}</span>
+                            <span>Lançamento: ${fullDate}</span>
                         </div>
                     `;
                     card.onclick = () => selectWork(item, poster, title, year);
