@@ -19,4 +19,8 @@ export class AdminModel {
     }
     return null;
   }
+
+  static getByUsername(username) {
+    return db.prepare('SELECT * FROM admins WHERE username = ?').get(username);
+  }
 }

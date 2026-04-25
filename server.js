@@ -30,19 +30,22 @@ app.set('view engine', 'ejs');
 app.set('views', path.join(process.cwd(), 'views'));
 app.use(express.static(path.join(process.cwd(), 'public')));
 
-// Executar seed se o banco estiver vazio
-const countResellers = db.prepare('SELECT COUNT(*) as count FROM resellers').get();
+// Verificar e criar admin padrão se não existir
+const adminUsername = process.env.ADMIN_USERNAME;
+if (adminUsername && !AdminModel.getByUsername(adminUsername)) {
+    console.log(`🌱 Criando usuário administrador padrão: ${adminUsername}...`);
+    AdminModel.create({ 
+        username: adminUsername, 
+        password: process.env.ADMIN_PASSWORD, 
+        name: process.env.ADMIN_NAME 
+    });
+}
 
+// Executar seed de revendedores e pedidos se o banco estiver vazio
+const countResellers = db.prepare('SELECT COUNT(*) as count FROM resellers').get();
 if (countResellers.count === 0) {
-    console.log('🌱 Banco vazio. Executando seed...');
+    console.log('🌱 Banco de revendedores vazio. Executando seed de dados de teste...');
     try {
-        // Criar conta admin padrão se o banco for novo
-        AdminModel.create({ 
-            username: process.env.ADMIN_USERNAME, 
-            password: process.env.ADMIN_PASSWORD, 
-            name: process.env.ADMIN_NAME 
-        });
-        
         // Importar e executar seed dinamicamente
         const { execSync } = await import('child_process');
         execSync('node seed.js', { stdio: 'inherit', cwd: process.cwd() });
