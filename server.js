@@ -427,7 +427,7 @@ app.post('/api/tmdb/fetch', async (req, res) => {
     res.json(result);
 });
 
-const PORT = 3000;
+const PORT = 8080;
 app.listen(PORT, () => {
     console.log(`🚀 Painel rodando em http://localhost:${PORT}`);
     console.log(`📊 ${RequestModel.getStats().pending} pendentes, ${RequestModel.getStats().approved} aprovados, ${RequestModel.getStats().rejected} rejeitados`);

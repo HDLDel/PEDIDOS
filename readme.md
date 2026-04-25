@@ -79,8 +79,8 @@ Para que o sistema não desligue quando você fechar o terminal, usamos o **PM2*
 
 ## 🚀 4. Como acessar
 
-*   **Painel Administrativo:** `http://IP_DA_SUA_VPS:3000/admin/login`
-*   **Portal do Revendedor:** `http://IP_DA_SUA_VPS:3000/revenda/login`
+*   **Painel Administrativo:** `http://IP_DA_SUA_VPS:8080/admin/login`
+*   **Portal do Revendedor:** `http://IP_DA_SUA_VPS:8080/revenda/login`
 *   **Conexão do WhatsApp:** Após logar no Admin, clique no ícone do WhatsApp no topo para escanear o QR Code.
 
 ---
@@ -92,7 +92,7 @@ Para que o sistema não desligue quando você fechar o terminal, usamos o **PM2*
 *   No **Linux**: Rode `pm2 restart whatsapp-motor`.
 
 **O WhatsApp não conecta:**
-*   Verifique se o seu servidor do WhatsApp (Porta 3001) está ligado.
+*   Verifique se o seu servidor do WhatsApp (Porta 8880) está ligado.
 *   Certifique-se de que a pasta `.wwebjs_auth` tem permissão de escrita.
 
 ---

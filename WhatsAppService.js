@@ -1,7 +1,7 @@
 import 'dotenv/config';
 
 export class WhatsAppService {
-    static WA_API = 'http://localhost:3001';
+    static WA_API = 'http://localhost:8880';
 
     static async initialize() {
         try {

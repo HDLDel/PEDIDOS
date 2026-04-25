@@ -15,42 +15,42 @@ let lastQR = null;
 
 async function initWhatsApp() {
     // Se já estiver tentando carregar ou já estiver pronto, ignora para não duplicar
-    if (status === 'loading' || status === 'qr' || status === 'ready') {
+    if (status === 'qr' || status === 'ready') {
         console.log(`ℹ️ [WA-SERVER] Ignorando tentativa de início: Status atual é ${status}`);
         return;
     }
 
     status = 'loading';
-    console.log('⏳ [WA-SERVER] Iniciando navegador Puppeteer...');
+    console.log('⏳ [WA-SERVER] Preparando inicialização do Puppeteer...');
 
-    // Se houver um cliente antigo "sujo" na memória, tentamos destruir antes de começar
-    if (client) {
-        try {
-            await client.destroy();
-        } catch (e) {}
-        client = null;
-    }
-
-    client = new Client({
-        authStrategy: new LocalAuth({ dataPath: path.join(process.cwd(), '.wwebjs_auth') }),
-        puppeteer: {
-            args: [
-                '--no-sandbox', 
-                '--disable-setuid-sandbox', 
-                '--disable-dev-shm-usage', 
-                '--disable-gpu',
-                '--disable-extensions',
-                '--no-zygote',
-                '--no-first-run',
-                '--single-process', // Reduz o uso de memória em ambientes Linux
-                '--disable-setuid-sandbox',
-                '--no-sandbox',
-                // Limita o uso de memória do motor V8 do Chrome
-                '--js-flags="--max-old-space-size=512"'
-            ],
-            headless: true
+    try {
+        // Limpeza preventiva de instâncias anteriores
+        if (client) {
+            console.log('🧹 [WA-SERVER] Limpando cliente anterior...');
+            await client.destroy().catch(() => {});
+            client = null;
         }
-    });
+
+        client = new Client({
+            authStrategy: new LocalAuth({ 
+                dataPath: path.join(process.cwd(), '.wwebjs_auth'),
+                clientId: "primary-client" 
+            }),
+            puppeteer: {
+                headless: true,
+                executablePath: '/usr/bin/chromium-browser',
+                args: [
+                    '--no-sandbox',
+                    '--disable-setuid-sandbox',
+                    '--disable-dev-shm-usage',
+                    '--no-first-run',
+                    '--no-zygote',
+                    '--disable-gpu'
+                ]
+            }
+        });
+
+        console.log('📡 [WA-SERVER] Instância do cliente criada. Aguardando eventos...');
 
     client.on('qr', async (qr) => {
         lastQR = await qrcode.toDataURL(qr);
@@ -70,15 +70,15 @@ async function initWhatsApp() {
         console.log('❌ [WA-SERVER] Desconectado.');
     });
 
-    client.initialize().catch(async err => {
-        console.error('❌ [WA-SERVER] Erro Crítico na Inicialização:', err.message);
+        console.log('🚀 [WA-SERVER] Chamando initialize()...');
+        await client.initialize();
+
+    } catch (err) {
+        console.error('❌ [WA-SERVER] Falha ao iniciar WhatsApp:', err.message);
         status = 'disconnected';
         lastQR = null;
-        if (client) {
-            await client.destroy().catch(() => {});
-        }
         client = null;
-    });
+    }
 }
 
 // Endpoints para o Dashboard consultar
@@ -114,7 +114,7 @@ app.post('/send', async (req, res) => {
     }
 });
 
-const PORT = 3001;
+const PORT = 8880;
 app.listen(PORT, () => {
     console.log(`📡 MOTOR WHATSAPP INDEPENDENTE: Rodando na porta ${PORT}`);
 });
