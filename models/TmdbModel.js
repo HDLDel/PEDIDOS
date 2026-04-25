@@ -51,7 +51,7 @@ export class TmdbModel {
 
   // Buscar na API do TMDB e salvar
   static async fetchAndSave(requestId, title, type, tmdbId = null) {
-    const apiKey = process.env.TMDB_API_KEY || '<TMDB_API_KEY>';
+    const apiKey = process.env.TMDB_API_KEY;
     const endpoint = type === 'series' ? 'tv' : 'movie';
     
     try {

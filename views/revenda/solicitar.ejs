@@ -211,7 +211,7 @@
     </main>
 
     <script>
-        const API_KEY = '<TMDB_API_KEY>';
+        const API_KEY = '<%= tmdbApiKey %>';
         const pendingRequestsCount = <%= requests.filter(r => r.status === 'pending').length %>;
 
         document.getElementById('btnSearch').addEventListener('click', async () => {

@@ -1,3 +1,4 @@
+import 'dotenv/config';
 import express from 'express';
 import path from 'path';
 import { fileURLToPath } from 'url';
@@ -36,7 +37,11 @@ if (countResellers.count === 0) {
     console.log('🌱 Banco vazio. Executando seed...');
     try {
         // Criar conta admin padrão se o banco for novo
-        AdminModel.create({ username: '<ADMIN_USERNAME>', password: '<SENHA_ADMIN>', name: '<ADMIN_NAME>' });
+        AdminModel.create({ 
+            username: process.env.ADMIN_USERNAME, 
+            password: process.env.ADMIN_PASSWORD, 
+            name: process.env.ADMIN_NAME 
+        });
         
         // Importar e executar seed dinamicamente
         const { execSync } = await import('child_process');
@@ -131,7 +136,8 @@ app.get('/revenda/solicitar', checkResellerAuth, (req, res) => {
     const resellerId = req.session.resellerId;
     const reseller = ResellerModel.getById(resellerId);
     const requests = RequestModel.getByReseller(resellerId);
-    res.render('revenda/solicitar', { reseller, requests });
+    // Passamos a API KEY do TMDB de forma segura para o template
+    res.render('revenda/solicitar', { reseller, requests, tmdbApiKey: process.env.TMDB_API_KEY });
 });
 app.get('/revenda/solicitar/filme', (req, res) => res.render('revenda/buscar-filme'));
 

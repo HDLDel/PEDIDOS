@@ -1,4 +1,5 @@
 import db from '../db.js';
+import bcrypt from 'bcryptjs';
 
 export class ResellerModel {
   static getAll() {
@@ -26,17 +27,21 @@ export class ResellerModel {
   }
 
   static create({ name, email, phone, whatsapp, password }) {
-    // Nota: Em produção, a senha deve ser criptografada com bcrypt
+    const hashedPassword = bcrypt.hashSync(password || '<SENHA>', 10);
     const stmt = db.prepare(`
       INSERT INTO resellers (name, email, phone, whatsapp, password)
       VALUES (?, ?, ?, ?, ?)
     `);
-    const result = stmt.run(name, email, phone || '', whatsapp, password || '<SENHA>');
+    const result = stmt.run(name, email, phone || '', whatsapp, hashedPassword);
     return this.getById(result.lastInsertRowid);
   }
 
   static authenticate(email, password) {
-    return db.prepare('SELECT * FROM resellers WHERE email = ? AND password = ?')
-             .get(email, password);
+    const reseller = db.prepare('SELECT * FROM resellers WHERE email = ?').get(email);
+    
+    if (reseller && bcrypt.compareSync(password, reseller.password)) {
+      return reseller;
+    }
+    return null;
   }
 }
