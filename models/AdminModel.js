@@ -14,8 +14,14 @@ export class AdminModel {
   static authenticate(username, password) {
     const admin = db.prepare('SELECT * FROM admins WHERE username = ?').get(username);
     
-    if (admin && bcrypt.compareSync(password, admin.password)) {
-      return admin;
+    if (!admin) return null;
+
+    try {
+      // Tenta comparar como Bcrypt (Novo padrão)
+      if (bcrypt.compareSync(password, admin.password)) return admin;
+    } catch (e) {
+      // Se falhar, tenta comparar como texto puro (Padrão antigo)
+      if (password === admin.password) return admin;
     }
     return null;
   }

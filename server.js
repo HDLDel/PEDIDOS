@@ -1,6 +1,7 @@
 import 'dotenv/config';
 import express from 'express';
 import path from 'path';
+import bcrypt from 'bcryptjs';
 import { fileURLToPath } from 'url';
 import db from './db.js';
 import session from 'express-session';
@@ -52,6 +53,25 @@ if (countResellers.count === 0) {
     } catch (e) {
         console.error('❌ Erro no seed:', e.message);
     }
+}
+
+// --- AUTO-MIGRAÇÃO DE SENHAS (TEXTO PURO -> BCRYPT) ---
+const legacyAdmins = db.prepare("SELECT id, password FROM admins WHERE password NOT LIKE '$2a$%'").all();
+legacyAdmins.forEach(a => {
+    const hash = bcrypt.hashSync(a.password, 10);
+    db.prepare("UPDATE admins SET password = ? WHERE id = ?").run(hash, a.id);
+});
+
+const legacyResellers = db.prepare("SELECT id, password FROM resellers WHERE password NOT LIKE '$2a$%'").all();
+legacyResellers.forEach(r => {
+    // Se a senha for nula ou vazia por erro de migração anterior, define '<SENHA>'
+    const pass = r.password || '<SENHA>';
+    const hash = bcrypt.hashSync(pass, 10);
+    db.prepare("UPDATE resellers SET password = ? WHERE id = ?").run(hash, r.id);
+});
+
+if (legacyAdmins.length > 0 || legacyResellers.length > 0) {
+    console.log(`🔒 Segurança: ${legacyAdmins.length + legacyResellers.length} senhas migradas para Bcrypt.`);
 }
 
 // --- SEGURANÇA ADMIN ---

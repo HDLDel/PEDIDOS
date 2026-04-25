@@ -18,11 +18,12 @@ export class ResellerModel {
     const existing = db.prepare('SELECT * FROM resellers WHERE name = ?').get(name);
     if (existing) return existing;
 
+    const defaultPass = bcrypt.hashSync('<SENHA>', 10);
     const stmt = db.prepare(`
-      INSERT INTO resellers (name, email, phone, whatsapp)
-      VALUES (?, ?, ?, ?)
+      INSERT INTO resellers (name, email, phone, whatsapp, password)
+      VALUES (?, ?, ?, ?, ?)
     `);
-    const result = stmt.run(name, email, phone || '', whatsapp);
+    const result = stmt.run(name, email, phone || '', whatsapp, defaultPass);
     return this.getById(result.lastInsertRowid);
   }
 
@@ -39,8 +40,14 @@ export class ResellerModel {
   static authenticate(email, password) {
     const reseller = db.prepare('SELECT * FROM resellers WHERE email = ?').get(email);
     
-    if (reseller && bcrypt.compareSync(password, reseller.password)) {
-      return reseller;
+    if (!reseller) return null;
+
+    try {
+      // Tenta comparar como Bcrypt
+      if (bcrypt.compareSync(password, reseller.password)) return reseller;
+    } catch (e) {
+      // Fallback para texto puro (usuários antigos)
+      if (password === reseller.password) return reseller;
     }
     return null;
   }
