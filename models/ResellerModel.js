@@ -42,13 +42,6 @@ export class ResellerModel {
     
     if (!reseller) return null;
 
-    try {
-      // Tenta comparar como Bcrypt
-      if (bcrypt.compareSync(password, reseller.password)) return reseller;
-    } catch (e) {
-      // Fallback para texto puro (usuários antigos)
-      if (password === reseller.password) return reseller;
-    }
-    return null;
+    return bcrypt.compareSync(password, reseller.password) ? reseller : null;
   }
 }

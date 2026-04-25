@@ -19,7 +19,7 @@ app.use(express.urlencoded({ extended: true }));
 
 // Configuração da sessão
 app.use(session({
-    secret: process.env.SESSION_SECRET || 'fallback-para-dev', 
+    secret: process.env.SESSION_SECRET || (function() { throw new Error('ERRO: SESSION_SECRET não configurado no .env'); })(), 
     resave: false,
     saveUninitialized: false,
     cookie: { secure: false } // Use 'true' em produção com HTTPS
@@ -166,8 +166,8 @@ app.get('/revenda/solicitar', checkResellerAuth, (req, res) => {
     const resellerId = req.session.resellerId;
     const reseller = ResellerModel.getById(resellerId);
     const requests = RequestModel.getByReseller(resellerId);
-    // Passamos a API KEY do TMDB de forma segura para o template
-    res.render('revenda/solicitar', { reseller, requests, tmdbApiKey: process.env.TMDB_API_KEY });
+    // Não passamos mais a API KEY para o frontend
+    res.render('revenda/solicitar', { reseller, requests });
 });
 app.get('/revenda/solicitar/filme', (req, res) => res.render('revenda/buscar-filme'));
 
@@ -210,12 +210,12 @@ app.get('/revenda/logout', (req, res) => {
 // --- API ---
 
 // API - Estatísticas
-app.get('/api/stats', (req, res) => {
+app.get('/api/stats', checkAdminAuth, (req, res) => {
     res.json(RequestModel.getStats());
 });
 
 // API - Listar todos os pedidos
-app.get('/api/requests', (req, res) => {
+app.get('/api/requests', checkAdminAuth, (req, res) => {
     const { status, category, search } = req.query;
     let requests;
     
@@ -233,14 +233,14 @@ app.get('/api/requests', (req, res) => {
 });
 
 // API - Obter pedido por ID
-app.get('/api/requests/:id', (req, res) => {
+app.get('/api/requests/:id', checkAdminAuth, (req, res) => {
     const request = RequestModel.getById(parseInt(req.params.id));
     if (!request) return res.status(404).json({ error: 'Pedido não encontrado' });
     res.json(request);
 });
 
 // API - Atualizar status (aprovar/rejeitar)
-app.post('/api/requests/:id/status', (req, res) => {
+app.post('/api/requests/:id/status', checkAdminAuth, (req, res) => {
     const { status, rejectionReason } = req.body;
     if (!['pending', 'approved', 'rejected'].includes(status)) {
         return res.status(400).json({ error: 'Status inválido' });
@@ -348,6 +348,18 @@ app.get('/api/resellers/:id', (req, res) => {
     const reseller = ResellerModel.getById(parseInt(req.params.id));
     if (!reseller) return res.status(404).json({ error: 'Revendedor não encontrado' });
     res.json(reseller);
+});
+
+// API - Proxy de Busca TMDB (Protege a API KEY)
+app.get('/api/tmdb/search', checkResellerAuth, async (req, res) => {
+    const { query } = req.query;
+    if (!query || query.length < 3) return res.status(400).json({ error: 'Busca inválida' });
+    
+    const apiKey = process.env.TMDB_API_KEY;
+    const url = `https://api.themoviedb.org/3/search/multi?api_key=${apiKey}&query=${encodeURIComponent(query)}&language=pt-BR`;
+    const response = await fetch(url);
+    const data = await response.json();
+    res.json(data);
 });
 
 // API - TMDB

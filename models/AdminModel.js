@@ -18,14 +18,7 @@ export class AdminModel {
     
     if (!admin) return null;
 
-    try {
-      // Tenta comparar como Bcrypt (Novo padrão)
-      if (bcrypt.compareSync(password, admin.password)) return admin;
-    } catch (e) {
-      // Se falhar, tenta comparar como texto puro (Padrão antigo)
-      if (password === admin.password) return admin;
-    }
-    return null;
+    return bcrypt.compareSync(password, admin.password) ? admin : null;
   }
 
   static getByUsername(username) {
