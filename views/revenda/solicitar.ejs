@@ -211,7 +211,7 @@
                     card.className = 'tmdb-mini-card';
                     const title = item.title || item.name;
                     const date = item.release_date || item.first_air_date || '';
-                    const fullDate = date ? date.split('-').reverse().join('/') : 'N/A';
+                    const fullDate = date ? date.split('-').reverse().join('/') : '';
                     const poster = item.poster_path ? `https://image.tmdb.org/t/p/w200${item.poster_path}` : 'https://via.placeholder.com/200x300?text=Sem+Poster';
 
                     card.innerHTML = `
@@ -221,7 +221,16 @@
                             <span>Lançamento: ${fullDate}</span>
                         </div>
                     `;
-                    card.onclick = () => selectWork(item, poster, title, year);
+                    card.onclick = () => {
+                        const today = new Date().toISOString().split('T')[0]; // Formato YYYY-MM-DD
+                        const releaseDate = item.release_date || item.first_air_date;
+                        
+                        if (releaseDate && releaseDate > today) {
+                            alert(`⚠️ Pedido Bloqueado: Este conteúdo tem lançamento previsto para ${fullDate}. Não é permitido solicitar filmes ou séries que ainda não foram lançados oficialmente.`);
+                            return;
+                        }
+                        selectWork(item, poster, title, fullDate || 'N/A');
+                    };
                     resultsDiv.appendChild(card);
                 });
             } catch (e) {
