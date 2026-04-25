@@ -291,7 +291,7 @@ app.post('/api/requests', (req, res) => {
     }
 
     // Segurança de integridade: Filmes não podem ter temporada ou episódio
-    if (type === 'movie' || type === 'movie') {
+    if (type === 'movie') {
         season = null;
         episode = null;
     }
@@ -312,6 +312,27 @@ app.post('/api/requests', (req, res) => {
             return res.status(409).json({ 
                 error: 'este pedido ja foi feito por outro revenda e esta na fila de espera, favor aguardar.' 
             });
+        const existing = db.prepare(`
+            SELECT r.status, r.rejection_reason FROM requests r
+            JOIN tmdb_contents t ON r.id = t.request_id
+            WHERE t.tmdb_id = ?
+            ORDER BY r.id DESC LIMIT 1
+        `).get(parseInt(tmdbId));
+
+        if (existing) {
+            if (existing.status === 'pending') {
+                return res.status(409).json({ 
+                    error: 'este pedido ja foi feito por outro revenda e esta na fila de espera, favor aguardar.' 
+                });
+            } else if (existing.status === 'approved') {
+                return res.status(409).json({ 
+                    error: 'Pedido já adicionado ao servidor. Por favor, atualize a lista e procure em todas as categorias.' 
+                });
+            } else if (existing.status === 'rejected') {
+                return res.status(409).json({ 
+                    error: `Esse pedido foi rejeitado. Motivo: ${existing.rejection_reason || 'Não especificado.'}` 
+                });
+            }
         }
     }
     
