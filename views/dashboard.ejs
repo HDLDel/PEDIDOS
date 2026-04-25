@@ -222,9 +222,9 @@
             <h2 style="color: var(--accent-red);">IMPERIO <span style="color: white;">APPS</span></h2>
         </div>
         <div class="user-info" style="display: flex; align-items: center; gap: 20px;">
-            <div id="waStatusBtn" class="whatsapp-status-btn wa-off" onclick="openWaModal()">
+            <a href="/admin/whatsapp" id="waStatusBtn" class="whatsapp-status-btn wa-off" style="text-decoration: none;">
                 <i class="fab fa-whatsapp"></i> <span>OFFLINE</span>
-            </div>
+            </a>
             <a href="/admin/logout" style="color: var(--text-muted); text-decoration: none; font-size: 0.85rem; font-weight: 600;">
                 <i class="fas fa-sign-out-alt"></i> Sair do Painel
             </a>
@@ -321,6 +321,7 @@
         let currentRequestType = null; // Para armazenar o tipo (movie/series)
         let activeCategory = 'all';
         let activeStatus = 'all';
+        let checkStatusInterval = null;
 
         async function checkWaStatus() {
             const res = await fetch('/api/whatsapp/status');
@@ -338,18 +339,27 @@
             } else if (data.status === 'ready') {
                 qrContainer.innerHTML = `<i class="fas fa-check-circle" style="font-size: 5rem; color: #10b981; padding: 20px;"></i>`;
                 document.getElementById('waStatusText').innerText = "Conectado e pronto!";
+            } else if (data.status === 'loading') {
+                qrContainer.innerHTML = `<p style="color: #000; padding: 20px;">Sincronizando mensagens...</p>`;
             } else {
-                qrContainer.innerHTML = `<p style="color: #000; padding: 20px;">Iniciando sistema...</p>`;
+                qrContainer.innerHTML = `<p style="color: #000; padding: 20px;">Iniciando navegador...</p>`;
             }
         }
 
-        function openWaModal() {
+        async function openWaModal() {
             document.getElementById('waModal').style.display = 'flex';
+            document.getElementById('waStatusText').innerText = "Iniciando motor do WhatsApp...";
+            
+            // Envia o sinal para o servidor iniciar o navegador
+            await fetch('/api/whatsapp/start', { method: 'POST' });
             checkWaStatus();
+            if (checkStatusInterval) clearInterval(checkStatusInterval);
+            checkStatusInterval = setInterval(checkWaStatus, 3000); // Polling rápido (3s) para o QR Code
         }
 
         function closeWaModal() {
             document.getElementById('waModal').style.display = 'none';
+            if (checkStatusInterval) clearInterval(checkStatusInterval);
         }
 
         setInterval(checkWaStatus, 5000); // Atualiza status a cada 5 segundos

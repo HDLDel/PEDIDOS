@@ -26,9 +26,6 @@ app.use(session({
     cookie: { secure: false } // Use 'true' em produção com HTTPS
 }));
 
-// Inicializa o motor do WhatsApp
-WhatsAppService.initialize();
-
 app.set('view engine', 'ejs');
 
 // Define os caminhos de forma absoluta para evitar erros de diretório
@@ -120,6 +117,14 @@ app.get('/', checkAdminAuth, (req, res) => {
     const requests = RequestModel.getAll();
     const stats = RequestModel.getStats();
     res.render('dashboard', { requests, stats });
+});
+
+// Rota para Conexão do WhatsApp (Página Dedicada)
+app.get('/admin/whatsapp', checkAdminAuth, (req, res) => {
+    if (WhatsAppService.status === 'disconnected') {
+        WhatsAppService.initialize();
+    }
+    res.render('admin/whatsapp');
 });
 
 // Rota para Gestão de Revendedores
@@ -373,6 +378,18 @@ app.get('/api/tmdb/search', checkResellerAuth, async (req, res) => {
 // API - Status do WhatsApp
 app.get('/api/whatsapp/status', checkAdminAuth, (req, res) => {
     res.json(WhatsAppService.getStatus());
+});
+
+// API - Iniciar/Conectar WhatsApp
+app.post('/api/whatsapp/start', checkAdminAuth, (req, res) => {
+    WhatsAppService.initialize();
+    res.json({ success: true, message: 'Iniciando navegador...' });
+});
+
+// API - Resetar WhatsApp
+app.post('/api/whatsapp/reset', checkAdminAuth, async (req, res) => {
+    await WhatsAppService.logout();
+    res.json({ success: true });
 });
 
 // API - TMDB

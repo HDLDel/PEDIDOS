@@ -1,4 +1,5 @@
 import 'dotenv/config';
+import path from 'path';
 import pkg from 'whatsapp-web.js';
 const { Client, LocalAuth } = pkg;
 import qrcode from 'qrcode';
@@ -9,20 +10,43 @@ export class WhatsAppService {
     static status = 'disconnected'; // disconnected, qr, ready
 
     static initialize() {
-        if (this.client) return;
+        // Se o cliente já existir e não estiver desconectado, não faz nada
+        if (this.client && this.status !== 'disconnected') return;
+
+        if (this.client) {
+            this.client.destroy().catch(() => {});
+            this.client = null;
+        }
 
         this.client = new Client({
-            authStrategy: new LocalAuth({ dataPath: './.wwebjs_auth' }),
+            authStrategy: new LocalAuth({ dataPath: path.join(process.cwd(), '.wwebjs_auth') }),
             puppeteer: {
+                // Adicionando timers para evitar que o processo fique órfão
+                authTimeoutMs: 60000,
+                qrMaxRetries: 5,
                 handleSIGINT: false,
-                args: ['--no-sandbox', '--disable-setuid-sandbox']
+                headless: true,
+                args: ['--no-sandbox', '--disable-setuid-sandbox', '--disable-extensions']
             }
         });
 
         this.client.on('qr', async (qr) => {
-            console.log('⚡ Novo QR Code gerado.');
+            // Primeiro gera a imagem, depois sinaliza o status para evitar telas brancas
+            console.log('⚡ Gerando imagem do QR Code...');
+            const qrImage = await qrcode.toDataURL(qr);
+            this.lastQR = qrImage;
             this.status = 'qr';
-            this.lastQR = await qrcode.toDataURL(qr);
+            console.log('✅ QR Code pronto para exibição no painel.');
+        });
+
+        this.client.on('loading_screen', (percent, message) => {
+            console.log('⏳ Carregando WhatsApp:', percent, '%');
+            this.status = 'loading';
+        });
+
+        this.client.on('authenticated', () => {
+            console.log('🔓 WhatsApp Autenticado!');
+            this.status = 'authenticated';
         });
 
         this.client.on('ready', () => {
@@ -37,11 +61,28 @@ export class WhatsAppService {
             this.lastQR = null;
         });
 
+        this.client.on('auth_failure', (msg) => {
+            console.error('❌ Falha na autenticação:', msg);
+            this.status = 'disconnected';
+        });
+
         this.client.initialize().catch(err => console.error('Erro ao iniciar WhatsApp:', err));
     }
 
     static getStatus() {
         return { status: this.status, qr: this.lastQR };
+    }
+
+    static async logout() {
+        try {
+            if (this.client) {
+                await this.client.logout();
+                await this.client.destroy();
+                this.client = null;
+                this.status = 'disconnected';
+                this.initialize();
+            }
+        } catch (e) { console.error('Erro ao deslogar WhatsApp:', e); }
     }
 
     static async sendStatusNotification(request) {
