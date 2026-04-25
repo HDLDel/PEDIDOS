@@ -170,7 +170,7 @@
                     </select>
                 </div>
 
-                <div id="extraFields" class="form-row">
+                <div id="extraFields" class="form-row hidden">
                     <div class="form-group">
                         <label>Temporada</label>
                         <input type="text" id="reqSeason" placeholder="Ex: 2">
@@ -291,12 +291,27 @@
             document.getElementById('previewPoster').src = poster;
             document.getElementById('previewTitle').innerText = title;
             document.getElementById('previewYear').innerText = year;
+
+            // Lógica para mostrar/esconder campos de Temporada/Episódio
+            const isSeries = item.media_type === 'tv';
+            const isError = actionSelect.value === 'error';
+            
+            // Esconde se não for série OU se for erro de reprodução
+            document.getElementById('extraFields').classList.toggle('hidden', !isSeries || isError);
+            
+            if (!isSeries) {
+                document.getElementById('reqSeason').value = '';
+                document.getElementById('reqEpisode').value = '';
+            }
         }
 
         document.getElementById('requestAction').addEventListener('change', (e) => {
             const isError = e.target.value === 'error';
+            const isSeries = document.getElementById('selectedType').value === 'tv';
+
             document.getElementById('errorField').classList.toggle('hidden', !isError);
-            document.getElementById('extraFields').classList.toggle('hidden', isError);
+            // Mostra campos extras apenas se for série E não for erro
+            document.getElementById('extraFields').classList.toggle('hidden', isError || !isSeries);
         });
 
         function resetForm() {
