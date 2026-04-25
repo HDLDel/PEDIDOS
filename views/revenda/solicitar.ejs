@@ -309,31 +309,32 @@
             document.getElementById('previewTitle').innerText = title;
             document.getElementById('previewYear').innerText = year;
 
-            // Garante que campos de Série sumam se for Filme
-            if (!isSeries) {
-                document.getElementById('extraFields').classList.add('hidden');
-                document.getElementById('reqSeason').value = '';
-                document.getElementById('reqEpisode').value = '';
-            } else {
-                // Se for série, mostra apenas se não for erro
-                const isError = actionSelect.value === 'error';
-                document.getElementById('extraFields').classList.toggle('hidden', isError);
-            }
-            
-            // Força atualização do campo de erro
-            document.getElementById('errorField').classList.toggle('hidden', !isError);
+            updateUIByAction();
         }
 
         document.getElementById('requestAction').addEventListener('change', (e) => {
-            const isError = e.target.value === 'error';
-            const isSeries = document.getElementById('selectedType').value === 'tv';
+            updateUIByAction();
+        });
 
+        function updateUIByAction() {
+            const action = document.getElementById('requestAction').value;
+            const type = document.getElementById('selectedType').value;
+            const isSeries = (type === 'tv' || type === 'series');
+            const isError = action === 'error';
+
+            // Mostrar campos de erro
             document.getElementById('errorField').classList.toggle('hidden', !isError);
             
-            // Regra: Mostra extras APENAS se for SÉRIE e NÃO for erro
-            const showExtras = isSeries && !isError;
-            document.getElementById('extraFields').classList.toggle('hidden', !showExtras);
-        });
+            // Mostrar campos extras (Temporada/Episódio) APENAS se for Série e NÃO for erro
+            const extraFields = document.getElementById('extraFields');
+            if (isSeries && !isError) {
+                extraFields.classList.remove('hidden');
+            } else {
+                extraFields.classList.add('hidden');
+                document.getElementById('reqSeason').value = '';
+                document.getElementById('reqEpisode').value = '';
+            }
+        }
 
         function resetForm() {
             document.getElementById('requestForm').classList.add('hidden');

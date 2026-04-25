@@ -7,7 +7,7 @@ export class WhatsAppService {
         try {
             await fetch(`${this.WA_API}/start`, { method: 'POST' });
         } catch (e) {
-            console.error('❌ Não foi possível conectar ao Servidor Independente do WhatsApp na porta 3001.');
+            console.error('❌ Não foi possível conectar ao Servidor Independente do WhatsApp na porta 8880.');
         }
     }
 

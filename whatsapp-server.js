@@ -16,7 +16,7 @@ let lastQR = null;
 
 async function initWhatsApp() {
     // Se já estiver tentando carregar ou já estiver pronto, ignora para não duplicar
-    if (status === 'qr' || status === 'ready') {
+    if (status === 'loading' || status === 'qr' || status === 'ready') {
         console.log(`ℹ️ [WA-SERVER] Ignorando tentativa de início: Status atual é ${status}`);
         return;
     }
@@ -26,13 +26,17 @@ async function initWhatsApp() {
 
     try {
         const sessionPath = path.join(process.cwd(), '.wwebjs_auth', 'session-primary-client');
-        const lockFile = path.join(sessionPath, 'SingletonLock');
 
         // Limpeza de trava do Puppeteer (Evita o erro "The browser is already running")
-        if (fs.existsSync(lockFile)) {
-            console.log('🧹 [WA-SERVER] Removendo trava de sessão antiga...');
-            try { fs.unlinkSync(lockFile); } catch (e) { console.error('Erro ao remover lock:', e.message); }
-        }
+        try {
+            if (fs.existsSync(sessionPath)) {
+                console.log('🧹 [WA-SERVER] Verificando e limpando travas de sessão...');
+                ['SingletonLock', 'SingletonCookie', 'SingletonSocket'].forEach(file => {
+                    const filePath = path.join(sessionPath, file);
+                    if (fs.existsSync(filePath)) fs.unlinkSync(filePath);
+                });
+            }
+        } catch (e) { console.log('ℹ️ [WA-SERVER] Pasta de sessão limpa ou inexistente.'); }
 
         // Limpeza preventiva de instâncias anteriores
         if (client) {
@@ -48,7 +52,7 @@ async function initWhatsApp() {
             }),
             puppeteer: {
                 headless: true,
-                executablePath: '/usr/bin/chromium-browser',
+                executablePath: process.platform === 'linux' ? '/usr/bin/google-chrome' : undefined,
                 args: [
                     '--no-sandbox',
                     '--disable-setuid-sandbox',

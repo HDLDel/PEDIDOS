@@ -12,9 +12,13 @@ sudo apt-get update || true # Ignora erros de repositórios que não existem mai
 curl -fsSL https://deb.nodesource.com/setup_20.x | sudo bash -
 sudo apt-get install -y nodejs
 
-# Instalar ferramentas de compilação e Chromium com dependências compatíveis com Ubuntu 24.04
-sudo apt-get install -y build-essential python3 \
-    chromium-browser \
+# Instalar Google Chrome Oficial (evita problemas de SNAP no Ubuntu 24)
+wget -q -O - https://dl-ssl.google.com/linux/linux_signing_key.pub | sudo gpg --dearmor -o /usr/share/keyrings/google-chrome.gpg
+echo "deb [arch=amd64 signed-by=/usr/share/keyrings/google-chrome.gpg] http://dl.google.com/linux/chrome/deb/ stable main" | sudo tee /etc/apt/sources.list.d/google-chrome.list
+sudo apt-get update
+
+# Instalar ferramentas de compilação e Google Chrome
+sudo apt-get install -y build-essential python3 google-chrome-stable \
     ca-certificates \
     fonts-liberation \
     lsb-release \
