@@ -238,7 +238,8 @@ app.post('/api/requests', (req, res) => {
         requestType,
         description,
         date,
-        time
+        time,
+        tmdbId: tmdbId ? parseInt(tmdbId) : null
     });
 
     // Busca posters e dados do TMDB em segundo plano

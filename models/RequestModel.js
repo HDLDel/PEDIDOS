@@ -214,14 +214,25 @@ export class RequestModel {
     };
   }
 
-  static create({ resellerId, title, type, status, action, season, episode, requestType, description, date, time }) {
+  static create({ resellerId, title, type, status, action, season, episode, requestType, description, date, time, tmdbId }) {
     const stmt = db.prepare(`
       INSERT INTO requests 
       (reseller_id, title, type, status, action, season, episode, request_type, description, date, time)
       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
     `);
     const result = stmt.run(resellerId, title, type, status || 'pending', action || 'Adicionar ao catálogo', season, episode, requestType || 'content', description, date, time);
-    return this.getById(result.lastInsertRowid);
+    
+    const requestId = result.lastInsertRowid;
+
+    // Se houver tmdbId, insere imediatamente na tabela tmdb_contents para evitar duplicatas em requisições rápidas
+    if (tmdbId) {
+      db.prepare(`
+        INSERT INTO tmdb_contents (request_id, tmdb_id, title) 
+        VALUES (?, ?, ?)
+      `).run(requestId, tmdbId, title);
+    }
+
+    return this.getById(requestId);
   }
 
   static updateStatus(id, status, rejectionReason = null) {
