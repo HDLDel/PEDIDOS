@@ -135,10 +135,9 @@ app.get('/', checkAdminAuth, (req, res) => {
 });
 
 // Rota para Conexão do WhatsApp (Página Dedicada)
-app.get('/admin/whatsapp', checkAdminAuth, (req, res) => {
-    if (WhatsAppService.status === 'disconnected') {
-        WhatsAppService.initialize();
-    }
+app.get('/admin/whatsapp', checkAdminAuth, async (req, res) => {
+    // Avisa o servidor motor para iniciar caso não tenha sido iniciado
+    await WhatsAppService.initialize();
     res.render('admin/whatsapp');
 });
 
@@ -391,13 +390,14 @@ app.get('/api/tmdb/search', checkResellerAuth, async (req, res) => {
 });
 
 // API - Status do WhatsApp
-app.get('/api/whatsapp/status', checkAdminAuth, (req, res) => {
-    res.json(WhatsAppService.getStatus());
+app.get('/api/whatsapp/status', checkAdminAuth, async (req, res) => {
+    const status = await WhatsAppService.getStatus();
+    res.json(status);
 });
 
 // API - Iniciar/Conectar WhatsApp
-app.post('/api/whatsapp/start', checkAdminAuth, (req, res) => {
-    WhatsAppService.initialize();
+app.post('/api/whatsapp/start', checkAdminAuth, async (req, res) => {
+    await WhatsAppService.initialize();
     res.json({ success: true, message: 'Iniciando navegador...' });
 });
 

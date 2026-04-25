@@ -13,7 +13,10 @@ let status = 'disconnected';
 let lastQR = null;
 
 async function initWhatsApp() {
-    if (client && status !== 'disconnected') return;
+    if (client && (status === 'loading' || status === 'qr' || status === 'ready')) return;
+
+    status = 'loading';
+    console.log('⏳ [WA-SERVER] Iniciando navegador Puppeteer...');
 
     client = new Client({
         authStrategy: new LocalAuth({ dataPath: path.join(process.cwd(), '.wwebjs_auth') }),
