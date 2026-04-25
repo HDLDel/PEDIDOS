@@ -97,6 +97,18 @@
             color: #fff;
             border-color: #444;
         }
+        .limit-warning {
+            background: rgba(229, 9, 20, 0.2);
+            border: 1px solid var(--accent-red);
+            color: #ffbaba;
+            padding: 1rem;
+            border-radius: 10px;
+            margin-bottom: 2rem;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            font-weight: 600;
+        }
         @media (max-width: 600px) {
             .form-row { grid-template-columns: 1fr; gap: 1rem; }
             .form-actions { flex-direction: column-reverse; }
@@ -117,6 +129,13 @@
     <main class="container">
         <section class="request-section">
             <h2><i class="fas fa-plus-circle"></i> Novo Pedido</h2>
+
+            <% const pendingCount = requests.filter(r => r.status === 'pending').length; %>
+            <% if (pendingCount >= 10) { %>
+                <div class="limit-warning">
+                    <i class="fas fa-exclamation-triangle"></i> Você atingiu o limite de 10 pedidos pendentes. No momento, só é permitido reportar erros de reprodução.
+                </div>
+            <% } %>
             
             <div class="search-box">
                 <input type="text" id="tmdbSearch" placeholder="Digite o nome do filme ou série...">
@@ -193,6 +212,7 @@
 
     <script>
         const API_KEY = '<TMDB_API_KEY>';
+        const pendingRequestsCount = <%= requests.filter(r => r.status === 'pending').length %>;
 
         document.getElementById('btnSearch').addEventListener('click', async () => {
             const query = document.getElementById('tmdbSearch').value;
@@ -243,6 +263,26 @@
             document.getElementById('tmdbResults').classList.add('hidden');
             document.getElementById('requestForm').classList.remove('hidden');
             
+            const actionSelect = document.getElementById('requestAction');
+            
+            if (pendingRequestsCount >= 10) {
+                // Bloqueia opções de adição, permite apenas erro
+                Array.from(actionSelect.options).forEach(opt => {
+                    if (opt.value !== 'error') {
+                        opt.disabled = true;
+                        opt.style.display = 'none';
+                    }
+                });
+                actionSelect.value = 'error';
+                actionSelect.dispatchEvent(new Event('change'));
+                alert('⚠️ Limite de Pedidos: Como você já possui 10 solicitações pendentes, agora você só pode reportar erros de reprodução.');
+            } else {
+                Array.from(actionSelect.options).forEach(opt => {
+                    opt.disabled = false;
+                    opt.style.display = 'block';
+                });
+            }
+
             document.getElementById('selectedId').value = item.id;
             document.getElementById('selectedTitle').value = title;
             document.getElementById('selectedType').value = item.media_type;

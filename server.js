@@ -227,6 +227,15 @@ app.post('/api/requests', (req, res) => {
         return res.status(401).json({ error: 'Sessão expirada. Faça login novamente.' });
     }
 
+    // Validação de limite de pedidos pendentes (máximo 10)
+    const resellerRequests = RequestModel.getByReseller(resellerId);
+    const pendingCount = resellerRequests.filter(r => r.status === 'pending').length;
+    if (pendingCount >= 10 && requestType !== 'error') {
+        return res.status(403).json({ 
+            error: '⚠️ Limite atingido: Você possui 10 pedidos pendentes. No momento, só é permitido reportar erros.' 
+        });
+    }
+
     // Verificar se já existe um pedido para este TMDB ID (pendente ou aprovado)
     if (tmdbId) {
         const isDuplicate = RequestModel.checkDuplicate(parseInt(tmdbId));
