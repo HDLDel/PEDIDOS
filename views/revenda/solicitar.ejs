@@ -283,6 +283,11 @@
                 } else {
                     const data = await res.json();
                     alert(data.error || 'Erro ao enviar pedido.');
+                    
+                    // Se for erro de duplicidade (409), redireciona para a dashboard
+                    if (res.status === 409) {
+                        window.location.href = '/revenda/dashboard';
+                    }
                 }
             } catch (err) {
                 alert('Erro ao enviar pedido.');
