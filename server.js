@@ -305,13 +305,8 @@ app.post('/api/requests', (req, res) => {
         });
     }
 
-    // Verificar se já existe um pedido para este TMDB ID (pendente ou aprovado)
+    // Validação de Duplicidade Inteligente (Pendente, Aprovado ou Rejeitado)
     if (tmdbId) {
-        const isDuplicate = RequestModel.checkDuplicate(parseInt(tmdbId));
-        if (isDuplicate) {
-            return res.status(409).json({ 
-                error: 'este pedido ja foi feito por outro revenda e esta na fila de espera, favor aguardar.' 
-            });
         const existing = db.prepare(`
             SELECT r.status, r.rejection_reason FROM requests r
             JOIN tmdb_contents t ON r.id = t.request_id
