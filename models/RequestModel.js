@@ -57,6 +57,17 @@ export class RequestModel {
     `).all(resellerId);
   }
 
+  // Verifica se já existe um pedido para o mesmo conteúdo TMDB (Pendente ou Aprovado)
+  static checkDuplicate(tmdbId) {
+    return db.prepare(`
+      SELECT r.id
+      FROM requests r
+      JOIN tmdb_contents t ON r.id = t.request_id
+      WHERE t.tmdb_id = ? AND r.status IN ('pending', 'approved')
+      LIMIT 1
+    `).get(tmdbId);
+  }
+
   static getById(id) {
     return db.prepare(`
       SELECT 
