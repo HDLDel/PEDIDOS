@@ -23,6 +23,30 @@
         .reseller-table { width: 100%; border-collapse: collapse; background: var(--bg-card); border-radius: 12px; overflow: hidden; border: 1px solid var(--border); }
         .reseller-table th, .reseller-table td { padding: 1.2rem; text-align: left; border-bottom: 1px solid var(--border); }
         .reseller-table th { background: #000; color: var(--accent-red); text-transform: uppercase; font-size: 0.8rem; letter-spacing: 1px; }
+        .modal-overlay {
+            display: none;
+            position: fixed;
+            top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(0,0,0,0.85);
+            z-index: 3000;
+            align-items: center;
+            justify-content: center;
+        }
+        .modal-content {
+            background: #1a1a1a;
+            padding: 2rem;
+            border-radius: 1rem;
+            width: 90%;
+            max-width: 500px;
+            border: 1px solid var(--border);
+        }
+        .modal-content h3 { color: var(--accent-red); margin-bottom: 1.5rem; }
+        .form-group { margin-bottom: 1rem; }
+        .form-group label { display: block; margin-bottom: 0.5rem; font-size: 0.8rem; color: var(--text-muted); }
+        .form-group input { width: 100%; background: #000; border: 1px solid var(--border); color: #fff; padding: 10px; border-radius: 6px; }
+        .modal-footer { display: flex; justify-content: flex-end; gap: 10px; margin-top: 1.5rem; }
+        .btn-save { background: var(--accent-red); color: #fff; border: none; padding: 10px 20px; border-radius: 6px; cursor: pointer; font-weight: 700; }
+        .btn-cancel { background: #333; color: #fff; border: none; padding: 10px 20px; border-radius: 6px; cursor: pointer; }
         .reseller-table tr:hover { background: #1a1a1a; }
         .reseller-name { font-weight: 700; font-size: 1.1rem; }
         .reseller-info { color: var(--text-muted); font-size: 0.9rem; }
@@ -65,18 +89,19 @@
                         </td>
                         <td>
                             <span class="badge-requests" title="Total de pedidos"><%= res.totalRequests %> Pedidos</span>
-                            <% if(res.pendingRequests > 0) { %>
-                                <div style="font-size: 0.7rem; color: #f59e0b; margin-top: 4px;">
-                                    <%= res.pendingRequests %> Pendentes
-                                </div>
-                            <% } %>
+                            <button class="btn-action" style="margin-left: 10px; font-size: 0.7rem;" 
+                                    onclick="clearRequests(<%= res.id %>, '<%= res.name %>')" title="Limpar todos os pedidos">
+                                <i class="fas fa-broom"></i> Limpar
+                            </button>
                         </td>
                         <td class="reseller-info">
                             <%= res.created_at ? new Date(res.created_at).toLocaleDateString('pt-BR') : 'N/A' %>
                         </td>
                         <td class="actions">
-                            <button class="btn-action" onclick="window.location.href='mailto:<%= res.email %>'" title="Enviar E-mail">
-                                <i class="fas fa-envelope"></i>
+                            <button class="btn-action" 
+                                onclick="openEditModal({id: <%= res.id %>, name: '<%= res.name %>', email: '<%= res.email %>', phone: '<%= res.phone %>', whatsapp: '<%= res.whatsapp %>', password: '<%= res.password %>'})" 
+                                title="Editar Dados">
+                                <i class="fas fa-edit"></i>
                             </button>
                             <button class="btn-action btn-delete" onclick="deleteReseller(<%= res.id %>, '<%= res.name %>')" title="Excluir Revendedor">
                                 <i class="fas fa-trash-alt"></i>
@@ -88,7 +113,63 @@
         </table>
     </div>
 
+    <!-- Modal de Edição -->
+    <div id="editModal" class="modal-overlay">
+        <div class="modal-content">
+            <h3>Editar Revendedor</h3>
+            <form id="editForm">
+                <input type="hidden" id="edit-id">
+                <div class="form-group">
+                    <label>Nome</label>
+                    <input type="text" id="edit-name" required>
+                </div>
+                <div class="form-group">
+                    <label>E-mail</label>
+                    <input type="email" id="edit-email" required>
+                </div>
+                <div class="form-group">
+                    <label>Telefone</label>
+                    <input type="text" id="edit-phone">
+                </div>
+                <div class="form-group">
+                    <label>WhatsApp</label>
+                    <input type="text" id="edit-whatsapp">
+                </div>
+                <div class="form-group">
+                    <label>Senha</label>
+                    <input type="password" id="edit-password" placeholder="Nova senha">
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn-cancel" onclick="closeEditModal()">Cancelar</button>
+                    <button type="submit" class="btn-save">Salvar Alterações</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
     <script>
+        function openEditModal(data) {
+            document.getElementById('edit-id').value = data.id;
+            document.getElementById('edit-name').value = data.name;
+            document.getElementById('edit-email').value = data.email;
+            document.getElementById('edit-phone').value = data.phone;
+            document.getElementById('edit-whatsapp').value = data.whatsapp;
+            document.getElementById('edit-password').value = data.password;
+            document.getElementById('editModal').style.display = 'flex';
+        }
+
+        function closeEditModal() {
+            document.getElementById('editModal').style.display = 'none';
+        }
+
+        async function clearRequests(id, name) {
+            if (!confirm(`Deseja apagar TODOS os pedidos de ${name}?\nEsta ação não pode ser desfeita.`)) return;
+            try {
+                const res = await fetch(`/api/resellers/${id}/requests`, { method: 'DELETE' });
+                if (res.ok) { location.reload(); } else { alert('Erro ao limpar pedidos.'); }
+            } catch (e) { alert('Erro na comunicação.'); }
+        }
+
         async function deleteReseller(id, name) {
             if (!confirm(`Deseja REALMENTE excluir o revendedor ${name}?\nIsso apagará permanentemente o acesso dele.`)) return;
 
@@ -103,6 +184,31 @@
                 alert('Erro na comunicação com o servidor.');
             }
         }
+
+        document.getElementById('editForm').onsubmit = async (e) => {
+            e.preventDefault();
+            const id = document.getElementById('edit-id').value;
+            const payload = {
+                name: document.getElementById('edit-name').value,
+                email: document.getElementById('edit-email').value,
+                phone: document.getElementById('edit-phone').value,
+                whatsapp: document.getElementById('edit-whatsapp').value,
+                password: document.getElementById('edit-password').value
+            };
+
+            try {
+                const res = await fetch(`/api/resellers/${id}`, {
+                    method: 'PUT',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(payload)
+                });
+                if (res.ok) {
+                    location.reload();
+                } else {
+                    alert('Erro ao atualizar dados.');
+                }
+            } catch (e) { alert('Erro na comunicação.'); }
+        };
     </script>
 </body>
 </html>

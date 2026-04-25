@@ -286,6 +286,28 @@ app.delete('/api/resellers/:id', checkAdminAuth, (req, res) => {
     res.json({ success: result.changes > 0 });
 });
 
+// API para Limpar todos os pedidos de um revendedor
+app.delete('/api/resellers/:id/requests', checkAdminAuth, (req, res) => {
+    const resellerId = req.params.id;
+    // Remove dados do TMDB vinculados aos pedidos do revendedor primeiro
+    db.prepare('DELETE FROM tmdb_contents WHERE request_id IN (SELECT id FROM requests WHERE reseller_id = ?)').run(resellerId);
+    // Remove os pedidos
+    const result = db.prepare('DELETE FROM requests WHERE reseller_id = ?').run(resellerId);
+    res.json({ success: true, changes: result.changes });
+});
+
+// API para Editar Revendedor
+app.put('/api/resellers/:id', checkAdminAuth, (req, res) => {
+    const { name, email, phone, whatsapp, password } = req.body;
+    const id = req.params.id;
+    const result = db.prepare(`
+        UPDATE resellers 
+        SET name = ?, email = ?, phone = ?, whatsapp = ?, password = ?
+        WHERE id = ?
+    `).run(name, email, phone, whatsapp, password, id);
+    res.json({ success: result.changes > 0 });
+});
+
 app.get('/api/resellers/:id', (req, res) => {
     const reseller = ResellerModel.getById(parseInt(req.params.id));
     if (!reseller) return res.status(404).json({ error: 'Revendedor não encontrado' });
