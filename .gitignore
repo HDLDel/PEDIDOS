@@ -8,4 +8,5 @@ data/vod.sqlite-wal
 npm-debug.log*
 test_output.html
 Painel Admin _ Portal VOD_files/
-*.user.js
+*.user.js.wwebjs_auth/
+.wwebjs_auth/

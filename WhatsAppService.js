@@ -8,10 +8,14 @@ export class WhatsAppService {
     static client = null;
     static lastQR = null;
     static status = 'disconnected'; // disconnected, qr, ready
+    static isInitializing = false;
 
     static async initialize() { // Tornar a função assíncrona para usar 'await'
-        // Se já está inicializando ou pronto, evita duplicidade
-        if (this.client && (this.status === 'ready' || this.status === 'qr' || this.status === 'loading')) return;
+        // Se já está em processo de ligar ou já está ativo, ignora novos pedidos de boot
+        if (this.isInitializing) return;
+        if (this.client && this.status !== 'disconnected') return;
+
+        this.isInitializing = true;
 
         if (this.client) {
             console.log('🧹 Limpando instância anterior do WhatsApp...');
@@ -27,7 +31,13 @@ export class WhatsAppService {
                 qrMaxRetries: 5,
                 handleSIGINT: false,
                 headless: true,
-                args: ['--no-sandbox', '--disable-setuid-sandbox', '--disable-extensions']
+                args: [
+                    '--no-sandbox', 
+                    '--disable-setuid-sandbox', 
+                    '--disable-extensions',
+                    '--disable-dev-shm-usage',
+                    '--disable-gpu'
+                ]
             }
         });
 
@@ -62,6 +72,7 @@ export class WhatsAppService {
         this.client.on('ready', () => {
             console.log('✅ WhatsApp está pronto!');
             this.status = 'ready';
+            this.isInitializing = false;
             this.lastQR = null;
         });
 
@@ -69,16 +80,23 @@ export class WhatsAppService {
             console.log('📡 WhatsApp desconectado via evento.');
             this.status = 'disconnected';
             this.lastQR = null;
+            this.isInitializing = false;
             // Não é necessário chamar destroy() aqui, initialize() fará isso se for chamado novamente.
             this.client = null; // Apenas define o cliente como nulo para indicar que não está ativo.
         });
 
         this.client.on('auth_failure', (msg) => {
             console.error('❌ Falha na autenticação:', msg);
+            this.isInitializing = false;
             this.status = 'disconnected';
         });
 
-        this.client.initialize().catch(err => console.error('Erro ao iniciar WhatsApp:', err));
+        this.client.initialize().catch(err => {
+            console.error('❌ Erro fatal na inicialização do WhatsApp:', err.message);
+            this.isInitializing = false;
+            this.status = 'disconnected';
+            this.client = null;
+        });
     }
 
     static getStatus() {
@@ -87,15 +105,15 @@ export class WhatsAppService {
 
     static async logout() {
         console.log('🚪 Iniciando processo de logout do WhatsApp...');
+        this.isInitializing = false;
         try {
-            this.status = 'disconnected';
             this.lastQR = null;
             
             if (this.client) {
-                // Tenta logout e destroy, ignorando erros se já estiver desconectado
-                await this.client.logout().catch(() => {});
+                // Primeiro destruímos o navegador para liberar os bloqueios de arquivo do Windows
                 await this.client.destroy().catch(() => {});
                 this.client = null;
+                this.status = 'disconnected';
             }
             
             // Não reinicializa automaticamente após o logout. O usuário pode iniciar via UI.

@@ -14,6 +14,16 @@ import { WhatsAppService } from './WhatsAppService.js';
 const app = express();
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 
+// --- PROTEÇÃO CONTRA QUEDAS (WORLD CLASS SAFETY) ---
+// Impede que erros de arquivos bloqueados (EBUSY) ou falhas em bibliotecas matem o servidor
+process.on('unhandledRejection', (reason, promise) => {
+    console.error('⚠️ Rejeição não tratada (capturada):', reason);
+});
+process.on('uncaughtException', (err) => {
+    console.error('❌ Erro crítico no processo (capturado):', err.message);
+    if (err.code === 'EBUSY') console.log('ℹ️ Nota: Arquivo de sessão do WhatsApp estava ocupado. O servidor continuará rodando.');
+});
+
 // Configurações do Express
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
@@ -397,6 +407,13 @@ app.get('/api/tmdb/:requestId', (req, res) => {
     const tmdbData = TmdbModel.getByRequestId(parseInt(req.params.requestId));
     if (!tmdbData) return res.status(404).json({ error: 'Dados TMDB não encontrados' });
     res.json(tmdbData);
+});
+
+// --- TRATAMENTO DE ENCERRAMENTO ---
+process.on('SIGINT', async () => {
+    console.log('🛑 Encerrando servidor e limpando conexões...');
+    await WhatsAppService.logout();
+    process.exit(0);
 });
 
 app.post('/api/tmdb/fetch', async (req, res) => {
