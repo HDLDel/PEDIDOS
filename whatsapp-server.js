@@ -1,5 +1,6 @@
 import 'dotenv/config';
 import express from 'express';
+import { exec } from 'child_process';
 import path from 'path';
 import pkg from 'whatsapp-web.js';
 const { Client, LocalAuth } = pkg;
