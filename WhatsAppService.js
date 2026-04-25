@@ -1,4 +1,5 @@
 import 'dotenv/config';
+import { exec } from 'child_process';
 import path from 'path';
 import pkg from 'whatsapp-web.js';
 const { Client, LocalAuth } = pkg;
@@ -10,18 +11,53 @@ export class WhatsAppService {
     static status = 'disconnected'; // disconnected, qr, ready
     static isInitializing = false;
 
+    /**
+     * Mata processos órfãos do Chrome no Windows para liberar arquivos bloqueados (EBUSY)
+     */
+    static async forceKillBrowser() {
+        if (process.platform !== 'win32') return;
+        
+        return new Promise((resolve) => {
+            console.log('⚔️ Executando limpeza forçada de processos do Chrome...');
+            // /F = Força a interrupção | /IM = Nome da imagem | /T = Mata processos filhos também
+            exec('taskkill /F /IM chrome.exe /T', (err) => {
+                // Ignoramos o erro se não houver processos para matar
+                if (err) console.log('ℹ️ Nenhum processo zumbi encontrado ou permissão negada.');
+                else console.log('✅ Processos órfãos finalizados.');
+                resolve();
+            });
+        });
+    }
+
     static async initialize() { // Tornar a função assíncrona para usar 'await'
-        // Se já está em processo de ligar ou já está ativo, ignora novos pedidos de boot
-        if (this.isInitializing) return;
-        if (this.client && this.status !== 'disconnected') return;
+        // Trava de segurança: impede múltiplas inicializações simultâneas
+        if (this.isInitializing) {
+            console.log('ℹ️ Uma inicialização já está em curso. Aguarde...');
+            return;
+        }
+        
+        if (this.status === 'ready' && this.client) return;
 
         this.isInitializing = true;
 
+        // Antes de qualquer coisa, tentamos matar processos antigos que possam estar travando o banco
+        await this.forceKillBrowser();
+
         if (this.client) {
-            console.log('🧹 Limpando instância anterior do WhatsApp...');
-            await this.client.destroy().catch(e => console.error('Erro ao destruir instância anterior:', e));
+            console.log('🧹 Detectada instância anterior. Finalizando processos para evitar conflitos...');
+            try {
+                // Remove todos os ouvintes de eventos para evitar logs duplicados
+                this.client.removeAllListeners();
+                await this.client.destroy();
+            } catch (e) {
+                console.log('⚠️ Erro ao destruir cliente antigo (ignorado):', e.message);
+            }
             this.client = null;
+            this.status = 'disconnected';
+            // Pequeno delay após o kill para o Windows processar a liberação dos arquivos
+            await new Promise(r => setTimeout(r, 2000));
         }
+        this.status = 'loading';
 
         this.client = new Client({
             authStrategy: new LocalAuth({ dataPath: path.join(process.cwd(), '.wwebjs_auth') }),
@@ -30,6 +66,7 @@ export class WhatsAppService {
                 authTimeoutMs: 60000,
                 qrMaxRetries: 5,
                 handleSIGINT: false,
+                handleSIGHUP: false,
                 headless: true,
                 args: [
                     '--no-sandbox', 
@@ -49,8 +86,8 @@ export class WhatsAppService {
         });
 
         this.client.on('qr', async (qr) => {
-            console.log('⚡ Gerando imagem do QR Code...');
             try {
+                console.log('⚡ QR Code recebido. Convertendo para imagem...');
                 this.lastQR = await qrcode.toDataURL(qr);
                 this.status = 'qr';
                 console.log('✅ QR Code pronto para exibição.');
@@ -77,25 +114,26 @@ export class WhatsAppService {
         });
 
         this.client.on('disconnected', () => {
-            console.log('📡 WhatsApp desconectado via evento.');
+            console.log('📡 Conexão encerrada pelo WhatsApp.');
             this.status = 'disconnected';
             this.lastQR = null;
             this.isInitializing = false;
-            // Não é necessário chamar destroy() aqui, initialize() fará isso se for chamado novamente.
-            this.client = null; // Apenas define o cliente como nulo para indicar que não está ativo.
+            if (this.client) {
+                this.client.removeAllListeners();
+                this.client.destroy().catch(() => {});
+                this.client = null;
+            }
         });
 
         this.client.on('auth_failure', (msg) => {
-            console.error('❌ Falha na autenticação:', msg);
+            console.error('❌ Falha na autenticação do WhatsApp:', msg);
             this.isInitializing = false;
             this.status = 'disconnected';
         });
 
-        this.client.initialize().catch(err => {
-            console.error('❌ Erro fatal na inicialização do WhatsApp:', err.message);
-            this.isInitializing = false;
-            this.status = 'disconnected';
-            this.client = null;
+        this.client.initialize().catch(async err => {
+            console.error('❌ Erro no motor do WhatsApp:', err.message);
+            await this.logout();
         });
     }
 
@@ -104,19 +142,20 @@ export class WhatsAppService {
     }
 
     static async logout() {
-        console.log('🚪 Iniciando processo de logout do WhatsApp...');
-        this.isInitializing = false;
+        console.log('🚪 Executando limpeza de sessão do WhatsApp...');
         try {
             this.lastQR = null;
+            this.isInitializing = false;
+            this.status = 'disconnected';
             
             if (this.client) {
-                // Primeiro destruímos o navegador para liberar os bloqueios de arquivo do Windows
+                this.client.removeAllListeners();
                 await this.client.destroy().catch(() => {});
                 this.client = null;
-                this.status = 'disconnected';
             }
-            
-            // Não reinicializa automaticamente após o logout. O usuário pode iniciar via UI.
+
+            // Executa o kill para garantir que o Chrome fechou mesmo
+            await this.forceKillBrowser();
         } catch (e) { 
             console.error('❌ Erro crítico ao deslogar WhatsApp:', e); 
         }

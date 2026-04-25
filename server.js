@@ -21,7 +21,12 @@ process.on('unhandledRejection', (reason, promise) => {
 });
 process.on('uncaughtException', (err) => {
     console.error('❌ Erro crítico no processo (capturado):', err.message);
-    if (err.code === 'EBUSY') console.log('ℹ️ Nota: Arquivo de sessão do WhatsApp estava ocupado. O servidor continuará rodando.');
+    if (err.code === 'EBUSY') {
+        console.log('ℹ️ Nota: O Windows travou um arquivo do WhatsApp. O sistema tentará limpar automaticamente na próxima conexão.');
+    }
+    if (err.message.includes('Execution context was destroyed')) {
+        console.log('ℹ️ Nota: O navegador fechou inesperadamente. O sistema de recuperação foi ativado.');
+    }
 });
 
 // Configurações do Express
