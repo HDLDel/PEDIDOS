@@ -337,6 +337,18 @@
             applyFilters();
         }
 
+        async function refreshStats() {
+            try {
+                const res = await fetch('/api/stats');
+                const stats = await res.json();
+                document.querySelector('#stat-pending strong').innerText = stats.pending;
+                document.querySelector('#stat-approved strong').innerText = stats.approved;
+                document.querySelector('#stat-rejected strong').innerText = stats.rejected;
+            } catch (error) {
+                console.error('Erro ao atualizar estatísticas:', error);
+            }
+        }
+
         function openRejectModal(id, type) {
             currentRequestId = id;
             currentRequestType = type; // Armazena o tipo do pedido
@@ -405,14 +417,15 @@
 
                 if (response.ok) {
                     const card = document.getElementById(`card-${id}`);
+                    card.dataset.status = status;
+
                     const badge = card.querySelector('.badge-status');
-                    
-                    // Atualiza Visual
                     badge.className = `badge-status status-${status}`;
-                    badge.innerText = status;
-                    
-                    alert('Status atualizado com sucesso!');
-                    location.reload(); // Recarrega para atualizar os contadores no topo
+                    badge.innerText = status === 'pending' ? 'Pendente' : (status === 'approved' ? 'Aprovado' : 'Rejeitado');
+
+                    // Atualiza os contadores e re-aplica filtros para esconder o card se necessário
+                    await refreshStats();
+                    applyFilters();
                 } else {
                     alert('Erro ao atualizar status.');
                 }
