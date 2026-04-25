@@ -1,6 +1,7 @@
 import 'dotenv/config';
 import express from 'express';
 import { exec } from 'child_process';
+import fs from 'fs';
 import path from 'path';
 import pkg from 'whatsapp-web.js';
 const { Client, LocalAuth } = pkg;
@@ -24,6 +25,15 @@ async function initWhatsApp() {
     console.log('⏳ [WA-SERVER] Preparando inicialização do Puppeteer...');
 
     try {
+        const sessionPath = path.join(process.cwd(), '.wwebjs_auth', 'session-primary-client');
+        const lockFile = path.join(sessionPath, 'SingletonLock');
+
+        // Limpeza de trava do Puppeteer (Evita o erro "The browser is already running")
+        if (fs.existsSync(lockFile)) {
+            console.log('🧹 [WA-SERVER] Removendo trava de sessão antiga...');
+            try { fs.unlinkSync(lockFile); } catch (e) { console.error('Erro ao remover lock:', e.message); }
+        }
+
         // Limpeza preventiva de instâncias anteriores
         if (client) {
             console.log('🧹 [WA-SERVER] Limpando cliente anterior...');

@@ -17,15 +17,18 @@ sudo apt-get install -y build-essential python3 \
     chromium-browser \
     ca-certificates \
     fonts-liberation \
-    libnss3 \
     lsb-release \
     xdg-utils \
     libgbm1 \
-    libatk-bridge2.0-0t64 \
+    libnss3 \
     libatk1.0-0t64 \
+    libatk-bridge2.0-0t64 \
     libcups2t64 \
     libgtk-3-0t64 \
-    libasound2t64 # Adicionado explicitamente para garantir compatibilidade
+    libasound2t64 \
+    libxcomposite1 \
+    libxdamage1 \
+    libxrandr2
 
 # Instalar PM2 globalmente para gerenciar os processos
 sudo npm install -g pm2
