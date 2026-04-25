@@ -279,7 +279,7 @@ app.post('/api/requests/:id/status', checkAdminAuth, (req, res) => {
 
 // API - Criar novo pedido
 app.post('/api/requests', (req, res) => {
-    const { tmdbId, title, type, action, season, episode, requestType, description, date, time } = req.body;
+    let { tmdbId, title, type, action, season, episode, requestType, description, date, time } = req.body;
     
     let resellerId;
 
@@ -288,6 +288,12 @@ app.post('/api/requests', (req, res) => {
         resellerId = req.session.resellerId;
     } else {
         return res.status(401).json({ error: 'Sessão expirada. Faça login novamente.' });
+    }
+
+    // Segurança de integridade: Filmes não podem ter temporada ou episódio
+    if (type === 'movie' || type === 'movie') {
+        season = null;
+        episode = null;
     }
 
     // Validação de limite de pedidos pendentes (máximo 10)

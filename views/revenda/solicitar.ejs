@@ -264,23 +264,37 @@
             document.getElementById('requestForm').classList.remove('hidden');
             
             const actionSelect = document.getElementById('requestAction');
-            
-            if (pendingRequestsCount >= 10) {
-                // Bloqueia opções de adição, permite apenas erro
-                Array.from(actionSelect.options).forEach(opt => {
-                    if (opt.value !== 'error') {
-                        opt.disabled = true;
-                        opt.style.display = 'none';
-                    }
-                });
-                actionSelect.value = 'error';
-                actionSelect.dispatchEvent(new Event('change'));
-                alert('⚠️ Limite de Pedidos: Como você já possui 10 solicitações pendentes, agora você só pode reportar erros de reprodução.');
-            } else {
-                Array.from(actionSelect.options).forEach(opt => {
-                    opt.disabled = false;
+            const isSeries = item.media_type === 'tv';
+
+            // Lógica de filtragem do Menu (Dropdown)
+            Array.from(actionSelect.options).forEach(opt => {
+                const isSerieOption = (opt.value === 'season' || opt.value === 'episode');
+                
+                if (pendingRequestsCount >= 10) {
+                    // Regra 1: Limite de pendentes (Sempre prioridade)
+                    opt.style.display = (opt.value === 'error') ? 'block' : 'none';
+                    opt.disabled = (opt.value !== 'error');
+                } else if (!isSeries) {
+                    // Regra 2: Se for FILME, esconde opções de temporada/episódio
+                    opt.style.display = isSerieOption ? 'none' : 'block';
+                    opt.disabled = isSerieOption;
+                } else {
+                    // Regra 3: Se for SÉRIE, mostra tudo
                     opt.style.display = 'block';
-                });
+                    opt.disabled = false;
+                }
+            });
+
+            // Ajusta o valor selecionado caso a opção atual tenha ficado inválida
+            if (pendingRequestsCount >= 10) {
+                actionSelect.value = 'error';
+            } else if (!isSeries && (actionSelect.value === 'season' || actionSelect.value === 'episode')) {
+                actionSelect.value = 'content';
+            }
+
+            // Alerta de limite se necessário
+            if (pendingRequestsCount >= 10) {
+                alert('⚠️ Limite de Pedidos: Como você já possui 10 solicitações pendentes, agora você só pode reportar erros de reprodução.');
             }
 
             document.getElementById('selectedId').value = item.id;
@@ -292,17 +306,20 @@
             document.getElementById('previewTitle').innerText = title;
             document.getElementById('previewYear').innerText = year;
 
-            // Lógica para mostrar/esconder campos de Temporada/Episódio
-            const isSeries = item.media_type === 'tv';
+            // Controle de visibilidade dos campos extras (Inputs)
             const isError = actionSelect.value === 'error';
             
-            // Esconde se não for série OU se for erro de reprodução
-            document.getElementById('extraFields').classList.toggle('hidden', !isSeries || isError);
+            // Mostra extras APENAS se for SÉRIE e NÃO for erro
+            const showExtras = isSeries && !isError;
+            document.getElementById('extraFields').classList.toggle('hidden', !showExtras);
             
             if (!isSeries) {
                 document.getElementById('reqSeason').value = '';
                 document.getElementById('reqEpisode').value = '';
             }
+            
+            // Força atualização do campo de erro
+            document.getElementById('errorField').classList.toggle('hidden', !isError);
         }
 
         document.getElementById('requestAction').addEventListener('change', (e) => {
@@ -310,8 +327,10 @@
             const isSeries = document.getElementById('selectedType').value === 'tv';
 
             document.getElementById('errorField').classList.toggle('hidden', !isError);
-            // Mostra campos extras apenas se for série E não for erro
-            document.getElementById('extraFields').classList.toggle('hidden', isError || !isSeries);
+            
+            // Regra: Mostra extras APENAS se for SÉRIE e NÃO for erro
+            const showExtras = isSeries && !isError;
+            document.getElementById('extraFields').classList.toggle('hidden', !showExtras);
         });
 
         function resetForm() {
