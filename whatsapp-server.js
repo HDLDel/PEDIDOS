@@ -23,7 +23,19 @@ async function initWhatsApp() {
         authStrategy: new LocalAuth({ dataPath: path.join(process.cwd(), '.wwebjs_auth') }),
         puppeteer: {
             headless: true,
-            args: ['--no-sandbox', '--disable-setuid-sandbox', '--disable-dev-shm-usage', '--disable-gpu']
+            args: [
+                '--no-sandbox', 
+                '--disable-setuid-sandbox', 
+                '--disable-dev-shm-usage', 
+                '--disable-gpu',
+                '--disable-extensions',
+                '--no-zygote',
+                '--no-first-run',
+                '--single-process', // Reduz o uso de memória em ambientes Linux
+                '--disable-setuid-sandbox',
+                // Limita o uso de memória do motor V8 do Chrome
+                '--js-flags="--max-old-space-size=512"'
+            ]
         }
     });
 
