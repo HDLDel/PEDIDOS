@@ -9,6 +9,7 @@ import { RequestModel } from './models/RequestModel.js';
 import { ResellerModel } from './models/ResellerModel.js';
 import { TmdbModel } from './models/TmdbModel.js';
 import { AdminModel } from './models/AdminModel.js';
+import { WhatsAppService } from './WhatsAppService.js';
 
 const app = express();
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
@@ -24,6 +25,9 @@ app.use(session({
     saveUninitialized: false,
     cookie: { secure: false } // Use 'true' em produção com HTTPS
 }));
+
+// Inicializa o motor do WhatsApp
+WhatsAppService.initialize();
 
 app.set('view engine', 'ejs');
 
@@ -247,6 +251,10 @@ app.post('/api/requests/:id/status', checkAdminAuth, (req, res) => {
     }
     const updated = RequestModel.updateStatus(parseInt(req.params.id), status, rejectionReason);
     if (!updated) return res.status(404).json({ error: 'Pedido não encontrado' });
+
+    // Enviar notificação via WhatsApp em segundo plano
+    WhatsAppService.sendStatusNotification(updated).catch(e => console.error("Erro Notificação:", e));
+
     res.json(updated);
 });
 
@@ -360,6 +368,11 @@ app.get('/api/tmdb/search', checkResellerAuth, async (req, res) => {
     const response = await fetch(url);
     const data = await response.json();
     res.json(data);
+});
+
+// API - Status do WhatsApp
+app.get('/api/whatsapp/status', checkAdminAuth, (req, res) => {
+    res.json(WhatsAppService.getStatus());
 });
 
 // API - TMDB

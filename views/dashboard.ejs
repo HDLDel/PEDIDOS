@@ -50,6 +50,14 @@
             z-index: 2000;
         }
 
+        .whatsapp-status-btn {
+            display: flex; align-items: center; gap: 8px; padding: 8px 15px; border-radius: 50px;
+            font-size: 0.8rem; font-weight: 700; cursor: pointer; border: 1px solid var(--border); background: var(--bg-card); transition: 0.3s;
+        }
+        .wa-on { color: #10b981; border-color: #10b981; }
+        .wa-off { color: #ef4444; border-color: #ef4444; }
+        .wa-qr { color: #f59e0b; border-color: #f59e0b; }
+
         .logo h2 { font-weight: 900; letter-spacing: -1px; }
 
         .stats-summary {
@@ -213,7 +221,10 @@
         <div class="logo">
             <h2 style="color: var(--accent-red);">IMPERIO <span style="color: white;">APPS</span></h2>
         </div>
-        <div class="user-info">
+        <div class="user-info" style="display: flex; align-items: center; gap: 20px;">
+            <div id="waStatusBtn" class="whatsapp-status-btn wa-off" onclick="openWaModal()">
+                <i class="fab fa-whatsapp"></i> <span>OFFLINE</span>
+            </div>
             <a href="/admin/logout" style="color: var(--text-muted); text-decoration: none; font-size: 0.85rem; font-weight: 600;">
                 <i class="fas fa-sign-out-alt"></i> Sair do Painel
             </a>
@@ -310,6 +321,38 @@
         let currentRequestType = null; // Para armazenar o tipo (movie/series)
         let activeCategory = 'all';
         let activeStatus = 'all';
+
+        async function checkWaStatus() {
+            const res = await fetch('/api/whatsapp/status');
+            const data = await res.json();
+            const btn = document.getElementById('waStatusBtn');
+            const btnText = btn.querySelector('span');
+            const qrContainer = document.getElementById('waQrContainer');
+            
+            btn.className = 'whatsapp-status-btn ' + (data.status === 'ready' ? 'wa-on' : (data.status === 'qr' ? 'wa-qr' : 'wa-off'));
+            btnText.innerText = data.status.toUpperCase();
+
+            if (data.status === 'qr' && data.qr) {
+                qrContainer.innerHTML = `<img src="${data.qr}" style="width: 250px;">`;
+                document.getElementById('waStatusText').innerText = "Escaneie o QR Code com seu WhatsApp";
+            } else if (data.status === 'ready') {
+                qrContainer.innerHTML = `<i class="fas fa-check-circle" style="font-size: 5rem; color: #10b981; padding: 20px;"></i>`;
+                document.getElementById('waStatusText').innerText = "Conectado e pronto!";
+            } else {
+                qrContainer.innerHTML = `<p style="color: #000; padding: 20px;">Iniciando sistema...</p>`;
+            }
+        }
+
+        function openWaModal() {
+            document.getElementById('waModal').style.display = 'flex';
+            checkWaStatus();
+        }
+
+        function closeWaModal() {
+            document.getElementById('waModal').style.display = 'none';
+        }
+
+        setInterval(checkWaStatus, 5000); // Atualiza status a cada 5 segundos
 
         function applyFilters() {
             document.querySelectorAll('.request-card').forEach(card => {
