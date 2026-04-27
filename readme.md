@@ -143,3 +143,42 @@ Basta salvar esse conteúdo em um arquivo chamado `README.md` na raiz do seu pro
 [PROMPT_SUGGESTION]Crie um arquivo start_all.bat para Windows que abre as duas janelas automaticamente com um clique[/PROMPT_SUGGESTION]
 [PROMPT_SUGGESTION]Adicione uma seção no README explicando como configurar o Nginx para usar um domínio (ex: painel.meusite.com)[/PROMPT_SUGGESTION]
 ->
+
+
+1. Escondendo a porta 8080 (Cloudflare Tunnel)
+A melhor forma de remover o :8080 da URL e ainda aumentar a segurança (permitindo que você feche todas as portas do seu firewall/VPS) é usando o Cloudflare Tunnel.
+
+No painel do Cloudflare, vá em Zero Trust > Networks > Tunnels.
+Crie um novo túnel e instale o conector (cloudflared) na sua VPS seguindo os comandos que o Cloudflare fornecer.
+Na aba Public Hostname, configure:
+Public Hostname: gestorpedidos.click
+Service Type: HTTP
+URL: localhost:8080
+Resultado: Agora, ao acessar https://gestorpedidos.click, o Cloudflare busca internamente na sua máquina a porta 8080, mas o usuário nunca vê o número da porta.
+2. Escondendo o /revenda/login (URL Masking com Workers)
+Mesmo que o seu servidor redirecione internamente o / para /revenda/login, o navegador do usuário mostrará o caminho completo. Para "mascarar" isso e fazer com que a tela de login apareça diretamente em gestorpedidos.click/ sem mudar a URL, use um Cloudflare Worker:
+
+Vá em Workers & Pages > Create application > Create Worker.
+Dê um nome (ex: mask-login) e clique em Deploy.
+Clique em Edit Code e cole este script:
+javascript
+export default {
+  async fetch(request, env, ctx) {
+    const url = new URL(request.url);
+
+    // Se o usuário acessar a raiz "/"
+    if (url.pathname === "/") {
+      // O Worker busca o conteúdo do login, mas mantém a URL como "/"
+      const loginUrl = `${url.origin}/revenda/login`;
+      return fetch(loginUrl, request);
+    }
+
+    // Para todas as outras rotas, segue o fluxo normal
+    return fetch(request);
+  },
+};
+Configurar a Rota:
+Volte para as configurações do Worker.
+Vá em Triggers > Routes > Add Route.
+Coloque: gestorpedidos.click/*
+Selecione a Zona: gestorpedidos.click.
