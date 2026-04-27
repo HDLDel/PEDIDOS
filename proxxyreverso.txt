@@ -1,0 +1,92 @@
+Guia: Configuração de Proxy Reverso com Nginx (Ocultar Porta 8080)
+Objetivo: Receber tráfego web padrão (porta 80) e redirecionar internamente para uma aplicação Node.js rodando na porta 8080, ocultando a porta da URL final.
+
+Passo 1: Verificações Preliminares (Leitura)
+Antes de instalar qualquer coisa, confirmamos a versão do sistema e garantimos que as portas 80 e 443 não estavam em uso por outro serviço.
+
+Bash
+cat /etc/os-release
+ss -tlnp | grep -E ':(80|443)'
+Passo 2: Atualização e Instalação
+ALERTA: O COMANDO ABAIXO IRÁ ATUALIZAR O ÍNDICE DE PACOTES DO SEU SISTEMA (MODIFICAÇÃO DO SISTEMA).
+
+Bash
+apt update
+ALERTA: O COMANDO ABAIXO IRÁ INSTALAR UM NOVO SOFTWARE NO SEU SISTEMA (NGINX).
+
+Bash
+apt install nginx -y
+Passo 3: Criação do Arquivo de Configuração
+ALERTA: O COMANDO ABAIXO IRÁ CRIAR UM NOVO ARQUIVO DE CONFIGURAÇÃO NO SEU SISTEMA (MODIFICAÇÃO DE ARQUIVO DE CONFIGURAÇÃO).
+Nota: Substitua gestorpedidos.click pelo seu domínio real, caso replique para outro projeto.
+
+Bash
+cat << 'EOF' > /etc/nginx/sites-available/gestorpedidos.click
+server {
+    listen 80;
+    server_name gestorpedidos.click www.gestorpedidos.click;
+
+    location / {
+        proxy_pass http://127.0.0.1:8080;
+        proxy_set_header Host $host;
+        proxy_set_header X-Real-IP $remote_addr;
+        proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+        proxy_set_header X-Forwarded-Proto $scheme;
+    }
+}
+EOF
+Passo 4: Ativação do Site e Limpeza do Padrão
+ALERTA: O COMANDO ABAIXO IRÁ MODIFICAR A CONFIGURAÇÃO DO SISTEMA (CRIAR UM LINK SIMBÓLICO PARA ATIVAR O SITE).
+
+Bash
+ln -s /etc/nginx/sites-available/gestorpedidos.click /etc/nginx/sites-enabled/
+ALERTA: O COMANDO ABAIXO IRÁ APAGAR UM ARQUIVO DE ATALHO (COMANDO DESTRUTIVO 'RM' EM ARQUIVO DE CONFIGURAÇÃO PARA DESATIVAR O SITE PADRÃO).
+
+Bash
+rm /etc/nginx/sites-enabled/default
+Passo 5: Teste de Sintaxe e Reinicialização
+Validamos se o arquivo foi escrito corretamente antes de reiniciar o serviço.
+
+Bash
+nginx -t
+ALERTA: O COMANDO ABAIXO IRÁ REINICIAR UM SERVIÇO DO SISTEMA (NGINX PARA APLICAR AS MUDANÇAS).
+
+Bash
+systemctl restart nginx
+Passo 6: Teste de Validação Local (Leitura)
+Testamos internamente se o Nginx estava respondendo pelo domínio e encaminhando para a aplicação Node.js (esperando um retorno indicando o Express).
+
+Bash
+curl -H "Host: gestorpedidos.click" -I http://localhost
+O seu proxy reverso está configurado e funcionando. Lembre-se de que o nosso fluxo de trabalho ainda tem uma última etapa pendente: a configuração do firewall para bloquear o acesso externo direto à porta 8080. Basta me avisar quando estiver pronto para prosseguirmos com esse passo final de segurança.
+
+esconder barras com worker cloudflare
+
+Escondendo o /revenda/login (URL Masking com Workers)
+Mesmo que o seu servidor redirecione internamente o / para /revenda/login, o navegador do usuário mostrará o caminho completo. Para "mascarar" isso e fazer com que a tela de login apareça diretamente em gestorpedidos.click/ sem mudar a URL, use um Cloudflare Worker:
+
+Vá em Workers & Pages > Create application > Create Worker.
+Dê um nome (ex: mask-login) e clique em Deploy.
+Clique em Edit Code e cole este script:
+javascript
+export default {
+  async fetch(request, env, ctx) {
+    const url = new URL(request.url);
+
+    // Se o usuário acessar a raiz "/"
+    if (url.pathname === "/") {
+      // O Worker busca o conteúdo do login, mas mantém a URL como "/"
+      const loginUrl = `${url.origin}/revenda/login`;
+      return fetch(loginUrl, request);
+    }
+
+    // Para todas as outras rotas, segue o fluxo normal
+    return fetch(request);
+  },
+};
+Configurar a Rota:
+Volte para as configurações do Worker.
+Vá em Triggers > Routes > Add Route.
+Coloque: gestorpedidos.click/*
+Selecione a Zona: gestorpedidos.click.
+

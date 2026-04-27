@@ -145,17 +145,8 @@ Basta salvar esse conteúdo em um arquivo chamado `README.md` na raiz do seu pro
 ->
 
 
-1. Escondendo a porta 8080 (Cloudflare Tunnel)
-A melhor forma de remover o :8080 da URL e ainda aumentar a segurança (permitindo que você feche todas as portas do seu firewall/VPS) é usando o Cloudflare Tunnel.
 
-No painel do Cloudflare, vá em Zero Trust > Networks > Tunnels.
-Crie um novo túnel e instale o conector (cloudflared) na sua VPS seguindo os comandos que o Cloudflare fornecer.
-Na aba Public Hostname, configure:
-Public Hostname: gestorpedidos.click
-Service Type: HTTP
-URL: localhost:8080
-Resultado: Agora, ao acessar https://gestorpedidos.click, o Cloudflare busca internamente na sua máquina a porta 8080, mas o usuário nunca vê o número da porta.
-2. Escondendo o /revenda/login (URL Masking com Workers)
+Escondendo o /revenda/login (URL Masking com Workers)
 Mesmo que o seu servidor redirecione internamente o / para /revenda/login, o navegador do usuário mostrará o caminho completo. Para "mascarar" isso e fazer com que a tela de login apareça diretamente em gestorpedidos.click/ sem mudar a URL, use um Cloudflare Worker:
 
 Vá em Workers & Pages > Create application > Create Worker.
