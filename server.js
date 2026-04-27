@@ -105,7 +105,10 @@ const checkAdminAuth = (req, res, next) => {
     res.redirect('/admin/login');
 };
 
-app.get('/admin/login', (req, res) => res.render('admin/login'));
+app.get('/admin/login', (req, res) => {
+    if (req.session.adminId) return res.redirect('/admin/dashboard');
+    res.render('admin/login');
+});
 
 app.post('/admin/login', (req, res) => {
     const { username, password } = req.body;
@@ -196,10 +199,11 @@ app.get('/revenda/solicitar', checkResellerAuth, (req, res) => {
     // Não passamos mais a API KEY para o frontend
     res.render('revenda/solicitar', { reseller, requests });
 });
-app.get('/revenda/solicitar/filme', (req, res) => res.render('revenda/buscar-filme'));
+app.get('/revenda/solicitar/filme', checkResellerAuth, (req, res) => res.render('revenda/buscar-filme'));
 
 // Login e Registro
 app.get('/revenda/login', (req, res) => {
+    if (req.session.resellerId) return res.redirect('/revenda/dashboard');
     res.render('revenda/login');
 });
 
@@ -365,7 +369,7 @@ app.post('/api/requests', (req, res) => {
 });
 
 // API - Revendedores
-app.get('/api/resellers', (req, res) => {
+app.get('/api/resellers', checkAdminAuth, (req, res) => {
     res.json(ResellerModel.getAll());
 });
 
@@ -397,7 +401,7 @@ app.put('/api/resellers/:id', checkAdminAuth, (req, res) => {
     res.json({ success: result.changes > 0 });
 });
 
-app.get('/api/resellers/:id', (req, res) => {
+app.get('/api/resellers/:id', checkAdminAuth, (req, res) => {
     const reseller = ResellerModel.getById(parseInt(req.params.id));
     if (!reseller) return res.status(404).json({ error: 'Revendedor não encontrado' });
     res.json(reseller);
@@ -434,19 +438,19 @@ app.post('/api/whatsapp/reset', checkAdminAuth, async (req, res) => {
 });
 
 // API - TMDB
-app.get('/api/tmdb/:requestId', (req, res) => {
+app.get('/api/tmdb/:requestId', checkAdminAuth, (req, res) => {
     const tmdbData = TmdbModel.getByRequestId(parseInt(req.params.requestId));
     if (!tmdbData) return res.status(404).json({ error: 'Dados TMDB não encontrados' });
     res.json(tmdbData);
 });
 
 // --- TRATAMENTO DE ENCERRAMENTO ---
-process.on('SIGINT', async () => {
+process.on('SIGINT', () => {
     console.log('🛑 Encerrando servidor e limpando conexões...');
     process.exit(0);
 });
 
-app.post('/api/tmdb/fetch', async (req, res) => {
+app.post('/api/tmdb/fetch', checkAdminAuth, async (req, res) => {
     const { requestId, title, type } = req.body;
     const result = await TmdbModel.fetchAndSave(requestId, title, type);
     if (!result) return res.status(500).json({ error: 'Erro ao buscar dados do TMDB' });
