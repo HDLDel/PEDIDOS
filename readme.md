@@ -182,3 +182,7 @@ Volte para as configurações do Worker.
 Vá em Triggers > Routes > Add Route.
 Coloque: gestorpedidos.click/*
 Selecione a Zona: gestorpedidos.click.
+
+
+
+
