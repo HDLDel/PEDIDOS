@@ -112,7 +112,7 @@ app.post('/admin/login', (req, res) => {
     const admin = AdminModel.authenticate(username, password); // Supondo que AdminModel.authenticate existe
     if (admin) { // Se a autenticação for bem-sucedida
         req.session.adminId = admin.id; // Armazena o ID do admin na sessão
-        res.redirect('/');
+        res.redirect('/admin/dashboard');
     } else {
         res.render('admin/login', { error: 'Acesso negado: Credenciais inválidas.' });
     }
@@ -121,14 +121,18 @@ app.post('/admin/login', (req, res) => {
 app.get('/admin/logout', (req, res) => {
     req.session.destroy(err => {
         if (err) {
-            return res.redirect('/');
+            return res.redirect('/admin/dashboard');
         }
         res.clearCookie('connect.sid'); // Limpa o cookie da sessão
         res.redirect('/admin/login');
     });
 });
 
-app.get('/', checkAdminAuth, (req, res) => {
+app.get('/', (req, res) => {
+    res.redirect('/revenda/login');
+});
+
+app.get('/admin/dashboard', checkAdminAuth, (req, res) => {
     const requests = RequestModel.getAll();
     const stats = RequestModel.getStats();
     res.render('dashboard', { requests, stats });

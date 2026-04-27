@@ -101,6 +101,34 @@ Para que o sistema não desligue quando você fechar o terminal, usamos o **PM2*
 *   `pm2 logs`: Ver o que está acontecendo em tempo real.
 *   `pm2 restart all`: Reiniciar tudo.
 *   `pm2 stop all`: Parar tudo.
+
+---
+
+## 🛠️ Tecnologias e Módulos
+
+O sistema foi construído utilizando tecnologias modernas de back-end e front-end para garantir performance e escalabilidade.
+
+### Backend (Node.js)
+- **Express**: Framework web principal.
+- **Better-SQLite3**: Banco de dados relacional rápido para persistência de pedidos e usuários.
+- **BcryptJS**: Criptografia de alta segurança para armazenamento de senhas.
+- **Express-Session**: Controle de acesso e persistência de login.
+- **Dotenv**: Gerenciamento de configurações e chaves de API.
+- **EJS**: Renderização de templates HTML dinâmicos.
+
+### Automação e Notificações
+- **WhatsApp-Web.js**: Motor para envio de notificações em tempo real.
+- **Puppeteer**: Navegador interno (Headless) para suporte ao motor de mensagens.
+
+### Frontend
+- **CSS3 (Grid/Flexbox)**: Layout "Dark Premium" responsivo.
+- **JavaScript (Vanilla)**: Interatividade client-side sem dependências pesadas.
+- **Tampermonkey Scripts**: Auxiliares para integração rápida com TMDB e preenchimento de motivos.
+
+### Infraestrutura
+- **PM2**: Monitoramento e gerenciamento de processos em produção.
+- **Google Chrome (Stable)**: Necessário para o motor de notificações em servidores Linux.
+
 ```
 
 ### O que este README faz:
