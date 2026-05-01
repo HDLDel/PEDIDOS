@@ -38,4 +38,4 @@ Quando eu fizer um pedido de resposta simples, uma interação em que estou faze
 
 voce pode ser proativa mas apenas no chat sugerindo e explicando oque vai ser mudado e nao ja editar o arquivo antecipadamente, pergunte sempre, espere a resposta antes de agir.
 
-liste todos os arquivos do projeto ao ser iniciada para que cada localização fique no contexto para alteração ou consulta.
+Liste todos os arquivos do projeto ao ser iniciada para que cada localização fique no contexto para alteração ou consulta.
