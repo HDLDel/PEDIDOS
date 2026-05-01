@@ -94,7 +94,8 @@ if (requestCount === 0) {
       requestType: req.requestType,
       description: req.description,
       date: req.date,
-      time: req.time
+      time: req.time,
+      audioPreference: 'Dublado'
     });
     
     // Criar dados TMDB

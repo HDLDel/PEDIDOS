@@ -46,6 +46,7 @@ db.exec(`
     action TEXT NOT NULL DEFAULT 'Adicionar ao catálogo',
     season TEXT,
     episode TEXT,
+    audio_preference TEXT,
     request_type TEXT NOT NULL DEFAULT 'content',
     description TEXT,
     rejection_reason TEXT,
@@ -76,28 +77,22 @@ db.exec(`
   CREATE INDEX IF NOT EXISTS idx_requests_reseller ON requests(reseller_id);
 `);
 
-// Migrações: Garante que colunas novas existam em bancos de dados antigos
-try {
-    db.prepare("ALTER TABLE requests ADD COLUMN rejection_reason TEXT").run();
-    console.log('✅ Migração: Coluna rejection_reason verificada/adicionada em requests.');
-} catch (e) {
-    // A coluna provavelmente já existe
-}
+// --- SISTEMA DE MIGRAÇÕES SEGURAS (WORLD CLASS) ---
+// Função para adicionar colunas apenas se elas não existirem, sem quebrar o banco
+const safeAddColumn = (table, column, type) => {
+    try {
+        db.prepare(`ALTER TABLE ${table} ADD COLUMN ${column} ${type}`).run();
+        console.log(`✅ Migração: Coluna [${column}] adicionada em [${table}].`);
+    } catch (e) {
+        // Se der erro é porque a coluna já existe, então ignoramos silenciosamente
+    }
+};
 
-try {
-    db.prepare("ALTER TABLE resellers ADD COLUMN password TEXT").run();
-    console.log('✅ Migração: Coluna password verificada/adicionada em resellers.');
-} catch (e) {
-    // A coluna provavelmente já existe
-}
-
-try {
-    db.prepare("ALTER TABLE admins ADD COLUMN email TEXT").run();
-    db.prepare("ALTER TABLE admins ADD COLUMN phone TEXT").run();
-    console.log('✅ Migração: Colunas email e phone adicionadas em admins.');
-} catch (e) {
-    // Colunas já existem
-}
+safeAddColumn('requests', 'rejection_reason', 'TEXT');
+safeAddColumn('resellers', 'password', 'TEXT');
+safeAddColumn('requests', 'audio_preference', 'TEXT');
+safeAddColumn('admins', 'email', 'TEXT');
+safeAddColumn('admins', 'phone', 'TEXT');
 
 console.log('✅ Banco SQLite conectado em:', dbPath);
 

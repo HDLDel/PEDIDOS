@@ -37,3 +37,5 @@ Apos toda mudança feita me de um breve resumo do que foi modificado em linguage
 Quando eu fizer um pedido de resposta simples, uma interação em que estou fazendo um pedido que a resposta possa ser dada no chat e nao em um arquivo no projeto, uma pergunta simples e nao um report de problemas, nao sugira edição de arquivos ou correções apenas responda a pergunta e sugira uma correção, apos isso pergunte se pode aplicar.
 
 voce pode ser proativa mas apenas no chat sugerindo e explicando oque vai ser mudado e nao ja editar o arquivo antecipadamente, pergunte sempre, espere a resposta antes de agir.
+
+liste todos os arquivos do projeto ao ser iniciada para que cada localização fique no contexto para alteração ou consulta.

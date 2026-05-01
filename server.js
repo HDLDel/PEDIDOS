@@ -287,7 +287,7 @@ app.post('/api/requests/:id/status', checkAdminAuth, (req, res) => {
 
 // API - Criar novo pedido
 app.post('/api/requests', (req, res) => {
-    let { tmdbId, title, type, action, season, episode, requestType, description, date, time } = req.body;
+    let { tmdbId, title, type, action, season, episode, requestType, description, date, time, audioPreference } = req.body;
     
     let resellerId;
 
@@ -359,6 +359,7 @@ app.post('/api/requests', (req, res) => {
         description,
         date,
         time,
+        audioPreference,
         tmdbId: tmdbId ? parseInt(tmdbId) : null
     });
 
