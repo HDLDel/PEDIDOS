@@ -97,6 +97,55 @@
             color: #fff;
             border-color: #444;
         }
+        .audio-preference-group {
+            display: flex;
+            gap: 2rem;
+            background: #050505;
+            padding: 14px 18px;
+            border-radius: 10px;
+            border: 2px solid #333;
+        }
+        .radio-container {
+            display: flex;
+            align-items: center;
+            cursor: pointer;
+            color: #fff;
+            font-weight: 600;
+            gap: 8px;
+            user-select: none;
+            font-size: 1.1rem;
+        }
+        .radio-container input {
+            display: none;
+        }
+        .radio-checkmark {
+            height: 20px;
+            width: 20px;
+            background-color: #222;
+            border-radius: 50%;
+            border: 2px solid #444;
+            display: inline-block;
+            position: relative;
+        }
+        .radio-container input:checked ~ .radio-checkmark {
+            background-color: #e50914;
+            border-color: #e50914;
+        }
+        .radio-checkmark:after {
+            content: "";
+            position: absolute;
+            display: none;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            background: white;
+        }
+        .radio-container input:checked ~ .radio-checkmark:after {
+            display: block;
+        }
         .limit-warning {
             background: rgba(229, 9, 20, 0.2);
             border: 1px solid var(--accent-red);
@@ -171,6 +220,22 @@
                         <option value="episode">Solicitar episódios faltando</option>
                         <option value="error">Reportar erro de reprodução</option>
                     </select>
+                </div>
+
+                <div class="form-group">
+                    <label>Preferência de Áudio</label>
+                    <div class="audio-preference-group">
+                        <label class="radio-container">
+                            <input type="radio" name="audioPreference" value="Dublado" checked>
+                            <span class="radio-checkmark"></span>
+                            Dublado
+                        </label>
+                        <label class="radio-container">
+                            <input type="radio" name="audioPreference" value="Legendado">
+                            <span class="radio-checkmark"></span>
+                            Legendado
+                        </label>
+                    </div>
                 </div>
 
                 <div id="extraFields" class="form-row hidden">
@@ -354,7 +419,7 @@
                 episode: document.getElementById('reqEpisode').value,
                 description: document.getElementById('reqDescription').value,
                 date: new Date().toLocaleDateString('pt-BR'),
-                time: new Date().toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' })
+                time: new Date().toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' }),
                 audioPreference: document.querySelector('input[name="audioPreference"]:checked').value
             };
 
