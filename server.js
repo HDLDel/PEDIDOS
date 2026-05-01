@@ -393,11 +393,7 @@ app.delete('/api/resellers/:id/requests', checkAdminAuth, (req, res) => {
 app.put('/api/resellers/:id', checkAdminAuth, (req, res) => {
     const { name, email, phone, whatsapp, password } = req.body;
     const id = req.params.id;
-    const result = db.prepare(`
-        UPDATE resellers 
-        SET name = ?, email = ?, phone = ?, whatsapp = ?, password = ?
-        WHERE id = ?
-    `).run(name, email, phone, whatsapp, password, id);
+    const result = ResellerModel.update(id, { name, email, phone, whatsapp, password });
     res.json({ success: result.changes > 0 });
 });
 

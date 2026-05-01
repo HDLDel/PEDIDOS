@@ -44,4 +44,28 @@ export class ResellerModel {
 
     return bcrypt.compareSync(password, reseller.password) ? reseller : null;
   }
+
+  static update(id, { name, email, phone, whatsapp, password }) {
+    let fields = [];
+    let values = [];
+
+    if (name !== undefined) { fields.push('name = ?'); values.push(name); }
+    if (email !== undefined) { fields.push('email = ?'); values.push(email); }
+    if (phone !== undefined) { fields.push('phone = ?'); values.push(phone); }
+    if (whatsapp !== undefined) { fields.push('whatsapp = ?'); values.push(whatsapp); }
+    
+    if (password !== undefined && password !== '') {
+      const hashedPassword = bcrypt.hashSync(password, 10);
+      fields.push('password = ?');
+      values.push(hashedPassword);
+    }
+
+    if (fields.length === 0) {
+      return { changes: 0 };
+    }
+
+    const stmt = db.prepare(`UPDATE resellers SET ${fields.join(', ')} WHERE id = ?`);
+    const result = stmt.run(...values, id);
+    return { changes: result.changes };
+  }
 }
