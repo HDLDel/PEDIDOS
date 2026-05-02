@@ -200,6 +200,9 @@
               <% if (req.episode) { %>
                 <div class="meta">▶️ Episódio <%= req.episode %></div>
               <% } %>
+              <% if (req.audio_preference) { %>
+                <div class="meta">🔊 Áudio: <strong><%= req.audio_preference %></strong></div>
+              <% } %>
               <div class="meta">📅 <%= req.date %> <%= req.time %></div>
               <div class="meta">📝 <%= req.action %></div>
               <% if (req.rejectionReason) { %>
