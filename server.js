@@ -132,6 +132,9 @@ app.get('/admin/logout', (req, res) => {
 });
 
 app.get('/', (req, res) => {
+    // Rota inteligente: verifica quem está logado antes de redirecionar
+    if (req.session.adminId) return res.redirect('/admin/dashboard');
+    if (req.session.resellerId) return res.redirect('/revenda/dashboard');
     res.redirect('/revenda/login');
 });
 
