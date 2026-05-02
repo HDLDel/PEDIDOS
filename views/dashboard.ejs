@@ -266,8 +266,8 @@
                     <div class="info-item"><i class="fas fa-tag"></i> <%= req.action %></div>
                     <% if(req.season) { %><div class="info-item"><i class="fas fa-list-ol"></i> T<%= req.season %> | E<%= req.episode || 'Full' %></div><% } %>
                     
-                    <% if(req.audio_preference) { %>
-                        <div class="info-item"><i class="fas fa-volume-up"></i> Áudio: <strong><%= req.audio_preference %></strong></div>
+                    <% if(req.audioPreference) { %>
+                        <div class="info-item"><i class="fas fa-volume-up"></i> Áudio: <strong><%= req.audioPreference %></strong></div>
                     <% } %>
 
                     <div class="info-item"><i class="fas fa-user-tag"></i> <%= req.reseller %></div>

@@ -15,6 +15,7 @@ export class RequestModel {
         r.episode,
         r.request_type as requestType,
         r.description,
+        r.audio_preference as audioPreference,
         r.rejection_reason as rejectionReason,
         r.date,
         r.time,
@@ -45,6 +46,7 @@ export class RequestModel {
         r.episode,
         r.request_type as requestType,
         r.description,
+        r.audio_preference as audioPreference,
         r.rejection_reason as rejectionReason,
         r.date,
         r.time,
@@ -76,6 +78,7 @@ export class RequestModel {
         res.whatsapp,
         res.email,
         res.phone,
+        r.audio_preference as audioPreference,
         r.rejection_reason as rejectionReason,
         t.tmdb_id as tmdbId,
         t.poster_path as poster,
@@ -102,6 +105,7 @@ export class RequestModel {
         r.episode,
         r.request_type as requestType,
         r.description,
+        r.audio_preference as audioPreference,
         r.rejection_reason as rejectionReason,
         r.date,
         r.time,
@@ -131,6 +135,7 @@ export class RequestModel {
           r.episode,
           r.request_type as requestType,
           r.description,
+          r.audio_preference as audioPreference,
           r.rejection_reason as rejectionReason,
           r.date,
           r.time,
@@ -158,6 +163,7 @@ export class RequestModel {
         r.episode,
         r.request_type as requestType,
         r.description,
+        r.audio_preference as audioPreference,
         r.rejection_reason as rejectionReason,
         r.date,
         r.time,
@@ -188,6 +194,7 @@ export class RequestModel {
         r.episode,
         r.request_type as requestType,
         r.description,
+        r.audio_preference as audioPreference,
         r.rejection_reason as rejectionReason,
         r.date,
         r.time,
@@ -219,13 +226,13 @@ export class RequestModel {
     };
   }
 
-  static create({ resellerId, title, type, status, action, season, episode, requestType, description, date, time, tmdbId }) {
+  static create({ resellerId, title, type, status, action, season, episode, requestType, description, date, time, audioPreference, tmdbId }) {
     const stmt = db.prepare(`
       INSERT INTO requests 
-      (reseller_id, title, type, status, action, season, episode, request_type, description, date, time)
-      VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+      (reseller_id, title, type, status, action, season, episode, request_type, description, date, time, audio_preference)
+      VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
     `);
-    const result = stmt.run(resellerId, title, type, status || 'pending', action || 'Adicionar ao catálogo', season, episode, requestType || 'content', description, date, time);
+    const result = stmt.run(resellerId, title, type, status || 'pending', action || 'Adicionar ao catálogo', season, episode, requestType || 'content', description, date, time, audioPreference);
     
     const requestId = result.lastInsertRowid;
 
@@ -251,13 +258,14 @@ export class RequestModel {
   }
 
   static update(id, fields) {
-    const allowed = ['title', 'type', 'status', 'action', 'season', 'episode', 'request_type', 'description', 'date', 'time'];
+    const allowed = ['title', 'type', 'status', 'action', 'season', 'episode', 'request_type', 'description', 'date', 'time', 'audio_preference'];
     const sets = [];
     const values = [];
     
     for (const [key, value] of Object.entries(fields)) {
-      if (allowed.includes(key)) {
-        sets.push(`${key} = ?`);
+      const dbKey = key === 'audioPreference' ? 'audio_preference' : key;
+      if (allowed.includes(dbKey)) {
+        sets.push(`${dbKey} = ?`);
         values.push(value);
       }
     }
