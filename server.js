@@ -145,7 +145,8 @@ app.get('/admin/dashboard', checkAdminAuth, (req, res) => {
     const seen = new Set();
     const groupedRequests = requests.filter(req => {
         if (req.status !== 'pending') return true;
-        const key = req.tmdb_id ? `tmdb-${req.tmdb_id}` : `${req.type}-${req.title}`;
+        // Agrupa por conteúdo E por preferência de áudio
+        const key = req.tmdb_id ? `tmdb-${req.tmdb_id}-${req.audioPreference}` : `${req.type}-${req.title}-${req.audioPreference}`;
         if (seen.has(key)) return false;
         seen.add(key);
         return true;
