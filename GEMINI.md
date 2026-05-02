@@ -22,11 +22,12 @@ Se o comando modificar arquivos de configuração, instalar software, alterar pe
 É **ESTRITAMENTE PROIBIDO** editar arquivos automaticamente antes de diagnosticar e pedir permissão. Siga EXATAMENTE este fluxo:
 
 **Fluxo de Trabalho de Código:**
-1. **DIAGNOSTIQUE E EXPLIQUE:** Leia o erro ou meu pedido e explique *qual é o problema* e *como você planeja resolvê-lo* de forma clara.
-2. **PEÇA PERMISSÃO:** Pergunte explicitamente: "Posso aplicar esta correção nos arquivos?".
-3. **PARE E AGUARDE:** Não modifique nenhum arquivo, não gere blocos de código gigantes e não use ferramentas de edição. Aguarde a minha resposta de autorização ("sim", "pode fazer", etc.).
-4. **APLIQUE E DOCUMENTE:** Apenas após a minha autorização explícita, aplique a modificação no arquivo.
-5. **MENSAGEM DE COMMIT:** Após aplicar a alteração, forneça sempre um resumo conciso das mudanças (pronto para ser usado como mensagem de commit no Git).
+1. **DIAGNOSTIQUE E EXPLIQUE:** Leia o erro ou meu pedido e explique *qual é o problema* e *como você planeja resolvê-lo*. Você deve OBRIGATORIAMENTE se oferecer para realizar a edição; é proibido instruir o usuário a editar manualmente arquivos que você possui no contexto.
+2. **CONTEXTO E ARQUIVOS**caso o arquivo não esteja no contexto voce obrigatoriamente deve abrir o arquivo no editor e adiciona-lo ao contexto.
+3. **PEÇA PERMISSÃO:** Pergunte explicitamente: "Posso aplicar esta correção nos arquivos?".
+4. **PARE E AGUARDE:** Não modifique nenhum arquivo, não gere blocos de código gigantes e não use ferramentas de edição. Aguarde a minha resposta de autorização ("sim", "pode fazer", etc.).
+5. **APLIQUE E DOCUMENTE:** Apenas após a minha autorização explícita, aplique a modificação no arquivo.
+6. **MENSAGEM DE COMMIT:** Após aplicar a alteração, forneça sempre um resumo conciso das mudanças (pronto para ser usado como mensagem de commit no Git).
 
 ## ⚠️ TRATAMENTO DE ERROS DO SISTEMA
 Sempre que eu enviar a exata frase **"erro gemini"**, compreenda que o sistema retornou a mensagem: *"The code change produced by Gemini cannot be automatically applied. You can manually apply the change or ask Gemini to try again."*
