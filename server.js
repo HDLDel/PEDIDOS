@@ -141,16 +141,25 @@ app.get('/admin/dashboard', checkAdminAuth, (req, res) => {
     let requests = RequestModel.getAll();
     const stats = RequestModel.getStats();
 
-    // LÓGICA DE AGRUPAMENTO: Admin vê apenas um card por conteúdo pendente
-    const seen = new Set();
-    const groupedRequests = requests.filter(req => {
-        if (req.status !== 'pending') return true;
-        // Agrupa estritamente por ID do TMDB ou Título para evitar duplicatas no painel admin
-        const key = req.tmdb_id ? `tmdb-${req.tmdb_id}` : `${req.type}-${req.title}`;
-        if (seen.has(key)) return false;
-        seen.add(key);
-        return true;
+    // LÓGICA DE AGRUPAMENTO INTELIGENTE: Mantém o solicitante ORIGINAL (menor ID) no card do Admin
+    const pendingGroups = new Map();
+    const otherRequests = [];
+
+    requests.forEach(req => {
+        if (req.status !== 'pending') {
+            otherRequests.push(req);
+        } else {
+            const key = req.tmdb_id ? `tmdb-${req.tmdb_id}` : `manual-${req.type}-${req.title.toLowerCase()}`;
+            // Se o grupo não existe ou se este pedido é mais antigo que o guardado, atualiza o grupo
+            if (!pendingGroups.has(key) || req.id < pendingGroups.get(key).id) {
+                pendingGroups.set(key, req);
+            }
+        }
     });
+
+    const groupedRequests = [...pendingGroups.values(), ...otherRequests];
+    // Ordena para que os itens apareçam por ordem de atividade (ID decrescente)
+    groupedRequests.sort((a, b) => b.id - a.id);
 
     res.render('dashboard', { requests: groupedRequests, stats });
 });
