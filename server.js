@@ -132,16 +132,26 @@ app.get('/admin/logout', (req, res) => {
 });
 
 app.get('/', (req, res) => {
-    // Rota inteligente: verifica quem está logado antes de redirecionar
     if (req.session.adminId) return res.redirect('/admin/dashboard');
     if (req.session.resellerId) return res.redirect('/revenda/dashboard');
     res.redirect('/revenda/login');
 });
 
 app.get('/admin/dashboard', checkAdminAuth, (req, res) => {
-    const requests = RequestModel.getAll();
+    let requests = RequestModel.getAll();
     const stats = RequestModel.getStats();
-    res.render('dashboard', { requests, stats });
+
+    // LÓGICA DE AGRUPAMENTO: Admin vê apenas um card por conteúdo pendente
+    const seen = new Set();
+    const groupedRequests = requests.filter(req => {
+        if (req.status !== 'pending') return true;
+        const key = req.tmdb_id ? `tmdb-${req.tmdb_id}` : `${req.type}-${req.title}`;
+        if (seen.has(key)) return false;
+        seen.add(key);
+        return true;
+    });
+
+    res.render('dashboard', { requests: groupedRequests, stats });
 });
 
 // Rota para Conexão do WhatsApp (Página Dedicada)
@@ -279,10 +289,28 @@ app.post('/api/requests/:id/status', checkAdminAuth, (req, res) => {
     if (!['pending', 'approved', 'rejected'].includes(status)) {
         return res.status(400).json({ error: 'Status inválido' });
     }
-    const updated = RequestModel.updateStatus(parseInt(req.params.id), status, rejectionReason);
+    
+    const id = parseInt(req.params.id);
+    const updated = RequestModel.updateStatus(id, status, rejectionReason);
     if (!updated) return res.status(404).json({ error: 'Pedido não encontrado' });
 
-    // Enviar notificação via WhatsApp em segundo plano
+    // SINCRONIZAÇÃO: Se for um conteúdo TMDB, atualiza todos os outros revendedores que pediram o mesmo
+    const tmdbData = TmdbModel.getByRequestId(id);
+    if (tmdbData && tmdbData.tmdb_id) {
+        const siblings = db.prepare(`
+            SELECT r.id, res.name as reseller, res.whatsapp, r.title
+            FROM requests r
+            JOIN resellers res ON r.reseller_id = res.id
+            JOIN tmdb_contents t ON r.id = t.request_id
+            WHERE t.tmdb_id = ? AND r.status = 'pending' AND r.id != ?
+        `).all(tmdbData.tmdb_id, id);
+
+        for (const sibling of siblings) {
+            RequestModel.updateStatus(sibling.id, status, rejectionReason);
+            WhatsAppService.sendStatusNotification({ ...sibling, status, rejectionReason }).catch(e => console.error(e));
+        }
+    }
+
     WhatsAppService.sendStatusNotification(updated).catch(e => console.error("Erro Notificação:", e));
 
     res.json(updated);
@@ -316,29 +344,16 @@ app.post('/api/requests', (req, res) => {
         });
     }
 
-    // Validação de Duplicidade Inteligente (Pendente, Aprovado ou Rejeitado)
+    // Validação de Duplicidade: Agora só bloqueia se o PRÓPRIO revendedor já pediu e está pendente
     if (tmdbId) {
-        const existing = db.prepare(`
-            SELECT r.status, r.rejection_reason FROM requests r
+        const alreadyRequestedByMe = db.prepare(`
+            SELECT r.id FROM requests r
             JOIN tmdb_contents t ON r.id = t.request_id
-            WHERE t.tmdb_id = ?
-            ORDER BY r.id DESC LIMIT 1
-        `).get(parseInt(tmdbId));
+            WHERE t.tmdb_id = ? AND r.reseller_id = ? AND r.status = 'pending'
+        `).get(parseInt(tmdbId), resellerId);
 
-        if (existing) {
-            if (existing.status === 'pending') {
-                return res.status(409).json({ 
-                    error: 'este pedido ja foi feito por outro revenda e esta na fila de espera, favor aguardar.' 
-                });
-            } else if (existing.status === 'approved') {
-                return res.status(409).json({ 
-                    error: 'Pedido já adicionado ao servidor. Por favor, atualize a lista e procure em todas as categorias.' 
-                });
-            } else if (existing.status === 'rejected') {
-                return res.status(409).json({ 
-                    error: `Esse pedido foi rejeitado. Motivo: ${existing.rejection_reason || 'Não especificado.'}` 
-                });
-            }
+        if (alreadyRequestedByMe) {
+            return res.status(409).json({ error: 'Você já possui uma solicitação pendente para este conteúdo.' });
         }
     }
     
