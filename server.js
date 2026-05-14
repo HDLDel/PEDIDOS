@@ -151,9 +151,19 @@ app.get('/admin/dashboard', checkAdminAuth, (req, res) => {
             otherRequests.push(req);
         } else {
             const key = req.tmdb_id ? `tmdb-${req.tmdb_id}` : `manual-${req.type}-${req.title.toLowerCase()}`;
-            // Se o grupo não existe ou se este pedido é mais antigo que o guardado, atualiza o grupo
-            if (!pendingGroups.has(key) || req.id < pendingGroups.get(key).id) {
+            if (!pendingGroups.has(key)) {
+                req.subRequests = [];
                 pendingGroups.set(key, req);
+            } else {
+                const mainReq = pendingGroups.get(key);
+                if (req.id < mainReq.id) {
+                    req.subRequests = mainReq.subRequests || [];
+                    const { subRequests, ...mainReqCopy } = mainReq;
+                    req.subRequests.push(mainReqCopy);
+                    pendingGroups.set(key, req);
+                } else {
+                    mainReq.subRequests.push(req);
+                }
             }
         }
     });

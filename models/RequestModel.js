@@ -24,6 +24,7 @@ export class RequestModel {
         res.whatsapp,
         COALESCE(t.poster_path, 'https://via.placeholder.com/500x750?text=Sem+Poster') as poster,
         t.year,
+        t.tmdb_id,
         t.vote_average as voteAverage
       FROM requests r
       JOIN resellers res ON r.reseller_id = res.id
@@ -51,6 +52,7 @@ export class RequestModel {
         r.date,
         r.time,
         COALESCE(t.poster_path, 'https://via.placeholder.com/500x750?text=Sem+Poster') as poster,
+        t.tmdb_id,
         t.year
       FROM requests r
       LEFT JOIN tmdb_contents t ON r.id = t.request_id
@@ -113,6 +115,7 @@ export class RequestModel {
         res.whatsapp,
         COALESCE(t.poster_path, 'https://via.placeholder.com/500x750?text=Sem+Poster') as poster,
         t.year,
+        t.tmdb_id,
         t.vote_average as voteAverage
       FROM requests r
       JOIN resellers res ON r.reseller_id = res.id
@@ -143,6 +146,7 @@ export class RequestModel {
           res.whatsapp,
           COALESCE(t.poster_path, 'https://via.placeholder.com/500x750?text=Sem+Poster') as poster,
           t.year,
+          t.tmdb_id,
           t.vote_average as voteAverage
         FROM requests r
         JOIN resellers res ON r.reseller_id = res.id
@@ -171,6 +175,7 @@ export class RequestModel {
         res.whatsapp,
         COALESCE(t.poster_path, 'https://via.placeholder.com/500x750?text=Sem+Poster') as poster,
         t.year,
+        t.tmdb_id,
         t.vote_average as voteAverage
       FROM requests r
       JOIN resellers res ON r.reseller_id = res.id
@@ -202,6 +207,7 @@ export class RequestModel {
         res.whatsapp,
         COALESCE(t.poster_path, 'https://via.placeholder.com/500x750?text=Sem+Poster') as poster,
         t.year,
+        t.tmdb_id,
         t.vote_average as voteAverage
       FROM requests r
       JOIN resellers res ON r.reseller_id = res.id
