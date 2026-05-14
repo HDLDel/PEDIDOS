@@ -320,16 +320,31 @@
                      data-reseller="<%= (req.reseller || '').toLowerCase() %>"
                      data-year="<%= req.year || 0 %>">
                 
+                <% 
+                    let allReqs = [req];
+                    if (req.subRequests) allReqs = allReqs.concat(req.subRequests);
+                    let countDub = allReqs.filter(r => r.audioPreference === 'Dublado' && r.requestType !== 'error').length;
+                    let countLeg = allReqs.filter(r => r.audioPreference === 'Legendado' && r.requestType !== 'error').length;
+                    let countErr = allReqs.filter(r => r.requestType === 'error').length;
+                    let countPending = allReqs.filter(r => r.status === 'pending').length;
+                %>
                 <div class="poster-container">
                     <img src="<%= req.poster || 'https://via.placeholder.com/500x750?text=Sem+Poster' %>" class="poster-img" alt="Poster">
                     <span class="badge-status status-<%= req.status %>">
                         <%= req.status === 'pending' ? 'Pendente' : (req.status === 'approved' ? 'Aprovado' : 'Rejeitado') %>
                     </span>
-                    <% if (req.subRequests && req.subRequests.length > 0) { %>
+                    <% if (allReqs.length > 1) { %>
                         <div class="badge-grouped" style="position: absolute; top: 15px; left: 15px; background: rgba(59, 130, 246, 0.9); color: white; padding: 4px 8px; border-radius: 6px; font-size: 11px; font-weight: 800; z-index: 10; border: 1px solid #3b82f6;">
-                            <i class="fas fa-layer-group"></i> +<%= req.subRequests.length %> AGRUPADO(S)
+                            <i class="fas fa-layer-group"></i> <%= allReqs.length %> AGRUPADOS
+                            <% if (countPending > 0) { %><span style="background: #ef4444; border-radius: 50%; padding: 2px 5px; margin-left: 5px;"><%= countPending %></span><% } %>
                         </div>
                     <% } %>
+                    
+                    <div style="position: absolute; bottom: 10px; left: 10px; display: flex; flex-direction: column; gap: 5px; z-index: 10;">
+                        <% if (countDub > 0) { %><span style="background: rgba(16, 185, 129, 0.95); color: white; padding: 3px 6px; border-radius: 4px; font-size: 10px; font-weight: bold; border: 1px solid #10b981;"><i class="fas fa-microphone"></i> <%= countDub %> DUB</span><% } %>
+                        <% if (countLeg > 0) { %><span style="background: rgba(245, 158, 11, 0.95); color: white; padding: 3px 6px; border-radius: 4px; font-size: 10px; font-weight: bold; border: 1px solid #f59e0b;"><i class="fas fa-closed-captioning"></i> <%= countLeg %> LEG</span><% } %>
+                        <% if (countErr > 0) { %><span style="background: rgba(239, 68, 68, 0.95); color: white; padding: 3px 6px; border-radius: 4px; font-size: 10px; font-weight: bold; border: 1px solid #ef4444;"><i class="fas fa-exclamation-triangle"></i> <%= countErr %> ERRO</span><% } %>
+                    </div>
                 </div>
                 
                 <div class="card-body">
@@ -363,17 +378,19 @@
                             <i class="fas fa-play"></i> JW
                         </button>
                     </div>
-                    <% if (req.subRequests && req.subRequests.length > 0) { %>
+                    <% if (allReqs.length > 1) { %>
                         <button class="btn" style="background: #3b82f6; color: white; margin-bottom: 5px; width: 100%;" 
                                 data-details="<%= encodeURIComponent(JSON.stringify([req, ...req.subRequests])) %>" 
                                 onclick="openDetailsModal(this.dataset.details)">
-                            <i class="fas fa-list"></i> Histórico (+<%= req.subRequests.length %>)
+                            <i class="fas fa-list"></i> Histórico / Resolver
                         </button>
                     <% } %>
-                    <div class="btn-group">
-                        <button class="btn btn-approve" onclick="updateStatus(<%= req.id %>, 'approved')">Aprovar</button>
-                        <button class="btn btn-reject" onclick="openRejectModal(<%= req.id %>, '<%= req.type %>')">Rejeitar</button>
-                    </div>
+                    <% if (req.status === 'pending') { %>
+                        <div class="btn-group" id="btnGroup-<%= req.id %>">
+                            <button class="btn btn-approve" onclick="updateStatus(<%= req.id %>, 'approved', null, true)"><%= allReqs.length > 1 ? 'Aprovar Todos' : 'Aprovar' %></button>
+                            <button class="btn btn-reject" onclick="openRejectModal(<%= req.id %>, '<%= req.type %>', true)"><%= allReqs.length > 1 ? 'Rejeitar Todos' : 'Rejeitar' %></button>
+                        </div>
+                    <% } %>
                 </div>
             </article>
         <% }); %>
@@ -412,6 +429,7 @@
                             <th style="padding: 10px; color: var(--text-muted);">Ação</th>
                             <th style="padding: 10px; color: var(--text-muted);">Detalhes (Temp/Ep/Erro)</th>
                             <th style="padding: 10px; color: var(--text-muted);">Data</th>
+                            <th style="padding: 10px; color: var(--text-muted); text-align: center;">Ações</th>
                         </tr>
                     </thead>
                     <tbody id="detailsTableBody">
@@ -431,6 +449,7 @@
     <script>
         let currentRequestId = null;
         let currentRequestType = null; // Para armazenar o tipo (movie/series)
+        let currentSyncAll = true;
         let activeCategory = 'all';
         let activeStatus = 'all';
         let checkStatusInterval = null;
@@ -527,9 +546,10 @@
             }
         }
 
-        function openRejectModal(id, type) {
+        function openRejectModal(id, type, syncAll = true) {
             currentRequestId = id;
-            currentRequestType = type; // Armazena o tipo do pedido
+            currentRequestType = type;
+            currentSyncAll = syncAll;
             document.getElementById('rejectModal').style.display = 'flex';
             document.getElementById('rejectionText').value = '';
         }
@@ -549,7 +569,16 @@
                 let extraInfo = '';
                 if (req.season) extraInfo += `T${req.season} `;
                 if (req.episode) extraInfo += `E${req.episode} `;
-                if (req.requestType === 'error') extraInfo += `⚠️ ${req.description || 'Erro reportado'}`;
+                if (req.audioPreference && req.requestType !== 'error') extraInfo += `🎤 ${req.audioPreference} `;
+                if (req.requestType === 'error') extraInfo += `<br>⚠️ ${req.description || 'Erro reportado'}`;
+                
+                let actionsHtml = `<span class="badge-status status-${req.status}" style="position: static; padding: 4px 6px; font-size: 0.65rem;">${req.status.toUpperCase()}</span>`;
+                if (req.status === 'pending') {
+                    actionsHtml = `
+                        <button class="btn" title="Aprovar" style="background: var(--status-approved); color: white; padding: 4px 8px; border-radius: 4px;" onclick="updateStatus(${req.id}, 'approved', null, false)"><i class="fas fa-check"></i></button>
+                        <button class="btn" title="Rejeitar" style="background: var(--status-rejected); color: white; padding: 4px 8px; border-radius: 4px;" onclick="openRejectModal(${req.id}, '${req.type}', false)"><i class="fas fa-times"></i></button>
+                    `;
+                }
                 
                 tbody.innerHTML += `
                     <tr>
@@ -557,6 +586,7 @@
                         <td style="padding: 10px; border-bottom: 1px solid #333; color: #fff;">${req.action}</td>
                         <td style="padding: 10px; border-bottom: 1px solid #333; color: var(--text-muted);">${extraInfo || '-'}</td>
                         <td style="padding: 10px; border-bottom: 1px solid #333; color: var(--text-muted);">${req.date} ${req.time}</td>
+                        <td style="padding: 10px; border-bottom: 1px solid #333; display: flex; gap: 5px; justify-content: center; align-items: center;">${actionsHtml}</td>
                     </tr>
                 `;
             });
@@ -607,44 +637,51 @@
         document.getElementById('confirmRejectBtn').onclick = () => {
             const reason = document.getElementById('rejectionText').value;
             if(!reason) return alert('Por favor, informe um motivo.');
-            updateStatus(currentRequestId, 'rejected', reason);
+            updateStatus(currentRequestId, 'rejected', reason, currentSyncAll);
             closeRejectModal();
         };
 
-        async function updateStatus(id, status, reason = null) {
+        async function updateStatus(id, status, reason = null, syncAll = true) {
             if (!reason && !confirm(`Deseja realmente alterar o status para ${status.toUpperCase()}?`)) return;
 
             try {
                 const response = await fetch(`/api/requests/${id}/status`, {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ status, rejectionReason: reason })
+                    body: JSON.stringify({ status, rejectionReason: reason, syncAll })
                 });
 
                 if (response.ok) {
-                    const card = document.getElementById(`card-${id}`);
-                    card.dataset.status = status;
-
-                    const badge = card.querySelector('.badge-status');
-                    badge.className = `badge-status status-${status}`;
-                    badge.innerText = status === 'pending' ? 'Pendente' : (status === 'approved' ? 'Aprovado' : 'Rejeitado');
-
-                    // Se for rejeição, adiciona o motivo visualmente no card
-                    if (status === 'rejected' && reason) {
-                        const body = card.querySelector('.card-body');
-                        let reasonDiv = body.querySelector('.rejection-info');
-                        if (!reasonDiv) {
-                            reasonDiv = document.createElement('div');
-                            reasonDiv.className = 'info-item rejection-info';
-                            reasonDiv.style = 'color: var(--status-rejected); font-weight: bold; margin-top: 5px; display: flex; align-items: flex-start; gap: 10px; white-space: pre-wrap;';
-                            body.appendChild(reasonDiv);
+                    if (syncAll) {
+                        const card = document.getElementById(`card-${id}`);
+                        if (card) {
+                            card.dataset.status = status;
+                            const badge = card.querySelector('.badge-status');
+                            badge.className = `badge-status status-${status}`;
+                            badge.innerText = status === 'pending' ? 'Pendente' : (status === 'approved' ? 'Aprovado' : 'Rejeitado');
+                            
+                            if (status === 'rejected' && reason) {
+                                const body = card.querySelector('.card-body');
+                                let reasonDiv = body.querySelector('.rejection-info');
+                                if (!reasonDiv) {
+                                    reasonDiv = document.createElement('div');
+                                    reasonDiv.className = 'info-item rejection-info';
+                                    reasonDiv.style = 'color: var(--status-rejected); font-weight: bold; margin-top: 5px; display: flex; align-items: flex-start; gap: 10px; white-space: pre-wrap;';
+                                    body.appendChild(reasonDiv);
+                                }
+                                reasonDiv.innerHTML = `<i class="fas fa-exclamation-circle" style="margin-top: 4px;"></i><span>${reason}</span>`;
+                            }
+                            
+                            const btnGroup = document.getElementById(`btnGroup-${id}`);
+                            if (btnGroup) btnGroup.remove();
                         }
-                        reasonDiv.innerHTML = `<i class="fas fa-exclamation-circle" style="margin-top: 4px;"></i><span>${reason}</span>`;
+                        await refreshStats();
+                        applyFilters();
+                    } else {
+                        // Ação Individual Granular: Para garantir a sincronia e recriar os grupos e botões
+                        // perfeitamente como o Admin espera, damos refresh sutil na página.
+                        location.reload();
                     }
-
-                    // Atualiza os contadores e re-aplica filtros para esconder o card se necessário
-                    await refreshStats();
-                    applyFilters();
                 } else {
                     alert('Erro ao atualizar status.');
                 }

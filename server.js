@@ -142,34 +142,30 @@ app.get('/admin/dashboard', checkAdminAuth, (req, res) => {
     let requests = RequestModel.getAll();
     const stats = RequestModel.getStats();
 
-    // LÓGICA DE AGRUPAMENTO INTELIGENTE: Mantém o solicitante ORIGINAL (menor ID) no card do Admin
-    const pendingGroups = new Map();
-    const otherRequests = [];
+    // LÓGICA DE AGRUPAMENTO MESTRE: Todos do mesmo TMDB ID dividem 1 card
+    const groupedMap = new Map();
 
     requests.forEach(req => {
-        if (req.status !== 'pending') {
-            otherRequests.push(req);
+        const key = req.tmdb_id ? `tmdb-${req.tmdb_id}` : `manual-${req.type}-${req.title.toLowerCase()}`;
+        
+        if (!groupedMap.has(key)) {
+            req.subRequests = [];
+            groupedMap.set(key, req);
         } else {
-            const key = req.tmdb_id ? `tmdb-${req.tmdb_id}` : `manual-${req.type}-${req.title.toLowerCase()}`;
-            if (!pendingGroups.has(key)) {
-                req.subRequests = [];
-                pendingGroups.set(key, req);
+            const mainReq = groupedMap.get(key);
+            // Se o pedido atual for PENDENTE e o card principal NÃO FOR PENDENTE, o atual assume a capa
+            if (req.status === 'pending' && mainReq.status !== 'pending') {
+                req.subRequests = mainReq.subRequests || [];
+                const { subRequests, ...mainReqCopy } = mainReq;
+                req.subRequests.push(mainReqCopy);
+                groupedMap.set(key, req);
             } else {
-                const mainReq = pendingGroups.get(key);
-                if (req.id < mainReq.id) {
-                    req.subRequests = mainReq.subRequests || [];
-                    const { subRequests, ...mainReqCopy } = mainReq;
-                    req.subRequests.push(mainReqCopy);
-                    pendingGroups.set(key, req);
-                } else {
-                    mainReq.subRequests.push(req);
-                }
+                mainReq.subRequests.push(req);
             }
         }
     });
 
-    const groupedRequests = [...pendingGroups.values(), ...otherRequests];
-    // Ordena para que os itens apareçam por ordem de atividade (ID decrescente)
+    const groupedRequests = [...groupedMap.values()];
     groupedRequests.sort((a, b) => b.id - a.id);
 
     res.render('dashboard', { requests: groupedRequests, stats });
@@ -313,6 +309,7 @@ app.get('/api/requests/:id', checkAdminAuth, (req, res) => {
 // API - Atualizar status (aprovar/rejeitar)
 app.post('/api/requests/:id/status', checkAdminAuth, (req, res) => {
     const { status, rejectionReason } = req.body;
+    const syncAll = req.body.syncAll !== false; // Padrão é true, só false se declarado
     if (!['pending', 'approved', 'rejected'].includes(status)) {
         return res.status(400).json({ error: 'Status inválido' });
     }
@@ -331,19 +328,21 @@ app.post('/api/requests/:id/status', checkAdminAuth, (req, res) => {
     };
 
     // SINCRONIZAÇÃO: Se for um conteúdo TMDB, atualiza todos os outros revendedores que pediram o mesmo
-    const tmdbData = TmdbModel.getByRequestId(id);
-    if (tmdbData && tmdbData.tmdb_id) {
-        const siblings = db.prepare(`
-            SELECT r.id, res.name as reseller, res.whatsapp, r.title
-            FROM requests r
-            JOIN resellers res ON r.reseller_id = res.id
-            JOIN tmdb_contents t ON r.id = t.request_id
-            WHERE t.tmdb_id = ? AND r.status = 'pending' AND r.id != ?
-        `).all(tmdbData.tmdb_id, id);
+    if (syncAll) {
+        const tmdbData = TmdbModel.getByRequestId(id);
+        if (tmdbData && tmdbData.tmdb_id) {
+            const siblings = db.prepare(`
+                SELECT r.id, res.name as reseller, res.whatsapp, r.title
+                FROM requests r
+                JOIN resellers res ON r.reseller_id = res.id
+                JOIN tmdb_contents t ON r.id = t.request_id
+                WHERE t.tmdb_id = ? AND r.status = 'pending' AND r.id != ?
+            `).all(tmdbData.tmdb_id, id);
 
-        for (const sibling of siblings) {
-            RequestModel.updateStatus(sibling.id, status, rejectionReason);
-            trySendNotification({ ...sibling, status, rejectionReason });
+            for (const sibling of siblings) {
+                RequestModel.updateStatus(sibling.id, status, rejectionReason);
+                trySendNotification({ ...sibling, status, rejectionReason });
+            }
         }
     }
 
