@@ -103,6 +103,11 @@ Para que o sistema não desligue quando você fechar o terminal, usamos o **PM2*
 *   `pm2 stop all`: Parar tudo.
 
 ---
+### node
+
+rm -rf node_modules package-lock.json
+npm install
+npm rebuild better-sqlite3clear
 
 ## 🛠️ Tecnologias e Módulos
 
@@ -173,7 +178,3 @@ Volte para as configurações do Worker.
 Vá em Triggers > Routes > Add Route.
 Coloque: gestorpedidos.click/*
 Selecione a Zona: gestorpedidos.click.
-
-
-
-
