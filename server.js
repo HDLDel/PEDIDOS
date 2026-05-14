@@ -479,6 +479,29 @@ app.post('/api/botbot/config', checkAdminAuth, (req, res) => {
     res.json({ success: true, message: 'Chaves salvas com sucesso!' });
 });
 
+// API - Reenviar todas as notificações em massa
+app.post('/api/notifications/resend-all', checkAdminAuth, async (req, res) => {
+    const requests = RequestModel.getAll().filter(r => r.status !== 'pending');
+    
+    const trySendNotification = async (reqData) => {
+        const bbSuccess = await BotBotService.sendStatusNotification(reqData);
+        if (!bbSuccess) {
+            WhatsAppService.sendStatusNotification(reqData).catch(e => console.error("Erro Notificação Backup:", e));
+        }
+    };
+
+    setTimeout(async () => {
+        console.log(`🚀 Iniciando reenvio em lote de ${requests.length} notificações...`);
+        for (const r of requests) {
+            await trySendNotification(r);
+            await new Promise(resolve => setTimeout(resolve, 36000)); 
+        }
+        console.log(`✅ Reenvio em lote finalizado!`);
+    }, 0);
+
+    res.json({ success: true, message: `Reenvio em lote iniciado para ${requests.length} pedidos. Isso acontecerá em segundo plano (aguarde uns minutos).` });
+});
+
 // API - Iniciar/Conectar WhatsApp
 app.post('/api/whatsapp/start', checkAdminAuth, async (req, res) => {
     await WhatsAppService.initialize();

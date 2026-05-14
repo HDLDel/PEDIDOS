@@ -40,7 +40,11 @@
             <div style="color: #000; font-weight: 600;"><i class="fas fa-circle-notch fa-spin"></i> Preparando navegador...</div>
         </div>
 
-        <div><button class="btn-reset" onclick="resetConnection()"><i class="fas fa-sync-alt"></i> Reiniciar Conexão</button></div>
+        <div style="display: flex; gap: 10px; justify-content: center; margin-top: 1rem; flex-wrap: wrap;">
+            <button class="btn-reset" onclick="resetConnection()"><i class="fas fa-sync-alt"></i> Reiniciar</button>
+            <button class="btn-reset" style="background: #ef4444;" onclick="logoutConnection()"><i class="fas fa-power-off"></i> Desconectar</button>
+            <button class="btn-reset" style="background: #3b82f6;" onclick="resendAllNotifications()"><i class="fas fa-paper-plane"></i> Reenviar Tudo</button>
+        </div>
         <a href="/" class="btn-back"><i class="fas fa-arrow-left"></i> Voltar ao Painel</a>
     </div>
 
@@ -85,6 +89,21 @@
             if(!confirm("Deseja forçar o encerramento da sessão atual?")) return;
             document.getElementById('qrContainer').innerHTML = '<div style="color: #000;">Reiniciando...</div>';
             await fetch('/api/whatsapp/reset', { method: 'POST' });
+        }
+
+        async function logoutConnection() {
+            if(!confirm("Deseja encerrar a sua sessão atual do WhatsApp?\n\nIsso removerá a conexão e você precisará ler o QR Code novamente.")) return;
+            document.getElementById('qrContainer').innerHTML = '<div style="color: #000;"><i class="fas fa-spinner fa-spin"></i> Desconectando...</div>';
+            await fetch('/api/whatsapp/reset', { method: 'POST' });
+        }
+
+        async function resendAllNotifications() {
+            if(!confirm("Deseja reenviar a notificação de TODOS os pedidos processados? \n\nIsso rodará em segundo plano.")) return;
+            try {
+                const res = await fetch('/api/notifications/resend-all', { method: 'POST' });
+                const data = await res.json();
+                alert(data.message || 'Processo iniciado com sucesso!');
+            } catch (e) { alert('Erro ao iniciar reenvio.'); }
         }
 
         setInterval(fetchStatus, 3000);
