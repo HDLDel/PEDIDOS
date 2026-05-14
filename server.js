@@ -174,7 +174,8 @@ app.get('/admin/whatsapp', checkAdminAuth, async (req, res) => {
 
 // Rota para Conexão do BotBot
 app.get('/admin/botbot', checkAdminAuth, (req, res) => {
-    res.render('admin/botbot');
+    const creds = BotBotService.getCredentials();
+    res.render('admin/botbot', { appKey: creds.appKey, authKey: creds.authKey });
 });
 
 // Rota para Gestão de Revendedores
@@ -469,6 +470,13 @@ app.get('/api/whatsapp/status', checkAdminAuth, async (req, res) => {
 app.get('/api/botbot/status', checkAdminAuth, async (req, res) => {
     const status = await BotBotService.getStatus();
     res.json(status);
+});
+
+// API - Configurar BotBot
+app.post('/api/botbot/config', checkAdminAuth, (req, res) => {
+    const { appKey, authKey } = req.body;
+    BotBotService.saveCredentials(appKey, authKey);
+    res.json({ success: true, message: 'Chaves salvas com sucesso!' });
 });
 
 // API - Iniciar/Conectar WhatsApp

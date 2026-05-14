@@ -75,6 +75,11 @@ db.exec(`
   CREATE INDEX IF NOT EXISTS idx_requests_status ON requests(status);
   CREATE INDEX IF NOT EXISTS idx_requests_type ON requests(type);
   CREATE INDEX IF NOT EXISTS idx_requests_reseller ON requests(reseller_id);
+
+  CREATE TABLE IF NOT EXISTS settings (
+    key TEXT PRIMARY KEY,
+    value TEXT
+  );
 `);
 
 // --- SISTEMA DE MIGRAÇÕES SEGURAS (WORLD CLASS) ---

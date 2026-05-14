@@ -1,14 +1,35 @@
-import 'dotenv/config';
+import db from './db.js';
 
 export class BotBotService {
     static BOTBOT_API = 'https://botbot.chat/api/v2';
     
-    // Chaves de acesso conforme validado
-    static APP_KEY = process.env.BOTBOT_APP_KEY || '<BOTBOT_APP_KEY>';
-    static AUTH_KEY = process.env.BOTBOT_AUTH_KEY || '<BOTBOT_AUTH_KEY>';
+    static getCredentials() {
+        const appKeyRow = db.prepare("SELECT value FROM settings WHERE key = 'BOTBOT_APP_KEY'").get();
+        const authKeyRow = db.prepare("SELECT value FROM settings WHERE key = 'BOTBOT_AUTH_KEY'").get();
+        
+        return {
+            appKey: appKeyRow ? appKeyRow.value : '',
+            authKey: authKeyRow ? authKeyRow.value : ''
+        };
+    }
+
+    static saveCredentials(appKey, authKey) {
+        const stmt = db.prepare(`
+            INSERT INTO settings (key, value) VALUES (?, ?)
+            ON CONFLICT(key) DO UPDATE SET value = excluded.value
+        `);
+        const runMany = db.transaction(() => {
+            stmt.run('BOTBOT_APP_KEY', appKey);
+            stmt.run('BOTBOT_AUTH_KEY', authKey);
+        });
+        runMany();
+    }
 
     static async getStatus() {
-        // Serviço em nuvem não precisa ler QR code
+        const creds = this.getCredentials();
+        if (!creds.appKey || !creds.authKey) {
+            return { status: 'disconnected', qr: null };
+        }
         return { status: 'ready', qr: null };
     }
 
@@ -27,13 +48,19 @@ export class BotBotService {
 
         if (!message) return false;
 
+        const creds = this.getCredentials();
+        if (!creds.appKey || !creds.authKey) {
+            console.error('❌ [BotBot] Chaves da API não configuradas no painel.');
+            return false;
+        }
+
         try {
             const response = await fetch(`${this.BOTBOT_API}/sendText`, {
                 method: 'POST',
                 headers: { 
                     'Content-Type': 'application/json',
-                    'appKey': this.APP_KEY,
-                    'authKey': this.AUTH_KEY
+                    'appKey': creds.appKey,
+                    'authKey': creds.authKey
                 },
                 body: JSON.stringify({ 
                     to: cleanNumber, 
