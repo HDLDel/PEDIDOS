@@ -183,6 +183,22 @@
         .tab.active { color: var(--accent-red); border-bottom-color: var(--accent-red); }
         .request-card.hidden { display: none; }
 
+        /* Toolbar (Search & Sort) */
+        .toolbar {
+            display: flex; gap: 15px; padding: 0 3rem 10px; max-width: 100%; margin: 0 auto;
+        }
+        .toolbar input, .toolbar select {
+            padding: 12px 15px; border-radius: 8px; border: 1px solid var(--border);
+            background: #080808; color: var(--text-primary); font-family: inherit;
+            font-size: 0.95rem; outline: none; transition: 0.3s;
+        }
+        .toolbar input { flex: 1; }
+        .toolbar input:focus, .toolbar select:focus { border-color: var(--accent-red); box-shadow: 0 0 0 2px rgba(229, 9, 20, 0.2); }
+        
+        @media (max-width: 600px) {
+            .toolbar { flex-direction: column; padding: 0 1rem 20px; }
+        }
+
         /* Modal Styles */
         .modal-overlay {
             display: none;
@@ -280,12 +296,29 @@
         <div onclick="filterStatus('rejected')" id="stat-rejected" class="stat-pill">❌ REJEITADOS: <strong><%= stats.rejected %></strong></div>
     </div>
 
+    <!-- Barra de Busca e Ordenação -->
+    <div class="toolbar">
+        <input type="text" id="searchInput" placeholder="Buscar por título do pedido ou nome da revenda..." onkeyup="applyFilters()">
+        <select id="sortSelect" onchange="sortCards()">
+            <option value="newest">Mais Recentes (Data de Pedido)</option>
+            <option value="oldest">Mais Antigos (Data de Pedido)</option>
+            <option value="yearDesc">Ano de Lançamento (Novo - Antigo)</option>
+            <option value="yearAsc">Ano de Lançamento (Antigo - Novo)</option>
+            <option value="resellerAsc">Revendedor (A - Z)</option>
+            <option value="resellerDesc">Revendedor (Z - A)</option>
+        </select>
+    </div>
+
     <main class="requests-grid">
         <% requests.forEach(req => { %>
             <article class="request-card" 
                      id="card-<%= req.id %>" 
+                     data-id="<%= req.id %>"
                      data-category="<%= req.requestType === 'error' ? 'error' : req.type %>"
-                     data-status="<%= req.status %>">
+                     data-status="<%= req.status %>"
+                     data-title="<%= (req.title || '').toLowerCase() %>"
+                     data-reseller="<%= (req.reseller || '').toLowerCase() %>"
+                     data-year="<%= req.year || 0 %>">
                 
                 <div class="poster-container">
                     <img src="<%= req.poster || 'https://via.placeholder.com/500x750?text=Sem+Poster' %>" class="poster-img" alt="Poster">
@@ -390,16 +423,46 @@
         setInterval(checkWaStatus, 5000); // Atualiza status a cada 5 segundos
 
         function applyFilters() {
+            const searchQuery = document.getElementById('searchInput').value.toLowerCase().trim();
+
             document.querySelectorAll('.request-card').forEach(card => {
                 const categoryMatch = activeCategory === 'all' || card.dataset.category === activeCategory;
                 const statusMatch = activeStatus === 'all' || card.dataset.status === activeStatus;
 
-                if (categoryMatch && statusMatch) {
+                const titleMatch = card.dataset.title.includes(searchQuery);
+                const resellerMatch = card.dataset.reseller.includes(searchQuery);
+                const searchMatch = !searchQuery || titleMatch || resellerMatch;
+
+                if (categoryMatch && statusMatch && searchMatch) {
                     card.classList.remove('hidden');
                 } else {
                     card.classList.add('hidden');
                 }
             });
+        }
+
+        function sortCards() {
+            const grid = document.querySelector('.requests-grid');
+            const cards = Array.from(grid.querySelectorAll('.request-card'));
+            const sortType = document.getElementById('sortSelect').value;
+
+            const getYear = (dateStr) => {
+                if (!dateStr || dateStr === '0') return 0;
+                const parts = dateStr.split('/');
+                return parts.length === 3 ? parseInt(parts[2]) : parseInt(dateStr) || 0;
+            };
+
+            cards.sort((a, b) => {
+                if (sortType === 'newest') return parseInt(b.dataset.id) - parseInt(a.dataset.id);
+                if (sortType === 'oldest') return parseInt(a.dataset.id) - parseInt(b.dataset.id);
+                if (sortType === 'yearDesc') return getYear(b.dataset.year) - getYear(a.dataset.year);
+                if (sortType === 'yearAsc') return getYear(a.dataset.year) - getYear(b.dataset.year);
+                if (sortType === 'resellerAsc') return a.dataset.reseller.localeCompare(b.dataset.reseller);
+                if (sortType === 'resellerDesc') return b.dataset.reseller.localeCompare(a.dataset.reseller);
+            });
+
+            // Re-anexa os cards na nova ordem (o navegador move os elementos automaticamente)
+            cards.forEach(card => grid.appendChild(card));
         }
 
         function filterCategory(category) {
