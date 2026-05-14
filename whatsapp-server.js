@@ -106,12 +106,20 @@ app.post('/start', (req, res) => {
 app.post('/logout', async (req, res) => {
     if (client) {
         try {
+            await client.logout(); // Remove o aparelho vinculado do seu celular
             await client.destroy();
             client = null;
             status = 'disconnected';
             lastQR = null;
         } catch (e) {}
     }
+    
+    // Apaga a pasta local da sessão para forçar um novo QR Code
+    const sessionPath = path.join(process.cwd(), '.wwebjs_auth', 'session-primary-client');
+    if (fs.existsSync(sessionPath)) {
+        fs.rmSync(sessionPath, { recursive: true, force: true });
+    }
+
     res.json({ success: true });
 });
 
