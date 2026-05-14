@@ -50,6 +50,12 @@
             <button type="submit" class="btn-save"><i class="fas fa-save"></i> Salvar Credenciais</button>
         </form>
 
+        <div style="margin-top: 2.5rem; border-top: 1px solid var(--border); padding-top: 2rem;">
+            <h3 style="font-size: 1rem; margin-bottom: 0.5rem;">Ações em Lote</h3>
+            <p style="color: var(--text-muted); font-size: 0.85rem; margin-bottom: 1.5rem;">Reenviar aos revendedores o status dos últimos 50 pedidos avaliados (Aprovados/Rejeitados).</p>
+            <button id="resendAllBtn" class="btn-save" style="background: #3b82f6;"><i class="fas fa-paper-plane"></i> Reenviar Todas as Notificações</button>
+        </div>
+
         <a href="/admin/dashboard" class="btn-back"><i class="fas fa-arrow-left"></i> Voltar ao Painel</a>
     </div>
 
@@ -82,6 +88,26 @@
                 }
             } catch (err) {
                 alert('Erro de conexão ao salvar.');
+            } finally {
+                btn.innerHTML = originalText;
+                btn.disabled = false;
+            }
+        });
+
+        document.getElementById('resendAllBtn').addEventListener('click', async () => {
+            if(!confirm("Deseja reenviar a notificação dos ÚLTIMOS 50 pedidos processados? \n\nIsso pode demorar alguns minutos em segundo plano.")) return;
+            
+            const btn = document.getElementById('resendAllBtn');
+            const originalText = btn.innerHTML;
+            btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Iniciando...';
+            btn.disabled = true;
+
+            try {
+                const res = await fetch('/api/notifications/resend-all', { method: 'POST' });
+                const data = await res.json();
+                alert(data.message || 'Processo iniciado com sucesso!');
+            } catch (err) {
+                alert('Erro ao iniciar reenvio.');
             } finally {
                 btn.innerHTML = originalText;
                 btn.disabled = false;

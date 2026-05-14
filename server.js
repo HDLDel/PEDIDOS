@@ -15,6 +15,9 @@ import { BotBotService } from './BotBotService.js';
 const app = express();
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 
+// Trava global para reenvio em massa
+let isResendingBackground = false;
+
 // --- PROTEÇÃO CONTRA QUEDAS (WORLD CLASS SAFETY) ---
 // Impede que erros de arquivos bloqueados (EBUSY) ou falhas em bibliotecas matem o servidor
 process.on('unhandledRejection', (reason, promise) => {
@@ -490,8 +493,14 @@ app.post('/api/botbot/config', checkAdminAuth, (req, res) => {
 
 // API - Reenviar todas as notificações em massa
 app.post('/api/notifications/resend-all', checkAdminAuth, async (req, res) => {
-    const requests = RequestModel.getAll().filter(r => r.status !== 'pending');
+    if (isResendingBackground) {
+        return res.status(429).json({ message: '❌ Um reenvio em lote já está em andamento. Aguarde a finalização do processo atual antes de iniciar outro.' });
+    }
+
+    const requests = RequestModel.getAll().filter(r => r.status !== 'pending').slice(0, 50);
     
+    isResendingBackground = true;
+
     const trySendNotification = async (reqData) => {
         const bbSuccess = await BotBotService.sendStatusNotification(reqData);
         if (!bbSuccess) {
@@ -506,6 +515,7 @@ app.post('/api/notifications/resend-all', checkAdminAuth, async (req, res) => {
             await new Promise(resolve => setTimeout(resolve, 36000)); 
         }
         console.log(`✅ Reenvio em lote finalizado!`);
+        isResendingBackground = false;
     }, 0);
 
     res.json({ success: true, message: `Reenvio em lote iniciado para ${requests.length} pedidos. Isso acontecerá em segundo plano (aguarde uns minutos).` });

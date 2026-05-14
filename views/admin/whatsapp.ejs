@@ -98,7 +98,7 @@
         }
 
         async function resendAllNotifications() {
-            if(!confirm("Deseja reenviar a notificação de TODOS os pedidos processados? \n\nIsso rodará em segundo plano.")) return;
+            if(!confirm("Deseja reenviar a notificação dos ÚLTIMOS 50 pedidos processados? \n\nIsso rodará em segundo plano.")) return;
             try {
                 const res = await fetch('/api/notifications/resend-all', { method: 'POST' });
                 const data = await res.json();
