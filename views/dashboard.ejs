@@ -575,8 +575,8 @@
                 let actionsHtml = `<span class="badge-status status-${req.status}" style="position: static; padding: 4px 6px; font-size: 0.65rem;">${req.status.toUpperCase()}</span>`;
                 if (req.status === 'pending') {
                     actionsHtml = `
-                        <button class="btn" title="Aprovar" style="background: var(--status-approved); color: white; padding: 4px 8px; border-radius: 4px;" onclick="updateStatus(${req.id}, 'approved', null, false)"><i class="fas fa-check"></i></button>
-                        <button class="btn" title="Rejeitar" style="background: var(--status-rejected); color: white; padding: 4px 8px; border-radius: 4px;" onclick="openRejectModal(${req.id}, '${req.type}', false)"><i class="fas fa-times"></i></button>
+                        <button class="btn" title="Aprovar" style="background: var(--status-approved); color: white; padding: 8px 12px; border-radius: 6px; font-size: 0.75rem;" onclick="updateStatus(${req.id}, 'approved', null, false)"><i class="fas fa-check"></i> APROVAR</button>
+                        <button class="btn" title="Rejeitar" style="background: var(--status-rejected); color: white; padding: 8px 12px; border-radius: 6px; font-size: 0.75rem;" onclick="openRejectModal(${req.id}, '${req.type}', false)"><i class="fas fa-times"></i> REJEITAR</button>
                     `;
                 }
                 
@@ -586,7 +586,7 @@
                         <td style="padding: 10px; border-bottom: 1px solid #333; color: #fff;">${req.action}</td>
                         <td style="padding: 10px; border-bottom: 1px solid #333; color: var(--text-muted);">${extraInfo || '-'}</td>
                         <td style="padding: 10px; border-bottom: 1px solid #333; color: var(--text-muted);">${req.date} ${req.time}</td>
-                        <td style="padding: 10px; border-bottom: 1px solid #333; display: flex; gap: 5px; justify-content: center; align-items: center;">${actionsHtml}</td>
+                        <td style="padding: 10px; border-bottom: 1px solid #333; display: flex; gap: 12px; justify-content: center; align-items: center;">${actionsHtml}</td>
                     </tr>
                 `;
             });
