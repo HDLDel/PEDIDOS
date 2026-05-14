@@ -256,6 +256,9 @@
             <a href="/admin/whatsapp" id="waStatusBtn" class="whatsapp-status-btn wa-off" style="text-decoration: none;">
                 <i class="fab fa-whatsapp"></i> <span>OFFLINE</span>
             </a>
+            <a href="/admin/botbot" id="bbStatusBtn" class="whatsapp-status-btn wa-off" style="text-decoration: none;">
+                <i class="fas fa-robot"></i> <span>BOTBOT</span>
+            </a>
             <a href="/admin/logout" style="color: var(--text-muted); text-decoration: none; font-size: 0.85rem; font-weight: 600;">
                 <i class="fas fa-sign-out-alt"></i> Sair do Painel
             </a>
@@ -364,42 +367,24 @@
         let checkStatusInterval = null;
 
         async function checkWaStatus() {
-            const res = await fetch('/api/whatsapp/status');
-            const data = await res.json();
-            const btn = document.getElementById('waStatusBtn');
-            const btnText = btn.querySelector('span');
-            const qrContainer = document.getElementById('waQrContainer');
-            
-            btn.className = 'whatsapp-status-btn ' + (data.status === 'ready' ? 'wa-on' : (data.status === 'qr' ? 'wa-qr' : 'wa-off'));
-            btnText.innerText = data.status.toUpperCase();
+            try {
+                const res = await fetch('/api/whatsapp/status');
+                const data = await res.json();
+                const btn = document.getElementById('waStatusBtn');
+                const btnText = btn.querySelector('span');
+                
+                btn.className = 'whatsapp-status-btn ' + (data.status === 'ready' ? 'wa-on' : (data.status === 'qr' ? 'wa-qr' : 'wa-off'));
+                btnText.innerText = 'WA LOCAL ' + data.status.toUpperCase();
 
-            if (data.status === 'qr' && data.qr) {
-                qrContainer.innerHTML = `<img src="${data.qr}" style="width: 250px;">`;
-                document.getElementById('waStatusText').innerText = "Escaneie o QR Code com seu WhatsApp";
-            } else if (data.status === 'ready') {
-                qrContainer.innerHTML = `<i class="fas fa-check-circle" style="font-size: 5rem; color: #10b981; padding: 20px;"></i>`;
-                document.getElementById('waStatusText').innerText = "Conectado e pronto!";
-            } else if (data.status === 'loading') {
-                qrContainer.innerHTML = `<p style="color: #000; padding: 20px;">Sincronizando mensagens...</p>`;
-            } else {
-                qrContainer.innerHTML = `<p style="color: #000; padding: 20px;">Iniciando navegador...</p>`;
+                const resBb = await fetch('/api/botbot/status');
+                const dataBb = await resBb.json();
+                const bbBtn = document.getElementById('bbStatusBtn');
+                const bbBtnText = bbBtn.querySelector('span');
+                bbBtn.className = 'whatsapp-status-btn ' + (dataBb.status === 'ready' ? 'wa-on' : 'wa-off');
+                bbBtnText.innerText = 'BOTBOT ' + dataBb.status.toUpperCase();
+            } catch (e) {
+                console.error("Erro ao verificar status das APIs:", e);
             }
-        }
-
-        async function openWaModal() {
-            document.getElementById('waModal').style.display = 'flex';
-            document.getElementById('waStatusText').innerText = "Iniciando motor do WhatsApp...";
-            
-            // Envia o sinal para o servidor iniciar o navegador
-            await fetch('/api/whatsapp/start', { method: 'POST' });
-            checkWaStatus();
-            if (checkStatusInterval) clearInterval(checkStatusInterval);
-            checkStatusInterval = setInterval(checkWaStatus, 3000); // Polling rápido (3s) para o QR Code
-        }
-
-        function closeWaModal() {
-            document.getElementById('waModal').style.display = 'none';
-            if (checkStatusInterval) clearInterval(checkStatusInterval);
         }
 
         setInterval(checkWaStatus, 5000); // Atualiza status a cada 5 segundos

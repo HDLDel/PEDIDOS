@@ -10,6 +10,7 @@ import { ResellerModel } from './models/ResellerModel.js';
 import { TmdbModel } from './models/TmdbModel.js';
 import { AdminModel } from './models/AdminModel.js';
 import { WhatsAppService } from './WhatsAppService.js';
+import { BotBotService } from './BotBotService.js';
 
 const app = express();
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
@@ -171,6 +172,11 @@ app.get('/admin/whatsapp', checkAdminAuth, async (req, res) => {
     res.render('admin/whatsapp');
 });
 
+// Rota para Conexão do BotBot
+app.get('/admin/botbot', checkAdminAuth, (req, res) => {
+    res.render('admin/botbot');
+});
+
 // Rota para Gestão de Revendedores
 app.get('/admin/resellers', checkAdminAuth, (req, res) => {
     const resellers = ResellerModel.getAll();
@@ -304,6 +310,15 @@ app.post('/api/requests/:id/status', checkAdminAuth, (req, res) => {
     const updated = RequestModel.updateStatus(id, status, rejectionReason);
     if (!updated) return res.status(404).json({ error: 'Pedido não encontrado' });
 
+    // LÓGICA DE BACKUP: Tenta BotBot primeiro, se falhar ou cair, o Local Assume!
+    const trySendNotification = async (reqData) => {
+        const bbSuccess = await BotBotService.sendStatusNotification(reqData);
+        if (!bbSuccess) {
+            console.log('⚠️ BotBot indisponível. Acionando Motor WhatsApp Local como backup...');
+            WhatsAppService.sendStatusNotification(reqData).catch(e => console.error("Erro Notificação Backup:", e));
+        }
+    };
+
     // SINCRONIZAÇÃO: Se for um conteúdo TMDB, atualiza todos os outros revendedores que pediram o mesmo
     const tmdbData = TmdbModel.getByRequestId(id);
     if (tmdbData && tmdbData.tmdb_id) {
@@ -317,11 +332,11 @@ app.post('/api/requests/:id/status', checkAdminAuth, (req, res) => {
 
         for (const sibling of siblings) {
             RequestModel.updateStatus(sibling.id, status, rejectionReason);
-            WhatsAppService.sendStatusNotification({ ...sibling, status, rejectionReason }).catch(e => console.error(e));
+            trySendNotification({ ...sibling, status, rejectionReason });
         }
     }
 
-    WhatsAppService.sendStatusNotification(updated).catch(e => console.error("Erro Notificação:", e));
+    trySendNotification(updated);
 
     res.json(updated);
 });
@@ -447,6 +462,12 @@ app.get('/api/tmdb/search', checkResellerAuth, async (req, res) => {
 // API - Status do WhatsApp
 app.get('/api/whatsapp/status', checkAdminAuth, async (req, res) => {
     const status = await WhatsAppService.getStatus();
+    res.json(status);
+});
+
+// API - Status do BotBot
+app.get('/api/botbot/status', checkAdminAuth, async (req, res) => {
+    const status = await BotBotService.getStatus();
     res.json(status);
 });
 
