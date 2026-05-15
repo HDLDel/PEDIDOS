@@ -86,6 +86,14 @@
             filter: brightness(1.2);
             box-shadow: 0 8px 25px rgba(229, 9, 20, 0.5);
         }
+        .btn-submit:disabled {
+            background: #444;
+            color: #888;
+            cursor: not-allowed;
+            box-shadow: none;
+            transform: none;
+            filter: none;
+        }
         .btn-cancel {
             flex: 1;
             background: #262626;
@@ -248,23 +256,23 @@
 
                 <div id="extraFields" class="form-row hidden">
                     <div class="form-group">
-                        <label>Temporada</label>
+                        <label>Temporada <span id="labelSeasonReq" class="hidden" style="color: var(--accent-red); font-size: 0.8rem; text-transform: lowercase;">(obrigatório)</span></label>
                         <input type="number" id="reqSeason" min="1" placeholder="Ex: 2" oninput="this.value = this.value.replace(/[^0-9]/g, '')">
                     </div>
                     <div class="form-group">
-                        <label>Episódio(s)</label>
+                        <label>Episódio(s) <span id="labelEpisodeReq" class="hidden" style="color: var(--accent-red); font-size: 0.8rem; text-transform: lowercase;">(obrigatório)</span></label>
                         <input type="number" id="reqEpisode" min="1" placeholder="Ex: 10" oninput="this.value = this.value.replace(/[^0-9]/g, '')">
                     </div>
                 </div>
 
                 <div id="errorField" class="form-group hidden">
-                    <label>Detalhes técnicos do erro</label>
+                    <label>Detalhes técnicos do erro <span style="color: var(--accent-red); font-size: 0.8rem; text-transform: lowercase;">(obrigatório, mín. 10 caracteres)</span></label>
                     <textarea id="reqDescription" placeholder="Descreva o erro (ex: travamento aos 10:30, tela preta, sem áudio...)"></textarea>
                 </div>
 
                 <div class="form-actions">
                     <button type="button" class="btn-cancel" onclick="resetForm()">Cancelar</button>
-                    <button type="submit" class="btn-submit">Enviar Solicitação</button>
+                    <button type="submit" class="btn-submit" disabled>Enviar Solicitação</button>
                 </div>
             </form>
         </section>
@@ -422,7 +430,40 @@
                 document.getElementById('reqSeason').value = '';
                 document.getElementById('reqEpisode').value = '';
             }
+
+            if (!isError) {
+                document.getElementById('reqDescription').value = '';
+            }
+
+            // Controle das labels de obrigatoriedade
+            document.getElementById('labelSeasonReq').classList.toggle('hidden', action !== 'season');
+            document.getElementById('labelEpisodeReq').classList.toggle('hidden', action !== 'episode');
+
+            validateForm();
         }
+
+        function validateForm() {
+            const action = document.getElementById('requestAction').value;
+            const btnSubmit = document.querySelector('.btn-submit');
+            let isValid = true;
+
+            if (action === 'error') {
+                const desc = document.getElementById('reqDescription').value.trim();
+                if (desc.length < 10) isValid = false;
+            } else if (action === 'season') {
+                const season = document.getElementById('reqSeason').value.trim();
+                if (season.length === 0) isValid = false;
+            } else if (action === 'episode') {
+                const episode = document.getElementById('reqEpisode').value.trim();
+                if (episode.length === 0) isValid = false;
+            }
+
+            btnSubmit.disabled = !isValid;
+        }
+
+        document.getElementById('reqDescription').addEventListener('input', validateForm);
+        document.getElementById('reqSeason').addEventListener('input', validateForm);
+        document.getElementById('reqEpisode').addEventListener('input', validateForm);
 
         function resetForm() {
             document.getElementById('requestForm').classList.add('hidden');
