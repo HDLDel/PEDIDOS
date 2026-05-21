@@ -254,12 +254,6 @@
             <article class="request-card">
               <div class="poster-container">
                 <img src="<%= req.poster %>" alt="<%= req.title %>" class="poster">
-                <% if (req.description) { %>
-                  <div class="badge-chat-indicator" style="position: absolute; top: 15px; right: 15px; background: #2563eb; color: white; padding: 4px 8px; border-radius: 6px; font-size: 11px; font-weight: 800; z-index: 10; border: 1px solid #3b82f6; cursor: pointer; display: flex; align-items: center; gap: 5px; box-shadow: 0 4px 10px rgba(37, 99, 235, 0.4);" 
-                       onclick="event.stopPropagation(); openChatModal('<%= encodeURIComponent(req.title) %>', '<%= encodeURIComponent(req.description) %>')">
-                      <i class="fas fa-comment-dots"></i> HISTÓRICO
-                  </div>
-                <% } %>
               </div>
               <div class="info">
                 <div class="title">
@@ -286,21 +280,28 @@
                             <div class="meta">📝 <%= req.action %>
                             </div>
                             <% if (req.rejectionReason) { %>
-                              <div class="meta" style="color: #ef4444; margin-top: 0.5rem;">
-                                ❌ <%= req.rejectionReason %>
+                              <div class="meta" style="color: <%= req.status === 'pending' ? '#f59e0b' : '#ef4444' %>; margin-top: 0.5rem; display: flex; align-items: flex-start; gap: 5px; font-weight: bold;">
+                                <span><%= req.status === 'pending' ? '⚠️ Nota do Admin:' : '❌ Motivo da Rejeição:' %></span>
+                                <span style="font-weight: normal; color: #fff;"><%= req.rejectionReason %></span>
                               </div>
-                              <% } %>
+                            <% } %>
                             <% if (req.description) { %>
                               <div class="meta" style="color: #9ca3af; font-size: 0.8rem; background: rgba(255,255,255,0.03); padding: 5px 8px; border-radius: 4px; margin-top: 0.25rem; border-left: 2px solid #3b82f6; white-space: pre-wrap; width: 100%;">
                                 💬 <strong>Obs / Explicação:</strong><br><%= req.description %>
                               </div>
-                              <% } %>
+                            <% } %>
                                 <span class="status-badge <%= req.status %>">
                                   <%= req.status==='pending' ? '⏳ Pendente' : req.status==='approved' ? '✅ Aprovado'
                                     : '❌ Rejeitado' %>
                                 </span>
+                                <% if (req.description) { %>
+                                  <button class="btn-solicitar" style="margin-top: 10px; background: rgba(37, 99, 235, 0.15); border: 1px solid #2563eb; color: #3b82f6; width: 100%; justify-content: center; font-size: 0.75rem; padding: 6px 12px; border-radius: 6px; cursor: pointer; display: inline-flex; align-items: center; gap: 5px;" 
+                                          onclick="openChatModal('<%= encodeURIComponent(req.title) %>', '<%= encodeURIComponent(req.description) %>')">
+                                    <i class="fas fa-comments"></i> Histórico de Conversa
+                                  </button>
+                                <% } %>
                                 <% if (req.status !== 'approved') { %>
-                                  <button class="btn-solicitar" style="margin-top: 10px; background: #2563eb; width: 100%; justify-content: center; font-size: 0.75rem; padding: 6px 12px; border-radius: 6px; border: none; cursor: pointer;" 
+                                  <button class="btn-solicitar" style="margin-top: 5px; background: #2563eb; width: 100%; justify-content: center; font-size: 0.75rem; padding: 6px 12px; border-radius: 6px; border: none; cursor: pointer;" 
                                           onclick="openExplanationModal(<%= req.id %>, '<%= encodeURIComponent(req.title) %>', '<%= encodeURIComponent(req.rejectionReason || '') %>')">
                                     💬 Responder / Explicar
                                   </button>
@@ -318,8 +319,8 @@
       <h3 style="color: #fff; margin-bottom: 15px; font-weight: 700; display: flex; align-items: center; gap: 10px;">💬 Explicar / Responder</h3>
       <p style="font-size: 0.9rem; color: #aaa; margin-bottom: 10px;"><strong>Pedido:</strong> <span id="explainModalTitle" style="color: #fff;"></span></p>
       
-      <div id="explainModalReasonContainer" style="background: rgba(239, 68, 68, 0.1); border: 1px solid rgba(239, 68, 68, 0.2); padding: 10px; border-radius: 6px; margin-bottom: 15px; font-size: 0.85rem; display: none;">
-        <strong style="color: #ef4444;">Nota do Admin:</strong> <span id="explainModalReason" style="color: #fff;"></span>
+      <div id="explainModalReasonContainer" style="background: rgba(245, 158, 11, 0.1); border: 1px solid rgba(245, 158, 11, 0.2); padding: 10px; border-radius: 6px; margin-bottom: 15px; font-size: 0.85rem; display: none;">
+        <strong style="color: #f59e0b;">Nota/Dúvida do Admin:</strong> <span id="explainModalReason" style="color: #fff;"></span>
       </div>
       
       <textarea id="explanationText" rows="6" style="width: 100%; background: #000; border: 1px solid #333; border-radius: 8px; color: #fff; padding: 12px; font-family: inherit; font-size: 0.9rem; margin-bottom: 20px; resize: vertical;" placeholder="Escreva aqui a sua explicação detalhada, resposta ou correção para o administrador..."></textarea>
