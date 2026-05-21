@@ -39,7 +39,7 @@ app.use(express.urlencoded({ extended: true }));
 
 // Configuração da sessão
 app.use(session({
-    secret: process.env.SESSION_SECRET || (function() { throw new Error('ERRO: SESSION_SECRET não configurado no .env'); })(), 
+    secret: process.env.SESSION_SECRET || (function () { throw new Error('ERRO: SESSION_SECRET não configurado no .env'); })(),
     resave: false,
     saveUninitialized: false,
     cookie: { secure: false } // Use 'true' em produção com HTTPS
@@ -55,10 +55,10 @@ app.use(express.static(path.join(process.cwd(), 'public')));
 const adminUsername = process.env.ADMIN_USERNAME;
 if (adminUsername && !AdminModel.getByUsername(adminUsername)) {
     console.log(`🌱 Criando usuário administrador padrão: ${adminUsername}...`);
-    AdminModel.create({ 
-        username: adminUsername, 
-        password: process.env.ADMIN_PASSWORD, 
-        name: process.env.ADMIN_NAME 
+    AdminModel.create({
+        username: adminUsername,
+        password: process.env.ADMIN_PASSWORD,
+        name: process.env.ADMIN_NAME
     });
 }
 
@@ -84,7 +84,7 @@ const migrateTable = (tableName) => {
         const pwd = record.password || '<SENHA>';
         // Verifica se a senha já possui o prefixo de um hash Bcrypt válido
         const isAlreadyHashed = /^\$2[ayb]\$.*/.test(pwd);
-        
+
         if (!isAlreadyHashed) {
             const hash = bcrypt.hashSync(pwd, 10);
             db.prepare(`UPDATE ${tableName} SET password = ? WHERE id = ?`).run(hash, record.id);
@@ -150,7 +150,7 @@ app.get('/admin/dashboard', checkAdminAuth, (req, res) => {
 
     requests.forEach(req => {
         const key = req.tmdb_id ? `tmdb-${req.tmdb_id}` : `manual-${req.type}-${req.title.toLowerCase()}`;
-        
+
         if (!groupedMap.has(key)) {
             req.subRequests = [];
             groupedMap.set(key, req);
@@ -190,7 +190,7 @@ app.get('/admin/botbot', checkAdminAuth, (req, res) => {
 // Rota para Gestão de Revendedores
 app.get('/admin/resellers', checkAdminAuth, (req, res) => {
     const resellers = ResellerModel.getAll();
-    
+
     // Enriquecer os dados dos revendedores com estatísticas de seus pedidos
     const resellersWithStats = resellers.map(r => {
         const requests = RequestModel.getByReseller(r.id);
@@ -230,7 +230,7 @@ app.get('/revenda/dashboard', checkResellerAuth, (req, res) => {
     res.render('revenda/dashboard', { reseller, requests, stats, error: req.query.error });
 });
 
-// API para o revendedor responder/explicar um pedido rejeitado ou pendente
+// API para o revendedor responder/explicar um pedido rejeitado ou pendente com histórico de auditoria
 app.post('/api/requests/:id/respond', checkResellerAuth, (req, res) => {
     const id = parseInt(req.params.id);
     const { explanation } = req.body;
@@ -244,18 +244,31 @@ app.post('/api/requests/:id/respond', checkResellerAuth, (req, res) => {
         return res.status(403).json({ error: 'Acesso negado' });
     }
     
-    // Montar nova descrição contendo a explicação do revendedor
-    let newDescription = explanation;
+    // Captura o motivo da rejeição anterior se existir para o histórico de auditoria
+    let rejectionPrefix = '';
+    if (request.rejectionReason) {
+        rejectionPrefix = `[Rejeitado pelo Admin - Motivo: ${request.rejectionReason}]`;
+    }
+    
+    // Montar nova descrição contendo o histórico de auditoria e a resposta do revendedor
+    let newDescription = '';
+    const timestamp = `${new Date().toLocaleDateString('pt-BR')} ${new Date().toLocaleTimeString('pt-BR')}`;
+    
     if (request.description) {
-        newDescription = `${request.description}\n\n[Resposta do Revendedor em ${new Date().toLocaleDateString('pt-BR')} ${new Date().toLocaleTimeString('pt-BR')}]:\n${explanation}`;
+        newDescription = request.description;
+        if (rejectionPrefix) {
+            newDescription += `\n\n${rejectionPrefix}`;
+        }
+        newDescription += `\n[Resposta do Revendedor em ${timestamp}]:\n${explanation}`;
     } else {
-        newDescription = `[Resposta do Revendedor em ${new Date().toLocaleDateString('pt-BR')} ${new Date().toLocaleTimeString('pt-BR')}]:\n${explanation}`;
+        newDescription = rejectionPrefix ? `${rejectionPrefix}\n` : '';
+        newDescription += `[Resposta do Revendedor em ${timestamp}]:\n${explanation}`;
     }
     
     try {
-        // Atualizar descrição
+        // Atualizar descrição no banco
         RequestModel.update(id, { description: newDescription });
-        // Mudar status de volta para pendente e limpar o motivo da rejeição
+        // Mudar status de volta para pendente e limpar o motivo de rejeição principal
         RequestModel.updateStatus(id, 'pending', null);
         
         res.json({ success: true });
@@ -322,7 +335,7 @@ app.get('/api/stats', checkAdminAuth, (req, res) => {
 app.get('/api/requests', checkAdminAuth, (req, res) => {
     const { status, category, search } = req.query;
     let requests;
-    
+
     if (search) {
         requests = RequestModel.search(search);
     } else if (status && status !== 'all') {
@@ -332,7 +345,7 @@ app.get('/api/requests', checkAdminAuth, (req, res) => {
     } else {
         requests = RequestModel.getAll();
     }
-    
+
     res.json(requests);
 });
 
@@ -350,7 +363,7 @@ app.post('/api/requests/:id/status', checkAdminAuth, (req, res) => {
     if (!['pending', 'approved', 'rejected'].includes(status)) {
         return res.status(400).json({ error: 'Status inválido' });
     }
-    
+
     const id = parseInt(req.params.id);
     const updated = RequestModel.updateStatus(id, status, rejectionReason);
     if (!updated) return res.status(404).json({ error: 'Pedido não encontrado' });
@@ -391,7 +404,7 @@ app.post('/api/requests/:id/status', checkAdminAuth, (req, res) => {
 // API - Criar novo pedido
 app.post('/api/requests', (req, res) => {
     let { tmdbId, title, type, action, season, episode, requestType, description, date, time, audioPreference } = req.body;
-    
+
     let resellerId;
 
     // Se houver sessão, usa o ID do revendedor logado
@@ -411,8 +424,8 @@ app.post('/api/requests', (req, res) => {
     const resellerRequests = RequestModel.getByReseller(resellerId);
     const pendingCount = resellerRequests.filter(r => r.status === 'pending').length;
     if (pendingCount >= 10 && requestType !== 'error') {
-        return res.status(403).json({ 
-            error: '⚠️ Limite atingido: Você possui 10 pedidos pendentes. No momento, só é permitido reportar erros.' 
+        return res.status(403).json({
+            error: '⚠️ Limite atingido: Você possui 10 pedidos pendentes. No momento, só é permitido reportar erros.'
         });
     }
 
@@ -428,7 +441,7 @@ app.post('/api/requests', (req, res) => {
             return res.status(409).json({ error: 'Você já possui uma solicitação pendente para este conteúdo.' });
         }
     }
-    
+
     // Mapeia o tipo de solicitação para um texto legível
     const actionMap = {
         'content': 'Adicionar ao catálogo',
@@ -455,7 +468,7 @@ app.post('/api/requests', (req, res) => {
 
     // Busca posters e dados do TMDB em segundo plano
     TmdbModel.fetchAndSave(request.id, title, type, tmdbId).catch(e => console.error("Erro TMDB:", e));
-    
+
     res.status(201).json(request);
 });
 
@@ -509,7 +522,7 @@ app.get('/api/resellers/:id', checkAdminAuth, (req, res) => {
 app.get('/api/tmdb/search', checkResellerAuth, async (req, res) => {
     const { query } = req.query;
     if (!query || query.length < 3) return res.status(400).json({ error: 'Busca inválida' });
-    
+
     const apiKey = process.env.TMDB_API_KEY;
     const url = `https://api.themoviedb.org/3/search/multi?api_key=${apiKey}&query=${encodeURIComponent(query)}&language=pt-BR`;
     const response = await fetch(url);
@@ -543,7 +556,7 @@ app.post('/api/notifications/resend-all', checkAdminAuth, async (req, res) => {
     }
 
     const requests = RequestModel.getAll().filter(r => r.status !== 'pending').slice(0, 50);
-    
+
     isResendingBackground = true;
 
     const trySendNotification = async (reqData) => {
@@ -557,7 +570,7 @@ app.post('/api/notifications/resend-all', checkAdminAuth, async (req, res) => {
         console.log(`🚀 Iniciando reenvio em lote de ${requests.length} notificações...`);
         for (const r of requests) {
             await trySendNotification(r);
-            await new Promise(resolve => setTimeout(resolve, 36000)); 
+            await new Promise(resolve => setTimeout(resolve, 36000));
         }
         console.log(`✅ Reenvio em lote finalizado!`);
         isResendingBackground = false;
