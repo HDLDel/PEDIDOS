@@ -626,6 +626,10 @@
                                             <% } %>
                                                 <% 
                                                     let hasChatHistory = req.description && (req.description.includes('[Rejeitado pelo Admin') || req.description.includes('[Resposta do Revendedor')); 
+                                                    let replyCount = 0;
+                                                    if (req.description) {
+                                                        replyCount = (req.description.match(/\[Resposta do Revendedor/g) || []).length;
+                                                    }
                                                 %>
                                                 <% if (req.description && !hasChatHistory) { %>
                                                     <div class="info-item" style="color: #3b82f6; font-size: 0.8rem; background: rgba(59, 130, 246, 0.05); padding: 6px 10px; border-radius: 6px; margin-top: 8px; border-left: 3px solid #3b82f6; white-space: pre-wrap; width: 100%; display: block; font-weight: normal;">
@@ -635,6 +639,11 @@
                                                 <div class="info-item"><i class="far fa-calendar-alt"></i>
                                                     <%= req.date %>
                                                 </div>
+                                                <% if (replyCount > 0) { %>
+                                                    <div class="info-item" style="color: <%= replyCount >= 2 ? '#ef4444' : '#f59e0b' %>; font-weight: bold; margin-top: 4px;">
+                                                        <i class="fas fa-history"></i> Contestações: <%= replyCount %>/2 <%= replyCount >= 2 ? '(Limite Atingido)' : '' %>
+                                                    </div>
+                                                <% } %>
                     </div>
 
                     <div class="card-actions">

@@ -238,6 +238,15 @@ app.post('/api/requests/:id/respond', checkResellerAuth, (req, res) => {
     // Obter o pedido
     const request = RequestModel.getById(id);
     if (!request) return res.status(404).json({ error: 'Pedido não encontrado' });
+
+    // Validar limite de contestações (Máximo: 2)
+    let replyCount = 0;
+    if (request.description) {
+        replyCount = (request.description.match(/\[Resposta do Revendedor/g) || []).length;
+    }
+    if (replyCount >= 2) {
+        return res.status(403).json({ error: 'Você já atingiu o limite de contestações para este pedido (Máximo: 2).' });
+    }
     
     // Validar se o pedido pertence ao revendedor autenticado
     if (request.reseller_id !== req.session.resellerId) {
