@@ -385,12 +385,24 @@
                             <i class="fas fa-list"></i> Histórico / Resolver
                         </button>
                     <% } %>
-                    <% if (req.status === 'pending') { %>
-                        <div class="btn-group" id="btnGroup-<%= req.id %>">
-                            <button class="btn btn-approve" onclick="updateStatus(<%= req.id %>, 'approved', null, true)"><%= allReqs.length > 1 ? 'Aprovar Todos' : 'Aprovar' %></button>
-                            <button class="btn btn-reject" onclick="openRejectModal(<%= req.id %>, '<%= req.type %>', true)"><%= allReqs.length > 1 ? 'Rejeitar Todos' : 'Rejeitar' %></button>
+                    <div class="btn-group-container" id="btnGroupContainer-<%= req.id %>" style="display: flex; flex-direction: column; gap: 8px; width: 100%;">
+                        <div class="btn-group" id="btnGroup-<%= req.id %>" style="display: grid; grid-template-columns: <%= req.status === 'pending' ? '1fr 1fr' : '1fr' %>; gap: 10px;">
+                            <% if (req.status !== 'approved') { %>
+                                <button class="btn btn-approve" onclick="updateStatus(<%= req.id %>, 'approved', null, true)"><%= allReqs.length > 1 ? 'Aprovar Todos' : 'Aprovar' %></button>
+                            <% } %>
+                            <% if (req.status !== 'rejected') { %>
+                                <button class="btn btn-reject" onclick="openRejectModal(<%= req.id %>, '<%= req.type %>', true)"><%= allReqs.length > 1 ? 'Rejeitar Todos' : 'Rejeitar' %></button>
+                            <% } %>
                         </div>
-                    <% } %>
+                        <% if (req.status !== 'pending') { %>
+                            <button class="btn" style="background: transparent; border-color: var(--status-pending); color: var(--status-pending); width: 100%;" onclick="updateStatus(<%= req.id %>, 'pending', null, true)">
+                                <i class="fas fa-undo"></i> Retornar para Pendente
+                            </button>
+                        <% } %>
+                        <button class="btn" style="background: rgba(220, 38, 38, 0.15); border: 1px solid #dc2626; color: #f87171; width: 100%; transition: 0.3s;" onmouseover="this.style.backgroundColor='#dc2626'; this.style.color='white';" onmouseout="this.style.backgroundColor='rgba(220, 38, 38, 0.15)'; this.style.color='#f87171';" onclick="deleteRequest(<%= req.id %>, true)">
+                            <i class="fas fa-trash-alt"></i> <%= allReqs.length > 1 ? 'Excluir Todos os Agrupados' : 'Excluir Pedido' %>
+                        </button>
+                    </div>
                 </div>
             </article>
         <% }); %>
@@ -572,13 +584,25 @@
                 if (req.audioPreference && req.requestType !== 'error') extraInfo += `🎤 ${req.audioPreference} `;
                 if (req.requestType === 'error') extraInfo += `<br>⚠️ ${req.description || 'Erro reportado'}`;
                 
-                let actionsHtml = `<span class="badge-status status-${req.status}" style="position: static; padding: 4px 6px; font-size: 0.65rem;">${req.status.toUpperCase()}</span>`;
-                if (req.status === 'pending') {
-                    actionsHtml = `
-                        <button class="btn" title="Aprovar" style="background: var(--status-approved); color: white; padding: 8px 12px; border-radius: 6px; font-size: 0.75rem;" onclick="updateStatus(${req.id}, 'approved', null, false)"><i class="fas fa-check"></i> APROVAR</button>
-                        <button class="btn" title="Rejeitar" style="background: var(--status-rejected); color: white; padding: 8px 12px; border-radius: 6px; font-size: 0.75rem;" onclick="openRejectModal(${req.id}, '${req.type}', false)"><i class="fas fa-times"></i> REJEITAR</button>
-                    `;
+                let actionsHtml = `
+                    <div style="display: flex; gap: 8px; align-items: center; justify-content: center; flex-wrap: wrap;">
+                        <span class="badge-status status-${req.status}" style="position: static; padding: 4px 6px; font-size: 0.65rem;">${req.status === 'pending' ? 'Pendente' : (req.status === 'approved' ? 'Aprovado' : 'Rejeitado')}</span>
+                `;
+                
+                if (req.status !== 'approved') {
+                    actionsHtml += `<button class="btn" title="Aprovar" style="background: var(--status-approved); color: white; padding: 6px 10px; border-radius: 6px; font-size: 0.7rem; border: none;" onclick="updateStatus(${req.id}, 'approved', null, false)"><i class="fas fa-check"></i></button>`;
                 }
+                if (req.status !== 'rejected') {
+                    actionsHtml += `<button class="btn" title="Rejeitar" style="background: var(--status-rejected); color: white; padding: 6px 10px; border-radius: 6px; font-size: 0.7rem; border: none;" onclick="openRejectModal(${req.id}, '${req.type}', false)"><i class="fas fa-times"></i></button>`;
+                }
+                if (req.status !== 'pending') {
+                    actionsHtml += `<button class="btn" title="Retornar para Pendente" style="background: transparent; border: 1px solid var(--status-pending); color: var(--status-pending); padding: 6px 10px; border-radius: 6px; font-size: 0.7rem;" onclick="updateStatus(${req.id}, 'pending', null, false)"><i class="fas fa-undo"></i></button>`;
+                }
+                
+                actionsHtml += `
+                        <button class="btn" title="Excluir Pedido" style="background: rgba(220, 38, 38, 0.15); border: 1px solid #dc2626; color: #f87171; padding: 6px 10px; border-radius: 6px; font-size: 0.7rem;" onclick="deleteRequest(${req.id}, false)"><i class="fas fa-trash-alt"></i></button>
+                    </div>
+                `;
                 
                 tbody.innerHTML += `
                     <tr>
@@ -684,6 +708,44 @@
                     }
                 } else {
                     alert('Erro ao atualizar status.');
+                }
+            } catch (error) {
+                console.error('Erro:', error);
+                alert('Falha na comunicação com o servidor.');
+            }
+        }
+
+        async function deleteRequest(id, syncAll = true) {
+            if (!confirm(syncAll ? 'Deseja realmente excluir este pedido e todos os seus agrupados permanentemente?' : 'Deseja realmente excluir este pedido individual permanentemente?')) return;
+
+            try {
+                let idsToDelete = [id];
+                if (syncAll) {
+                    const card = document.getElementById(`card-${id}`);
+                    if (card) {
+                        const detailsBtn = card.querySelector('[data-details]');
+                        if (detailsBtn) {
+                            const data = JSON.parse(decodeURIComponent(detailsBtn.dataset.details));
+                            idsToDelete = data.map(r => r.id);
+                        }
+                    }
+                }
+
+                let successCount = 0;
+                for (const deleteId of idsToDelete) {
+                    const response = await fetch(`/api/requests/${deleteId}`, {
+                        method: 'DELETE'
+                    });
+                    if (response.ok) {
+                        successCount++;
+                    }
+                }
+
+                if (successCount > 0) {
+                    alert('Pedido(s) excluído(s) com sucesso!');
+                    location.reload();
+                } else {
+                    alert('Erro ao excluir pedido(s).');
                 }
             } catch (error) {
                 console.error('Erro:', error);

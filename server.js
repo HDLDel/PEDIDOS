@@ -446,6 +446,17 @@ app.delete('/api/resellers/:id/requests', checkAdminAuth, (req, res) => {
     res.json({ success: true, changes: result.changes });
 });
 
+// API para Deletar Pedido Individual (Somente Admin)
+app.delete('/api/requests/:id', checkAdminAuth, (req, res) => {
+    const id = parseInt(req.params.id);
+    try {
+        const result = RequestModel.delete(id);
+        res.json({ success: result.changes > 0 });
+    } catch (e) {
+        res.status(500).json({ error: e.message });
+    }
+});
+
 // API para Editar Revendedor
 app.put('/api/resellers/:id', checkAdminAuth, (req, res) => {
     const { name, email, phone, whatsapp, password } = req.body;
