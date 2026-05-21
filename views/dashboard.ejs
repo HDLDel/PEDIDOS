@@ -620,19 +620,16 @@
                                             <%= req.whatsapp %>
                                         </div>
                                         <% if(req.rejectionReason) { %>
-                                            <div class="info-item"
-                                                style="color: <%= req.status === 'pending' ? '#f59e0b' : 'var(--status-rejected)' %>; font-weight: bold; margin-top: 5px; align-items: flex-start; white-space: pre-wrap;">
-                                                <i class="fas <%= req.status === 'pending' ? 'fa-comment-dots' : 'fa-exclamation-circle' %>" style="margin-top: 4px;"></i><span>
-                                                    <%= req.status === 'pending' ? 'Nota p/ Revendedor: ' : '' %><%= req.rejectionReason %>
-                                                </span>
+                                            <div class="info-item" style="color: <%= req.status === 'pending' ? '#f59e0b' : '#ef4444' %>; font-size: 0.8rem; background: <%= req.status === 'pending' ? 'rgba(245, 158, 11, 0.05)' : 'rgba(239, 68, 68, 0.05)' %>; padding: 6px 10px; border-radius: 6px; margin-top: 8px; border-left: 3px solid <%= req.status === 'pending' ? '#f59e0b' : '#ef4444' %>; white-space: pre-wrap; width: 100%; display: block; font-weight: normal;">
+                                                <i class="fas <%= req.status === 'pending' ? 'fa-comment-dots' : 'fa-exclamation-circle' %>" style="margin-right: 5px;"></i><strong><%= req.status === 'pending' ? 'Nota p/ Revendedor:' : 'Motivo da Rejeição:' %></strong><br><span style="color: #e2e8f0;"><%= req.rejectionReason %></span>
                                             </div>
                                             <% } %>
                                                 <% 
                                                     let hasChatHistory = req.description && (req.description.includes('[Rejeitado pelo Admin') || req.description.includes('[Resposta do Revendedor')); 
                                                 %>
                                                 <% if (req.description && !hasChatHistory) { %>
-                                                    <div class="info-item" style="color: #9ca3af; font-size: 0.8rem; background: rgba(255,255,255,0.03); padding: 6px 10px; border-radius: 6px; margin-top: 8px; border-left: 3px solid #3b82f6; white-space: pre-wrap; width: 100%; display: block;">
-                                                        <i class="fas fa-comment-dots" style="color: #3b82f6; margin-right: 5px;"></i><strong>Observação/Erro:</strong><br><span style="color: #e2e8f0;"><%= req.description %></span>
+                                                    <div class="info-item" style="color: #3b82f6; font-size: 0.8rem; background: rgba(59, 130, 246, 0.05); padding: 6px 10px; border-radius: 6px; margin-top: 8px; border-left: 3px solid #3b82f6; white-space: pre-wrap; width: 100%; display: block; font-weight: normal;">
+                                                        <i class="fas fa-comment-dots" style="margin-right: 5px;"></i><strong>Observação/Erro do Revendedor:</strong><br><span style="color: #e2e8f0;"><%= req.description %></span>
                                                     </div>
                                                 <% } %>
                                                 <div class="info-item"><i class="far fa-calendar-alt"></i>
