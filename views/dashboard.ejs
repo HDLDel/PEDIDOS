@@ -621,9 +621,9 @@
                                         </div>
                                         <% if(req.rejectionReason) { %>
                                             <div class="info-item"
-                                                style="color: var(--status-rejected); font-weight: bold; margin-top: 5px; align-items: flex-start; white-space: pre-wrap;">
-                                                <i class="fas fa-exclamation-circle" style="margin-top: 4px;"></i><span>
-                                                    <%= req.rejectionReason %>
+                                                style="color: <%= req.status === 'pending' ? '#f59e0b' : 'var(--status-rejected)' %>; font-weight: bold; margin-top: 5px; align-items: flex-start; white-space: pre-wrap;">
+                                                <i class="fas <%= req.status === 'pending' ? 'fa-comment-dots' : 'fa-exclamation-circle' %>" style="margin-top: 4px;"></i><span>
+                                                    <%= req.status === 'pending' ? 'Nota p/ Revendedor: ' : '' %><%= req.rejectionReason %>
                                                 </span>
                                             </div>
                                             <% } %>

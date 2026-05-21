@@ -285,11 +285,6 @@
                                 <span style="font-weight: normal; color: #fff;"><%= req.rejectionReason %></span>
                               </div>
                             <% } %>
-                            <% if (req.description) { %>
-                              <div class="meta" style="color: #9ca3af; font-size: 0.8rem; background: rgba(255,255,255,0.03); padding: 5px 8px; border-radius: 4px; margin-top: 0.25rem; border-left: 2px solid #3b82f6; white-space: pre-wrap; width: 100%;">
-                                💬 <strong>Obs / Explicação:</strong><br><%= req.description %>
-                              </div>
-                            <% } %>
                                 <span class="status-badge <%= req.status %>">
                                   <%= req.status==='pending' ? '⏳ Pendente' : req.status==='approved' ? '✅ Aprovado'
                                     : '❌ Rejeitado' %>
