@@ -555,6 +555,12 @@
                             <%= req.status==='pending' ? 'Pendente' : (req.status==='approved' ? 'Aprovado'
                                 : 'Rejeitado' ) %>
                         </span>
+                        <% if (req.description && req.description.includes('[Resposta do Revendedor')) { %>
+                            <div class="badge-chat-indicator" style="position: absolute; top: 15px; right: 15px; background: #2563eb; color: white; padding: 4px 8px; border-radius: 6px; font-size: 11px; font-weight: 800; z-index: 10; border: 1px solid #3b82f6; cursor: pointer; display: flex; align-items: center; gap: 5px; box-shadow: 0 4px 10px rgba(37, 99, 235, 0.4);" 
+                                 onclick="event.stopPropagation(); openChatModal('<%= encodeURIComponent(req.title) %>', '<%= encodeURIComponent(req.description) %>')">
+                                <i class="fas fa-comment-dots"></i> RESPOSTA
+                            </div>
+                        <% } %>
                         <% if (allReqs.length> 1) { %>
                             <div class="badge-grouped"
                                 style="position: absolute; top: 15px; left: 15px; background: rgba(59, 130, 246, 0.9); color: white; padding: 4px 8px; border-radius: 6px; font-size: 11px; font-weight: 800; z-index: 10; border: 1px solid #3b82f6;">
@@ -773,6 +779,23 @@
         </div>
     </div>
 
+    <!-- Modal de Histórico de Conversa (Chat) -->
+    <div id="chatModal" class="modal-overlay" style="z-index: 1100;">
+        <div class="modal-content" style="max-width: 500px; background: #0d0d0d; border: 1px solid #222; box-shadow: 0 10px 25px rgba(0,0,0,0.8);">
+            <h3 class="modal-header" style="display: flex; align-items: center; gap: 10px; border-bottom: 1px solid #222; padding-bottom: 15px;"><i class="fas fa-comments" style="color: #3b82f6;"></i> Histórico de Conversa</h3>
+            
+            <p style="font-size: 0.95rem; margin-bottom: 15px; color: #aaa;"><strong>Pedido:</strong> <span id="chatModalTitle" style="color: #fff; font-weight: bold;"></span></p>
+            
+            <div id="chatMessagesContainer" style="max-height: 300px; overflow-y: auto; display: flex; flex-direction: column; gap: 12px; padding: 10px; background: #050505; border-radius: 8px; border: 1px solid #1a1a1a;">
+                <!-- Mensagens injetadas dinamicamente -->
+            </div>
+            
+            <div class="modal-footer" style="margin-top: 1.5rem; border-top: 1px solid #222; padding-top: 15px; display: flex; justify-content: flex-end;">
+                <button class="btn" style="background: #333; color: #fff; padding: 10px 20px;" onclick="closeChatModal()">FECHAR</button>
+            </div>
+        </div>
+    </div>
+
     <button id="backToTop" class="back-to-top" title="Voltar ao topo">
         <i class="fas fa-chevron-up"></i>
     </button>
@@ -901,11 +924,18 @@
                 if (req.season) extraInfo += `T${req.season} `;
                 if (req.episode) extraInfo += `E${req.episode} `;
                 if (req.audioPreference && req.requestType !== 'error') extraInfo += `🎤 ${req.audioPreference} `;
-                if (req.requestType === 'error') extraInfo += `<br>⚠️ ${req.description || 'Erro reportado'}`;
+                if (req.description) extraInfo += `<br><span style="color: #bbb; font-size: 0.8rem;"><i class="far fa-comment-dots"></i> ${req.description}</span>`;
+                else if (req.requestType === 'error') extraInfo += `<br>⚠️ Erro reportado`;
 
                 let actionsHtml = `
                     <div style="display: flex; gap: 8px; align-items: center; justify-content: center;">
                         <span class="badge-status status-${req.status}" style="position: static; padding: 4px 6px; font-size: 0.65rem;">${req.status === 'pending' ? 'Pendente' : (req.status === 'approved' ? 'Aprovado' : 'Rejeitado')}</span>
+                        ${(req.description && req.description.includes('[Resposta do Revendedor')) ? `
+                        <button class="btn" style="background: #2563eb; color: #fff; padding: 6px 10px; border-radius: 6px; font-size: 0.7rem; border: none; cursor: pointer; display: flex; align-items: center; justify-content: center;" 
+                                onclick="openChatModal('${encodeURIComponent(req.title)}', '${encodeURIComponent(req.description)}')">
+                            <i class="fas fa-comment-dots"></i>
+                        </button>
+                        ` : ''}
                         <button class="btn" style="background: #222; border: 1px solid #444; color: #fff; padding: 6px 10px; border-radius: 6px; font-size: 0.7rem;" 
                                 onclick="openOptionsModal(${req.id}, '${req.type}', '${req.status}', '${encodeURIComponent(req.title)}', '${encodeURIComponent(req.reseller)}', false)">
                             <i class="fas fa-cog"></i>
@@ -1096,6 +1126,72 @@
 
         function closeOptionsModal() {
             document.getElementById('optionsModal').style.display = 'none';
+        }
+
+        function openChatModal(title, encodedDescription) {
+            const description = decodeURIComponent(encodedDescription);
+            document.getElementById('chatModalTitle').innerText = decodeURIComponent(title);
+            
+            const container = document.getElementById('chatMessagesContainer');
+            container.innerHTML = '';
+            
+            // Separar as mensagens por bloco de resposta
+            const blocks = description.split(/(?=\[Rejeitado pelo Admin|\[Resposta do Revendedor)/g);
+            
+            blocks.forEach(block => {
+                const trimmed = block.trim();
+                if (!trimmed) return;
+                
+                let isReseller = trimmed.startsWith('[Resposta do Revendedor');
+                let isRejection = trimmed.startsWith('[Rejeitado pelo Admin');
+                
+                let bubbleStyle = '';
+                let headerText = '';
+                let contentText = '';
+                
+                if (isReseller) {
+                    bubbleStyle = 'background: rgba(37, 99, 235, 0.15); border-left: 3px solid #2563eb; color: #e2e8f0; align-self: flex-end; width: 90%;';
+                    const match = trimmed.match(/\[Resposta do Revendedor em ([^\]]+)\]:\s*([\s\S]*)/);
+                    if (match) {
+                        headerText = `👤 Revendedor (${match[1]})`;
+                        contentText = match[2];
+                    } else {
+                        headerText = `👤 Resposta do Revendedor`;
+                        contentText = trimmed;
+                    }
+                } else if (isRejection) {
+                    bubbleStyle = 'background: rgba(239, 68, 68, 0.15); border-left: 3px solid #ef4444; color: #e2e8f0; align-self: flex-start; width: 90%;';
+                    const match = trimmed.match(/\[Rejeitado pelo Admin - Motivo: ([^\]]+)\]\s*([\s\S]*)/);
+                    if (match) {
+                        headerText = `🚨 Rejeição - Motivo: ${match[1]}`;
+                        contentText = match[2] || 'Sem detalhes adicionais.';
+                    } else {
+                        headerText = `🚨 Rejeitado pelo Admin`;
+                        contentText = trimmed;
+                    }
+                } else {
+                    bubbleStyle = 'background: rgba(255, 255, 255, 0.05); border-left: 3px solid #555; color: #ccc; align-self: flex-start; width: 90%;';
+                    headerText = `📝 Observações do Pedido`;
+                    contentText = trimmed;
+                }
+                
+                container.innerHTML += `
+                    <div style="padding: 10px 12px; border-radius: 8px; font-size: 0.85rem; word-break: break-word; line-height: 1.4; display: flex; flex-direction: column; gap: 4px; box-shadow: 0 2px 5px rgba(0,0,0,0.2); ${bubbleStyle}">
+                        <div style="font-weight: bold; font-size: 0.75rem; color: #fff; opacity: 0.9; margin-bottom: 2px;">${headerText}</div>
+                        <div style="white-space: pre-wrap;">${contentText}</div>
+                    </div>
+                `;
+            });
+            
+            if (container.innerHTML === '') {
+                container.innerHTML = '<div style="color: #666; text-align: center; font-size: 0.85rem; padding: 20px;">Nenhuma mensagem registrada.</div>';
+            }
+            
+            document.getElementById('chatModal').style.display = 'flex';
+        }
+
+        function closeChatModal() {
+            document.getElementById('chatModal').style.display = 'none';
         }
 
         function handleOptionsApprove() {
