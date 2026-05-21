@@ -230,6 +230,40 @@ app.get('/revenda/dashboard', checkResellerAuth, (req, res) => {
     res.render('revenda/dashboard', { reseller, requests, stats, error: req.query.error });
 });
 
+// API para o revendedor responder/explicar um pedido rejeitado ou pendente
+app.post('/api/requests/:id/respond', checkResellerAuth, (req, res) => {
+    const id = parseInt(req.params.id);
+    const { explanation } = req.body;
+    
+    // Obter o pedido
+    const request = RequestModel.getById(id);
+    if (!request) return res.status(404).json({ error: 'Pedido não encontrado' });
+    
+    // Validar se o pedido pertence ao revendedor autenticado
+    if (request.reseller_id !== req.session.resellerId) {
+        return res.status(403).json({ error: 'Acesso negado' });
+    }
+    
+    // Montar nova descrição contendo a explicação do revendedor
+    let newDescription = explanation;
+    if (request.description) {
+        newDescription = `${request.description}\n\n[Resposta do Revendedor em ${new Date().toLocaleDateString('pt-BR')} ${new Date().toLocaleTimeString('pt-BR')}]:\n${explanation}`;
+    } else {
+        newDescription = `[Resposta do Revendedor em ${new Date().toLocaleDateString('pt-BR')} ${new Date().toLocaleTimeString('pt-BR')}]:\n${explanation}`;
+    }
+    
+    try {
+        // Atualizar descrição
+        RequestModel.update(id, { description: newDescription });
+        // Mudar status de volta para pendente e limpar o motivo da rejeição
+        RequestModel.updateStatus(id, 'pending', null);
+        
+        res.json({ success: true });
+    } catch (e) {
+        res.status(500).json({ error: e.message });
+    }
+});
+
 // Telas de Solicitação
 app.get('/revenda/solicitar', checkResellerAuth, (req, res) => {
     const resellerId = req.session.resellerId;

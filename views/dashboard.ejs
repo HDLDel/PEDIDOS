@@ -385,24 +385,17 @@
                             <i class="fas fa-list"></i> Histórico / Resolver
                         </button>
                     <% } %>
-                    <div class="btn-group-container" id="btnGroupContainer-<%= req.id %>" style="display: flex; flex-direction: column; gap: 8px; width: 100%;">
-                        <div class="btn-group" id="btnGroup-<%= req.id %>" style="display: grid; grid-template-columns: <%= req.status === 'pending' ? '1fr 1fr' : '1fr' %>; gap: 10px;">
-                            <% if (req.status !== 'approved') { %>
-                                <button class="btn btn-approve" onclick="updateStatus(<%= req.id %>, 'approved', null, true)"><%= allReqs.length > 1 ? 'Aprovar Todos' : 'Aprovar' %></button>
-                            <% } %>
-                            <% if (req.status !== 'rejected') { %>
-                                <button class="btn btn-reject" onclick="openRejectModal(<%= req.id %>, '<%= req.type %>', true)"><%= allReqs.length > 1 ? 'Rejeitar Todos' : 'Rejeitar' %></button>
-                            <% } %>
+                    <% if (req.status === 'pending') { %>
+                        <div class="btn-group" id="btnGroup-<%= req.id %>" style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px; width: 100%;">
+                            <button class="btn btn-approve" onclick="updateStatus(<%= req.id %>, 'approved', null, true)"><%= allReqs.length > 1 ? 'Aprovar Todos' : 'Aprovar' %></button>
+                            <button class="btn btn-reject" onclick="openRejectModal(<%= req.id %>, '<%= req.type %>', true)"><%= allReqs.length > 1 ? 'Rejeitar Todos' : 'Rejeitar' %></button>
                         </div>
-                        <% if (req.status !== 'pending') { %>
-                            <button class="btn" style="background: transparent; border-color: var(--status-pending); color: var(--status-pending); width: 100%;" onclick="updateStatus(<%= req.id %>, 'pending', null, true)">
-                                <i class="fas fa-undo"></i> Retornar para Pendente
-                            </button>
-                        <% } %>
-                        <button class="btn" style="background: rgba(220, 38, 38, 0.15); border: 1px solid #dc2626; color: #f87171; width: 100%; transition: 0.3s;" onmouseover="this.style.backgroundColor='#dc2626'; this.style.color='white';" onmouseout="this.style.backgroundColor='rgba(220, 38, 38, 0.15)'; this.style.color='#f87171';" onclick="deleteRequest(<%= req.id %>, true)">
-                            <i class="fas fa-trash-alt"></i> <%= allReqs.length > 1 ? 'Excluir Todos os Agrupados' : 'Excluir Pedido' %>
+                    <% } else { %>
+                        <button class="btn" style="background: var(--bg-main); border: 1px solid var(--border); color: var(--text-primary); width: 100%;" 
+                                onclick="openOptionsModal(<%= req.id %>, '<%= req.type %>', '<%= req.status %>', '<%= encodeURIComponent(req.title) %>', '<%= encodeURIComponent(req.reseller) %>', true)">
+                            <i class="fas fa-cog"></i> Opções do Pedido
                         </button>
-                    </div>
+                    <% } %>
                 </div>
             </article>
         <% }); %>
@@ -450,6 +443,41 @@
             </div>
             <div class="modal-footer">
                 <button class="btn" style="background: #333; color: #fff;" onclick="closeDetailsModal()">FECHAR</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal de Opções Unificado -->
+    <div id="optionsModal" class="modal-overlay">
+        <div class="modal-content" style="max-width: 450px;">
+            <h3 class="modal-header" id="optionsModalHeader" style="display: flex; align-items: center; gap: 10px;"><i class="fas fa-cog"></i> Opções do Pedido</h3>
+            
+            <div style="background: #0d0d0d; border: 1px solid var(--border); padding: 15px; border-radius: 8px; margin-bottom: 1.5rem;">
+                <p style="font-size: 0.95rem; margin-bottom: 8px;"><strong>Título:</strong> <span id="optionsModalTitle" style="color: #fff;"></span></p>
+                <p style="font-size: 0.95rem; margin-bottom: 8px;"><strong>Revenda:</strong> <span id="optionsModalReseller" style="color: #fff;"></span></p>
+                <p style="font-size: 0.95rem; display: flex; align-items: center; gap: 10px;">
+                    <strong>Status:</strong> 
+                    <span id="optionsModalStatusBadge" class="badge-status" style="position: static; padding: 4px 8px; font-size: 0.7rem;"></span>
+                </p>
+            </div>
+            
+            <div style="display: flex; flex-direction: column; gap: 10px;">
+                <button id="optionsBtnApprove" class="btn btn-approve" style="width: 100%; padding: 12px; font-size: 0.85rem;" onclick="handleOptionsApprove()">
+                    <i class="fas fa-check"></i> Aprovar Pedido
+                </button>
+                <button id="optionsBtnReject" class="btn btn-reject" style="width: 100%; padding: 12px; font-size: 0.85rem;" onclick="handleOptionsReject()">
+                    <i class="fas fa-times"></i> Rejeitar Pedido
+                </button>
+                <button id="optionsBtnPending" class="btn" style="background: transparent; border: 1px solid var(--status-pending); color: var(--status-pending); width: 100%; padding: 12px; font-size: 0.85rem;" onclick="handleOptionsPending()">
+                    <i class="fas fa-undo"></i> Retornar para Pendente
+                </button>
+                <button id="optionsBtnDelete" class="btn" style="background: rgba(220, 38, 38, 0.15); border: 1px solid #dc2626; color: #f87171; width: 100%; padding: 12px; font-size: 0.85rem; transition: 0.3s;" onmouseover="this.style.backgroundColor='#dc2626'; this.style.color='white';" onmouseout="this.style.backgroundColor='rgba(220, 38, 38, 0.15)'; this.style.color='#f87171';" onclick="handleOptionsDelete()">
+                    <i class="fas fa-trash-alt"></i> Excluir Pedido
+                </button>
+            </div>
+            
+            <div class="modal-footer" style="margin-top: 1.5rem; display: flex; justify-content: flex-end;">
+                <button class="btn" style="background: #333; color: #fff; padding: 10px 20px;" onclick="closeOptionsModal()">FECHAR</button>
             </div>
         </div>
     </div>
@@ -585,22 +613,12 @@
                 if (req.requestType === 'error') extraInfo += `<br>⚠️ ${req.description || 'Erro reportado'}`;
                 
                 let actionsHtml = `
-                    <div style="display: flex; gap: 8px; align-items: center; justify-content: center; flex-wrap: wrap;">
+                    <div style="display: flex; gap: 8px; align-items: center; justify-content: center;">
                         <span class="badge-status status-${req.status}" style="position: static; padding: 4px 6px; font-size: 0.65rem;">${req.status === 'pending' ? 'Pendente' : (req.status === 'approved' ? 'Aprovado' : 'Rejeitado')}</span>
-                `;
-                
-                if (req.status !== 'approved') {
-                    actionsHtml += `<button class="btn" title="Aprovar" style="background: var(--status-approved); color: white; padding: 6px 10px; border-radius: 6px; font-size: 0.7rem; border: none;" onclick="updateStatus(${req.id}, 'approved', null, false)"><i class="fas fa-check"></i></button>`;
-                }
-                if (req.status !== 'rejected') {
-                    actionsHtml += `<button class="btn" title="Rejeitar" style="background: var(--status-rejected); color: white; padding: 6px 10px; border-radius: 6px; font-size: 0.7rem; border: none;" onclick="openRejectModal(${req.id}, '${req.type}', false)"><i class="fas fa-times"></i></button>`;
-                }
-                if (req.status !== 'pending') {
-                    actionsHtml += `<button class="btn" title="Retornar para Pendente" style="background: transparent; border: 1px solid var(--status-pending); color: var(--status-pending); padding: 6px 10px; border-radius: 6px; font-size: 0.7rem;" onclick="updateStatus(${req.id}, 'pending', null, false)"><i class="fas fa-undo"></i></button>`;
-                }
-                
-                actionsHtml += `
-                        <button class="btn" title="Excluir Pedido" style="background: rgba(220, 38, 38, 0.15); border: 1px solid #dc2626; color: #f87171; padding: 6px 10px; border-radius: 6px; font-size: 0.7rem;" onclick="deleteRequest(${req.id}, false)"><i class="fas fa-trash-alt"></i></button>
+                        <button class="btn" style="background: #222; border: 1px solid #444; color: #fff; padding: 6px 10px; border-radius: 6px; font-size: 0.7rem;" 
+                                onclick="openOptionsModal(${req.id}, '${req.type}', '${req.status}', '${encodeURIComponent(req.title)}', '${encodeURIComponent(req.reseller)}', false)">
+                            <i class="fas fa-cog"></i>
+                        </button>
                     </div>
                 `;
                 
@@ -751,6 +769,62 @@
                 console.error('Erro:', error);
                 alert('Falha na comunicação com o servidor.');
             }
+        }
+
+        let optionsRequestId = null;
+        let optionsRequestType = null;
+        let optionsRequestStatus = null;
+        let optionsSyncAll = true;
+
+        function openOptionsModal(id, type, status, title, reseller, syncAll = true) {
+            optionsRequestId = id;
+            optionsRequestType = type;
+            optionsRequestStatus = status;
+            optionsSyncAll = syncAll;
+
+            // Set content details
+            document.getElementById('optionsModalTitle').innerText = decodeURIComponent(title);
+            document.getElementById('optionsModalReseller').innerText = decodeURIComponent(reseller);
+            
+            // Configure status badge
+            const badge = document.getElementById('optionsModalStatusBadge');
+            badge.className = `badge-status status-${status}`;
+            badge.innerText = status === 'pending' ? 'Pendente' : (status === 'approved' ? 'Aprovado' : 'Rejeitado');
+
+            // Configure actions visibility
+            document.getElementById('optionsBtnApprove').style.display = status === 'approved' ? 'none' : 'flex';
+            document.getElementById('optionsBtnReject').style.display = status === 'rejected' ? 'none' : 'flex';
+            document.getElementById('optionsBtnPending').style.display = status === 'pending' ? 'none' : 'flex';
+            
+            // Delete button text
+            const deleteBtn = document.getElementById('optionsBtnDelete');
+            deleteBtn.innerHTML = syncAll ? '<i class="fas fa-trash-alt"></i> Excluir Pedido e Agrupados' : '<i class="fas fa-trash-alt"></i> Excluir Pedido';
+
+            document.getElementById('optionsModal').style.display = 'flex';
+        }
+
+        function closeOptionsModal() {
+            document.getElementById('optionsModal').style.display = 'none';
+        }
+
+        function handleOptionsApprove() {
+            closeOptionsModal();
+            updateStatus(optionsRequestId, 'approved', null, optionsSyncAll);
+        }
+
+        function handleOptionsReject() {
+            closeOptionsModal();
+            openRejectModal(optionsRequestId, optionsRequestType, optionsSyncAll);
+        }
+
+        function handleOptionsPending() {
+            closeOptionsModal();
+            updateStatus(optionsRequestId, 'pending', null, optionsSyncAll);
+        }
+
+        function handleOptionsDelete() {
+            closeOptionsModal();
+            deleteRequest(optionsRequestId, optionsSyncAll);
         }
 
         // Lógica do Botão Voltar ao Topo
