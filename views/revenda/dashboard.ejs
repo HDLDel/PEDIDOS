@@ -285,11 +285,19 @@
                                 <span style="font-weight: normal; color: #fff;"><%= req.rejectionReason %></span>
                               </div>
                             <% } %>
+                            <% 
+                              let hasChatHistory = req.description && (req.description.includes('[Rejeitado pelo Admin') || req.description.includes('[Resposta do Revendedor')); 
+                            %>
+                            <% if (req.description && !hasChatHistory) { %>
+                              <div class="meta" style="color: #9ca3af; font-size: 0.8rem; background: rgba(255,255,255,0.03); padding: 6px 10px; border-radius: 6px; margin-top: 8px; border-left: 3px solid #3b82f6; white-space: pre-wrap; width: 100%; display: block; font-weight: normal; text-align: left;">
+                                <i class="fas fa-comment-dots" style="color: #3b82f6; margin-right: 5px;"></i><strong>Observação/Erro:</strong><br><span style="color: #e2e8f0;"><%= req.description %></span>
+                              </div>
+                            <% } %>
                                 <span class="status-badge <%= req.status %>">
                                   <%= req.status==='pending' ? '⏳ Pendente' : req.status==='approved' ? '✅ Aprovado'
                                     : '❌ Rejeitado' %>
                                 </span>
-                                <% if (req.description) { %>
+                                <% if (hasChatHistory) { %>
                                   <button class="btn-solicitar" style="margin-top: 10px; background: rgba(37, 99, 235, 0.15); border: 1px solid #2563eb; color: #3b82f6; width: 100%; justify-content: center; font-size: 0.75rem; padding: 6px 12px; border-radius: 6px; cursor: pointer; display: inline-flex; align-items: center; gap: 5px;" 
                                           onclick="openChatModal('<%= encodeURIComponent(req.title) %>', '<%= encodeURIComponent(req.description) %>')">
                                     <i class="fas fa-comments"></i> Histórico de Conversa

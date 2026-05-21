@@ -627,13 +627,21 @@
                                                 </span>
                                             </div>
                                             <% } %>
+                                                <% 
+                                                    let hasChatHistory = req.description && (req.description.includes('[Rejeitado pelo Admin') || req.description.includes('[Resposta do Revendedor')); 
+                                                %>
+                                                <% if (req.description && !hasChatHistory) { %>
+                                                    <div class="info-item" style="color: #9ca3af; font-size: 0.8rem; background: rgba(255,255,255,0.03); padding: 6px 10px; border-radius: 6px; margin-top: 8px; border-left: 3px solid #3b82f6; white-space: pre-wrap; width: 100%; display: block;">
+                                                        <i class="fas fa-comment-dots" style="color: #3b82f6; margin-right: 5px;"></i><strong>Observação/Erro:</strong><br><span style="color: #e2e8f0;"><%= req.description %></span>
+                                                    </div>
+                                                <% } %>
                                                 <div class="info-item"><i class="far fa-calendar-alt"></i>
                                                     <%= req.date %>
                                                 </div>
                     </div>
 
                     <div class="card-actions">
-                        <% if (req.description) { %>
+                        <% if (hasChatHistory) { %>
                             <button class="btn"
                                 style="background: rgba(37, 99, 235, 0.15); border: 1px solid #2563eb; color: #3b82f6; margin-bottom: 8px; width: 100%; display: flex; align-items: center; justify-content: center; gap: 8px;"
                                 onclick="openChatModal('<%= encodeURIComponent(req.title) %>', '<%= encodeURIComponent(req.description) %>')">
