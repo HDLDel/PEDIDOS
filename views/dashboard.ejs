@@ -619,16 +619,20 @@
                                             <i class="fab fa-whatsapp"></i>
                                             <%= req.whatsapp %>
                                         </div>
-                                        <% if(req.rejectionReason) { %>
-                                            <div class="info-item" style="color: <%= req.status === 'pending' ? '#f59e0b' : '#ef4444' %>; font-size: 0.8rem; background: <%= req.status === 'pending' ? 'rgba(245, 158, 11, 0.05)' : 'rgba(239, 68, 68, 0.05)' %>; padding: 6px 10px; border-radius: 6px; margin-top: 8px; border-left: 3px solid <%= req.status === 'pending' ? '#f59e0b' : '#ef4444' %>; white-space: pre-wrap; width: 100%; display: block; font-weight: normal;">
-                                                <i class="fas <%= req.status === 'pending' ? 'fa-comment-dots' : 'fa-exclamation-circle' %>" style="margin-right: 5px;"></i><strong><%= req.status === 'pending' ? 'Nota p/ Revendedor:' : 'Motivo da Rejeição:' %></strong><br><span style="color: #e2e8f0;"><%= req.rejectionReason %></span>
+                                        <% if(req.rejectionReason && req.status === 'pending') { %>
+                                            <div class="info-item" style="color: #f59e0b; font-size: 0.8rem; background: rgba(245, 158, 11, 0.05); padding: 6px 10px; border-radius: 6px; margin-top: 8px; border-left: 3px solid #f59e0b; white-space: pre-wrap; width: 100%; display: block; font-weight: normal;">
+                                                <i class="fas fa-comment-dots" style="margin-right: 5px;"></i><strong>Nota p/ Revendedor:</strong><br><span style="color: #e2e8f0;"><%= req.rejectionReason %></span>
                                             </div>
-                                            <% } %>
+                                        <% } %>
                                                 <% 
-                                                    let hasChatHistory = req.description && (req.description.includes('[Rejeitado pelo Admin') || req.description.includes('[Resposta do Revendedor')); 
+                                                    let hasChatHistory = req.rejectionReason || (req.description && (req.description.includes('[Rejeitado pelo Admin') || req.description.includes('[Resposta do Revendedor'))); 
                                                     let replyCount = 0;
                                                     if (req.description) {
                                                         replyCount = (req.description.match(/\[Resposta do Revendedor/g) || []).length;
+                                                    }
+                                                    let chatDescription = req.description || '';
+                                                    if (req.rejectionReason && !chatDescription.includes('[Rejeitado pelo Admin')) {
+                                                        chatDescription = (chatDescription ? chatDescription + '\n' : '') + `[Rejeitado pelo Admin - Motivo: ${req.rejectionReason}]`;
                                                     }
                                                 %>
                                                 <% if (req.description && !hasChatHistory) { %>
@@ -650,17 +654,17 @@
                         <% if (hasChatHistory) { %>
                             <button class="btn"
                                 style="background: rgba(37, 99, 235, 0.15); border: 1px solid #2563eb; color: #3b82f6; margin-bottom: 8px; width: 100%; display: flex; align-items: center; justify-content: center; gap: 8px;"
-                                onclick="openChatModal('<%= encodeURIComponent(req.title) %>', '<%= encodeURIComponent(req.description) %>')">
+                                onclick="openChatModal('<%= encodeURIComponent(req.title).replace(/'/g, "%27") %>', '<%= encodeURIComponent(chatDescription).replace(/'/g, "%27") %>')">
                                 <i class="fas fa-comments"></i> Conversa / Histórico
                             </button>
                         <% } %>
                         <div style="display: flex; gap: 5px; margin-bottom: 5px;">
                             <button class="btn btn-tmdb"
-                                onclick="window.open('https://www.themoviedb.org/search?query=<%= encodeURIComponent(req.title) %>', '_blank')">
+                                onclick="window.open('https://www.themoviedb.org/search?query=<%= encodeURIComponent(req.title).replace(/'/g, "%27") %>', '_blank')">
                                 <i class="fas fa-search"></i> TMDB
                             </button>
                             <button class="btn btn-justwatch"
-                                onclick="window.open('https://www.justwatch.com/br/busca?q=<%= encodeURIComponent(req.title) %>', '_blank')">
+                                onclick="window.open('https://www.justwatch.com/br/busca?q=<%= encodeURIComponent(req.title).replace(/'/g, "%27") %>', '_blank')">
                                 <i class="fas fa-play"></i> JW
                             </button>
                         </div>
@@ -687,7 +691,7 @@
                                     <% } else { %>
                                         <button class="btn"
                                             style="background: var(--bg-main); border: 1px solid var(--border); color: var(--text-primary); width: 100%;"
-                                            onclick="openOptionsModal(<%= req.id %>, '<%= req.type %>', '<%= req.status %>', '<%= encodeURIComponent(req.title) %>', '<%= encodeURIComponent(req.reseller) %>', true)">
+                                            onclick="openOptionsModal(<%= req.id %>, '<%= req.type %>', '<%= req.status %>', '<%= encodeURIComponent(req.title).replace(/'/g, "%27") %>', '<%= encodeURIComponent(req.reseller).replace(/'/g, "%27") %>', true)">
                                             <i class="fas fa-cog"></i> Opções do Pedido
                                         </button>
                                         <% } %>
@@ -947,14 +951,28 @@
             tbody.innerHTML = '';
 
             data.forEach(req => {
+                let cleanDesc = req.description || '';
+                if (cleanDesc && (cleanDesc.includes('[Rejeitado pelo Admin') || cleanDesc.includes('[Resposta do Revendedor'))) {
+                    const idx = cleanDesc.search(/\[Rejeitado pelo Admin|\[Resposta do Revendedor/);
+                    if (idx !== -1) {
+                        cleanDesc = cleanDesc.substring(0, idx).trim();
+                    }
+                }
+
                 let extraInfo = '';
                 if (req.season) extraInfo += `T${req.season} `;
                 if (req.episode) extraInfo += `E${req.episode} `;
                 if (req.audioPreference && req.requestType !== 'error') extraInfo += `🎤 ${req.audioPreference} `;
-                if (req.description) extraInfo += `<br><span style="color: #bbb; font-size: 0.8rem;"><i class="far fa-comment-dots"></i> ${req.description}</span>`;
+                if (cleanDesc) extraInfo += `<br><span style="color: #bbb; font-size: 0.8rem;"><i class="far fa-comment-dots"></i> ${cleanDesc}</span>`;
                 else if (req.requestType === 'error') extraInfo += `<br>⚠️ Erro reportado`;
 
                 let actionsHtml = '';
+                const hasChat = req.rejectionReason || (req.description && (req.description.includes('[Rejeitado pelo Admin') || req.description.includes('[Resposta do Revendedor')));
+                let chatDesc = req.description || '';
+                if (req.rejectionReason && !chatDesc.includes('[Rejeitado pelo Admin')) {
+                    chatDesc = (chatDesc ? chatDesc + '\n' : '') + `[Rejeitado pelo Admin - Motivo: ${req.rejectionReason}]`;
+                }
+
                 if (req.status === 'pending') {
                     actionsHtml = `
                         <div style="display: flex; gap: 8px; align-items: center; justify-content: center; width: 100%;">
@@ -970,18 +988,18 @@
                                     onclick="openRejectModal(${req.id}, '${req.type}', false)">
                                 <i class="fas fa-times"></i> Rejeitar
                             </button>
-                            ${(req.description && req.description.includes('[Resposta do Revendedor')) ? `
+                            ${hasChat ? `
                             <button class="btn" style="background: rgba(37, 99, 235, 0.15); border: 1px solid #2563eb; color: #3b82f6; padding: 6px 10px; border-radius: 6px; font-size: 0.75rem; cursor: pointer; display: flex; align-items: center; justify-content: center; transition: 0.2s;" 
                                     onmouseover="this.style.background='#2563eb'; this.style.color='white';"
                                     onmouseout="this.style.background='rgba(37, 99, 235, 0.15)'; this.style.color='#3b82f6';"
-                                    onclick="openChatModal('${encodeURIComponent(req.title)}', '${encodeURIComponent(req.description)}')">
+                                    onclick="openChatModal('${encodeURIComponent(req.title).replace(/'/g, "%27")}', '${encodeURIComponent(chatDesc).replace(/'/g, "%27")}')">
                                 <i class="fas fa-comment-dots"></i>
                             </button>
                             ` : ''}
                             <button class="btn" style="background: #222; border: 1px solid #444; color: #fff; padding: 6px 10px; border-radius: 6px; font-size: 0.75rem; cursor: pointer; transition: 0.2s;" 
                                     onmouseover="this.style.background='#333';"
                                     onmouseout="this.style.background='#222';"
-                                    onclick="openOptionsModal(${req.id}, '${req.type}', '${req.status}', '${encodeURIComponent(req.title)}', '${encodeURIComponent(req.reseller)}', false)">
+                                    onclick="openOptionsModal(${req.id}, '${req.type}', '${req.status}', '${encodeURIComponent(req.title).replace(/'/g, "%27")}', '${encodeURIComponent(req.reseller).replace(/'/g, "%27")}', false)">
                                 <i class="fas fa-cog"></i>
                             </button>
                         </div>
@@ -991,18 +1009,18 @@
                     actionsHtml = `
                         <div style="display: flex; gap: 8px; align-items: center; justify-content: center; width: 100%;">
                             <span class="badge-status status-${req.status}" style="position: static; padding: 5px 8px; font-size: 0.75rem; font-weight: 700; text-transform: uppercase;">${badgeText}</span>
-                            ${(req.description && req.description.includes('[Resposta do Revendedor')) ? `
+                            ${hasChat ? `
                             <button class="btn" style="background: rgba(37, 99, 235, 0.15); border: 1px solid #2563eb; color: #3b82f6; padding: 6px 10px; border-radius: 6px; font-size: 0.75rem; cursor: pointer; display: flex; align-items: center; justify-content: center; transition: 0.2s;" 
                                     onmouseover="this.style.background='#2563eb'; this.style.color='white';"
                                     onmouseout="this.style.background='rgba(37, 99, 235, 0.15)'; this.style.color='#3b82f6';"
-                                    onclick="openChatModal('${encodeURIComponent(req.title)}', '${encodeURIComponent(req.description)}')">
+                                    onclick="openChatModal('${encodeURIComponent(req.title).replace(/'/g, "%27")}', '${encodeURIComponent(chatDesc).replace(/'/g, "%27")}')">
                                 <i class="fas fa-comment-dots"></i>
                             </button>
                             ` : ''}
                             <button class="btn" style="background: #222; border: 1px solid #444; color: #fff; padding: 6px 10px; border-radius: 6px; font-size: 0.75rem; cursor: pointer; transition: 0.2s;" 
                                     onmouseover="this.style.background='#333';"
                                     onmouseout="this.style.background='#222';"
-                                    onclick="openOptionsModal(${req.id}, '${req.type}', '${req.status}', '${encodeURIComponent(req.title)}', '${encodeURIComponent(req.reseller)}', false)">
+                                    onclick="openOptionsModal(${req.id}, '${req.type}', '${req.status}', '${encodeURIComponent(req.title).replace(/'/g, "%27")}', '${encodeURIComponent(req.reseller).replace(/'/g, "%27")}', false)">
                                 <i class="fas fa-cog"></i>
                             </button>
                         </div>
