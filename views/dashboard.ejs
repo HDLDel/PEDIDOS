@@ -676,12 +676,12 @@
                                     <div class="btn-group" id="btnGroup-<%= req.id %>"
                                         style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px; width: 100%;">
                                         <button class="btn btn-approve"
-                                            onclick="updateStatus(<%= req.id %>, 'approved', null, true)">
-                                            <%= allReqs.length> 1 ? 'Aprovar Todos' : 'Aprovar' %>
+                                            onclick="updateStatus(<%= req.id %>, 'approved', null, <%= countPending > 1 %>)">
+                                            <%= countPending > 1 ? 'Aprovar Pendentes' : 'Aprovar' %>
                                         </button>
                                         <button class="btn btn-reject"
-                                            onclick="openRejectModal(<%= req.id %>, '<%= req.type %>', true)">
-                                            <%= allReqs.length> 1 ? 'Rejeitar Todos' : 'Rejeitar' %>
+                                            onclick="openRejectModal(<%= req.id %>, '<%= req.type %>', <%= countPending > 1 %>)">
+                                            <%= countPending > 1 ? 'Rejeitar Pendentes' : 'Rejeitar' %>
                                         </button>
                                     </div>
                                     <% } else { %>
@@ -697,7 +697,7 @@
     </main>
 
     <!-- Modal de Rejeição -->
-    <div id="rejectModal" class="modal-overlay">
+    <div id="rejectModal" class="modal-overlay" style="z-index: 3200;">
         <div class="modal-content">
             <h3 class="modal-header">MOTIVO DA REJEIÇÃO DO PEDIDO</h3>
             <div class="quick-buttons">
@@ -720,19 +720,19 @@
     </div>
 
     <!-- Modal de Detalhes Agrupados -->
-    <div id="detailsModal" class="modal-overlay">
-        <div class="modal-content" style="max-width: 700px;">
+    <div id="detailsModal" class="modal-overlay" style="z-index: 3000;">
+        <div class="modal-content" style="max-width: 950px; width: 95%;">
             <h3 class="modal-header">📦 Detalhes dos Pedidos Agrupados</h3>
             <div
                 style="max-height: 400px; overflow-y: auto; background: #000; border-radius: 8px; border: 1px solid var(--border); margin-bottom: 1.5rem;">
                 <table style="width: 100%; border-collapse: collapse; text-align: left; font-size: 0.9rem;">
                     <thead style="background: #111; position: sticky; top: 0;">
                         <tr>
-                            <th style="padding: 10px; color: var(--text-muted);">Revendedor</th>
-                            <th style="padding: 10px; color: var(--text-muted);">Ação</th>
-                            <th style="padding: 10px; color: var(--text-muted);">Detalhes (Temp/Ep/Erro)</th>
-                            <th style="padding: 10px; color: var(--text-muted);">Data</th>
-                            <th style="padding: 10px; color: var(--text-muted); text-align: center;">Ações</th>
+                            <th style="padding: 12px 15px; color: var(--text-muted);">Revendedor</th>
+                            <th style="padding: 12px 15px; color: var(--text-muted);">Ação</th>
+                            <th style="padding: 12px 15px; color: var(--text-muted);">Detalhes (Temp/Ep/Erro)</th>
+                            <th style="padding: 12px 15px; color: var(--text-muted);">Data</th>
+                            <th style="padding: 12px 15px; color: var(--text-muted); text-align: center; width: 300px;">Ações</th>
                         </tr>
                     </thead>
                     <tbody id="detailsTableBody">
@@ -746,7 +746,7 @@
     </div>
 
     <!-- Modal de Opções Unificado -->
-    <div id="optionsModal" class="modal-overlay">
+    <div id="optionsModal" class="modal-overlay" style="z-index: 3100;">
         <div class="modal-content" style="max-width: 450px;">
             <h3 class="modal-header" id="optionsModalHeader" style="display: flex; align-items: center; gap: 10px;"><i
                     class="fas fa-cog"></i> Opções do Pedido</h3>
@@ -800,7 +800,7 @@
     </div>
 
     <!-- Modal de Histórico de Conversa (Chat) -->
-    <div id="chatModal" class="modal-overlay" style="z-index: 1100;">
+    <div id="chatModal" class="modal-overlay" style="z-index: 3300;">
         <div class="modal-content"
             style="max-width: 500px; background: #0d0d0d; border: 1px solid #222; box-shadow: 0 10px 25px rgba(0,0,0,0.8);">
             <h3 class="modal-header"
@@ -954,29 +954,68 @@
                 if (req.description) extraInfo += `<br><span style="color: #bbb; font-size: 0.8rem;"><i class="far fa-comment-dots"></i> ${req.description}</span>`;
                 else if (req.requestType === 'error') extraInfo += `<br>⚠️ Erro reportado`;
 
-                let actionsHtml = `
-                    <div style="display: flex; gap: 8px; align-items: center; justify-content: center;">
-                        <span class="badge-status status-${req.status}" style="position: static; padding: 4px 6px; font-size: 0.65rem;">${req.status === 'pending' ? 'Pendente' : (req.status === 'approved' ? 'Aprovado' : 'Rejeitado')}</span>
-                        ${(req.description && req.description.includes('[Resposta do Revendedor')) ? `
-                        <button class="btn" style="background: #2563eb; color: #fff; padding: 6px 10px; border-radius: 6px; font-size: 0.7rem; border: none; cursor: pointer; display: flex; align-items: center; justify-content: center;" 
-                                onclick="openChatModal('${encodeURIComponent(req.title)}', '${encodeURIComponent(req.description)}')">
-                            <i class="fas fa-comment-dots"></i>
-                        </button>
-                        ` : ''}
-                        <button class="btn" style="background: #222; border: 1px solid #444; color: #fff; padding: 6px 10px; border-radius: 6px; font-size: 0.7rem;" 
-                                onclick="openOptionsModal(${req.id}, '${req.type}', '${req.status}', '${encodeURIComponent(req.title)}', '${encodeURIComponent(req.reseller)}', false)">
-                            <i class="fas fa-cog"></i>
-                        </button>
-                    </div>
-                `;
+                let actionsHtml = '';
+                if (req.status === 'pending') {
+                    actionsHtml = `
+                        <div style="display: flex; gap: 8px; align-items: center; justify-content: center; width: 100%;">
+                            <button class="btn btn-approve" style="background: transparent; border: 1px solid var(--status-approved); color: var(--status-approved); padding: 6px 12px; border-radius: 6px; font-size: 0.75rem; font-weight: 700; cursor: pointer; display: flex; align-items: center; gap: 4px; transition: 0.2s;" 
+                                    onmouseover="this.style.background='var(--status-approved)'; this.style.color='white';" 
+                                    onmouseout="this.style.background='transparent'; this.style.color='var(--status-approved)';"
+                                    onclick="updateStatus(${req.id}, 'approved', null, false)">
+                                <i class="fas fa-check"></i> Aprovar
+                            </button>
+                            <button class="btn btn-reject" style="background: transparent; border: 1px solid var(--status-rejected); color: var(--status-rejected); padding: 6px 12px; border-radius: 6px; font-size: 0.75rem; font-weight: 700; cursor: pointer; display: flex; align-items: center; gap: 4px; transition: 0.2s;" 
+                                    onmouseover="this.style.background='var(--status-rejected)'; this.style.color='white';" 
+                                    onmouseout="this.style.background='transparent'; this.style.color='var(--status-rejected)';"
+                                    onclick="openRejectModal(${req.id}, '${req.type}', false)">
+                                <i class="fas fa-times"></i> Rejeitar
+                            </button>
+                            ${(req.description && req.description.includes('[Resposta do Revendedor')) ? `
+                            <button class="btn" style="background: rgba(37, 99, 235, 0.15); border: 1px solid #2563eb; color: #3b82f6; padding: 6px 10px; border-radius: 6px; font-size: 0.75rem; cursor: pointer; display: flex; align-items: center; justify-content: center; transition: 0.2s;" 
+                                    onmouseover="this.style.background='#2563eb'; this.style.color='white';"
+                                    onmouseout="this.style.background='rgba(37, 99, 235, 0.15)'; this.style.color='#3b82f6';"
+                                    onclick="openChatModal('${encodeURIComponent(req.title)}', '${encodeURIComponent(req.description)}')">
+                                <i class="fas fa-comment-dots"></i>
+                            </button>
+                            ` : ''}
+                            <button class="btn" style="background: #222; border: 1px solid #444; color: #fff; padding: 6px 10px; border-radius: 6px; font-size: 0.75rem; cursor: pointer; transition: 0.2s;" 
+                                    onmouseover="this.style.background='#333';"
+                                    onmouseout="this.style.background='#222';"
+                                    onclick="openOptionsModal(${req.id}, '${req.type}', '${req.status}', '${encodeURIComponent(req.title)}', '${encodeURIComponent(req.reseller)}', false)">
+                                <i class="fas fa-cog"></i>
+                            </button>
+                        </div>
+                    `;
+                } else {
+                    const badgeText = req.status === 'approved' ? 'Aprovado' : 'Rejeitado';
+                    actionsHtml = `
+                        <div style="display: flex; gap: 8px; align-items: center; justify-content: center; width: 100%;">
+                            <span class="badge-status status-${req.status}" style="position: static; padding: 5px 8px; font-size: 0.75rem; font-weight: 700; text-transform: uppercase;">${badgeText}</span>
+                            ${(req.description && req.description.includes('[Resposta do Revendedor')) ? `
+                            <button class="btn" style="background: rgba(37, 99, 235, 0.15); border: 1px solid #2563eb; color: #3b82f6; padding: 6px 10px; border-radius: 6px; font-size: 0.75rem; cursor: pointer; display: flex; align-items: center; justify-content: center; transition: 0.2s;" 
+                                    onmouseover="this.style.background='#2563eb'; this.style.color='white';"
+                                    onmouseout="this.style.background='rgba(37, 99, 235, 0.15)'; this.style.color='#3b82f6';"
+                                    onclick="openChatModal('${encodeURIComponent(req.title)}', '${encodeURIComponent(req.description)}')">
+                                <i class="fas fa-comment-dots"></i>
+                            </button>
+                            ` : ''}
+                            <button class="btn" style="background: #222; border: 1px solid #444; color: #fff; padding: 6px 10px; border-radius: 6px; font-size: 0.75rem; cursor: pointer; transition: 0.2s;" 
+                                    onmouseover="this.style.background='#333';"
+                                    onmouseout="this.style.background='#222';"
+                                    onclick="openOptionsModal(${req.id}, '${req.type}', '${req.status}', '${encodeURIComponent(req.title)}', '${encodeURIComponent(req.reseller)}', false)">
+                                <i class="fas fa-cog"></i>
+                            </button>
+                        </div>
+                    `;
+                }
 
                 tbody.innerHTML += `
-                    <tr>
-                        <td style="padding: 10px; border-bottom: 1px solid #333; color: #fff;">${req.reseller}</td>
-                        <td style="padding: 10px; border-bottom: 1px solid #333; color: #fff;">${req.action}</td>
-                        <td style="padding: 10px; border-bottom: 1px solid #333; color: var(--text-muted);">${extraInfo || '-'}</td>
-                        <td style="padding: 10px; border-bottom: 1px solid #333; color: var(--text-muted);">${req.date} ${req.time}</td>
-                        <td style="padding: 10px; border-bottom: 1px solid #333; display: flex; gap: 12px; justify-content: center; align-items: center;">${actionsHtml}</td>
+                    <tr style="border-bottom: 1px solid #222; transition: background 0.2s;" onmouseover="this.style.background='rgba(255,255,255,0.02)'" onmouseout="this.style.background='transparent'">
+                        <td style="padding: 12px 15px; color: #fff; font-weight: 600;">${req.reseller}</td>
+                        <td style="padding: 12px 15px; color: #fff;">${req.action}</td>
+                        <td style="padding: 12px 15px; color: var(--text-muted);">${extraInfo || '-'}</td>
+                        <td style="padding: 12px 15px; color: var(--text-muted);">${req.date} ${req.time}</td>
+                        <td style="padding: 12px 15px; display: flex; gap: 8px; justify-content: center; align-items: center;">${actionsHtml}</td>
                     </tr>
                 `;
             });
@@ -1140,8 +1179,15 @@
             badge.innerText = status === 'pending' ? 'Pendente' : (status === 'approved' ? 'Aprovado' : 'Rejeitado');
 
             // Configure actions visibility
-            document.getElementById('optionsBtnApprove').style.display = status === 'approved' ? 'none' : 'flex';
-            document.getElementById('optionsBtnReject').style.display = status === 'rejected' ? 'none' : 'flex';
+            const approveBtn = document.getElementById('optionsBtnApprove');
+            const rejectBtn = document.getElementById('optionsBtnReject');
+            
+            approveBtn.style.display = status === 'approved' ? 'none' : 'flex';
+            rejectBtn.style.display = status === 'rejected' ? 'none' : 'flex';
+            
+            approveBtn.innerHTML = syncAll ? '<i class="fas fa-check"></i> Aprovar Todos os Pendentes' : '<i class="fas fa-check"></i> Aprovar Pedido';
+            rejectBtn.innerHTML = syncAll ? '<i class="fas fa-times"></i> Rejeitar Todos os Pendentes' : '<i class="fas fa-times"></i> Rejeitar Pedido';
+            
             document.getElementById('optionsBtnPending').style.display = status === 'pending' ? 'none' : 'flex';
             document.getElementById('optionsBtnAddNote').style.display = status === 'pending' ? 'flex' : 'none';
 
