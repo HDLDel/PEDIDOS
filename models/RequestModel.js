@@ -29,7 +29,7 @@ export class RequestModel {
       FROM requests r
       JOIN resellers res ON r.reseller_id = res.id
       LEFT JOIN tmdb_contents t ON r.id = t.request_id
-      ORDER BY r.id DESC
+      ORDER BY r.id ASC
     `).all();
   }
 
@@ -57,7 +57,7 @@ export class RequestModel {
       FROM requests r
       LEFT JOIN tmdb_contents t ON r.id = t.request_id
       WHERE r.reseller_id = ?
-      ORDER BY r.id DESC
+      ORDER BY r.id ASC
     `).all(resellerId);
   }
 
@@ -121,7 +121,7 @@ export class RequestModel {
       JOIN resellers res ON r.reseller_id = res.id
       LEFT JOIN tmdb_contents t ON r.id = t.request_id
       WHERE r.status = ?
-      ORDER BY r.id DESC
+      ORDER BY r.id ASC
     `).all(status);
   }
 
@@ -152,7 +152,7 @@ export class RequestModel {
         JOIN resellers res ON r.reseller_id = res.id
         LEFT JOIN tmdb_contents t ON r.id = t.request_id
         WHERE r.request_type = 'error'
-        ORDER BY r.id DESC
+        ORDER BY r.id ASC
       `).all();
     }
     
@@ -181,7 +181,7 @@ export class RequestModel {
       JOIN resellers res ON r.reseller_id = res.id
       LEFT JOIN tmdb_contents t ON r.id = t.request_id
       WHERE r.type = ?
-      ORDER BY r.id DESC
+      ORDER BY r.id ASC
     `).all(category);
   }
 
@@ -213,7 +213,7 @@ export class RequestModel {
       JOIN resellers res ON r.reseller_id = res.id
       LEFT JOIN tmdb_contents t ON r.id = t.request_id
       WHERE LOWER(r.title) LIKE ? OR LOWER(res.name) LIKE ?
-      ORDER BY r.id DESC
+      ORDER BY r.id ASC
     `).all(q, q);
   }
 

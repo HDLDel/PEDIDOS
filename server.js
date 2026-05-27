@@ -169,7 +169,7 @@ app.get('/admin/dashboard', checkAdminAuth, (req, res) => {
     });
 
     const groupedRequests = [...groupedMap.values()];
-    groupedRequests.sort((a, b) => b.id - a.id);
+    groupedRequests.sort((a, b) => a.id - b.id);
 
     res.render('dashboard', { requests: groupedRequests, stats });
 });

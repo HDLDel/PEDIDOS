@@ -525,8 +525,8 @@
         <input type="text" id="searchInput" placeholder="Buscar por título do pedido ou nome da revenda..."
             onkeyup="applyFilters()">
         <select id="sortSelect" onchange="sortCards()">
+            <option value="oldest" selected>Mais Antigos (Data de Pedido)</option>
             <option value="newest">Mais Recentes (Data de Pedido)</option>
-            <option value="oldest">Mais Antigos (Data de Pedido)</option>
             <option value="yearDesc">Ano de Lançamento (Novo - Antigo)</option>
             <option value="yearAsc">Ano de Lançamento (Antigo - Novo)</option>
             <option value="resellerAsc">Revendedor (A - Z)</option>
@@ -1028,7 +1028,7 @@
                 }
 
                 tbody.innerHTML += `
-                    <tr style="border-bottom: 1px solid #222; transition: background 0.2s;" onmouseover="this.style.background='rgba(255,255,255,0.02)'" onmouseout="this.style.background='transparent'">
+                    <tr id="modal-row-${req.id}" style="border-bottom: 1px solid #222; transition: background 0.2s;" onmouseover="this.style.background='rgba(255,255,255,0.02)'" onmouseout="this.style.background='transparent'">
                         <td style="padding: 12px 15px; color: #fff; font-weight: 600;">${req.reseller}</td>
                         <td style="padding: 12px 15px; color: #fff;">${req.action}</td>
                         <td style="padding: 12px 15px; color: var(--text-muted);">${extraInfo || '-'}</td>
@@ -1099,42 +1099,272 @@
                 });
 
                 if (response.ok) {
+                    const reqData = await response.json(); // Recebe o objeto do banco de dados atualizado
+
+                    const updateCardElement = (cardEl, targetData) => {
+                        cardEl.dataset.status = targetData.status;
+                        const badge = cardEl.querySelector('.badge-status');
+                        if (badge) {
+                            badge.className = `badge-status status-${targetData.status}`;
+                            badge.innerText = targetData.status === 'pending' ? 'Pendente' : (targetData.status === 'approved' ? 'Aprovado' : 'Rejeitado');
+                        }
+
+                        // Remove caixas explicativas e notas do corpo ao aprovar/rejeitar para manter o design limpo
+                        const body = cardEl.querySelector('.card-body');
+                        if (body) {
+                            const noteDivs = body.querySelectorAll('.info-item');
+                            noteDivs.forEach(div => {
+                                if (div.innerHTML.includes('Nota p/ Revendedor') || div.classList.contains('rejection-info')) {
+                                    div.remove();
+                                }
+                            });
+
+                            // Se o status for alterado de volta para PENDENTE e possuir uma nota de explicação
+                            if (targetData.status === 'pending' && targetData.rejectionReason) {
+                                let noteDiv = Array.from(body.querySelectorAll('.info-item')).find(div => div.innerHTML.includes('Nota p/ Revendedor'));
+                                if (!noteDiv) {
+                                    noteDiv = document.createElement('div');
+                                    noteDiv.className = 'info-item';
+                                    noteDiv.style = 'color: #f59e0b; font-size: 0.8rem; background: rgba(245, 158, 11, 0.05); padding: 6px 10px; border-radius: 6px; margin-top: 8px; border-left: 3px solid #f59e0b; white-space: pre-wrap; width: 100%; display: block; font-weight: normal;';
+                                    body.appendChild(noteDiv);
+                                }
+                                noteDiv.innerHTML = `<i class="fas fa-comment-dots" style="margin-right: 5px;"></i><strong>Nota p/ Revendedor:</strong><br><span style="color: #e2e8f0;">${targetData.rejectionReason}</span>`;
+                            }
+                        }
+
+                        // Gerenciamento dos botões de ação e do botão de conversa
+                        const actions = cardEl.querySelector('.card-actions');
+                        if (actions) {
+                            // Remove o botão de conversa existente para evitar duplicações
+                            const existingChatBtn = Array.from(actions.querySelectorAll('button')).find(btn => btn.innerHTML.includes('Conversa / Histórico'));
+                            if (existingChatBtn) {
+                                existingChatBtn.remove();
+                            }
+
+                            // Se houver histórico de conversa, recria o botão de forma dinâmica
+                            const hasChatHistory = targetData.rejectionReason || (targetData.description && (targetData.description.includes('[Rejeitado pelo Admin') || targetData.description.includes('[Resposta do Revendedor')));
+                            if (hasChatHistory) {
+                                let chatDescription = targetData.description || '';
+                                if (targetData.rejectionReason && !chatDescription.includes('[Rejeitado pelo Admin')) {
+                                    chatDescription = (chatDescription ? chatDescription + '\n' : '') + `[Rejeitado pelo Admin - Motivo: ${targetData.rejectionReason}]`;
+                                }
+
+                                const chatBtn = document.createElement('button');
+                                chatBtn.className = 'btn';
+                                chatBtn.style = 'background: rgba(37, 99, 235, 0.15); border: 1px solid #2563eb; color: #3b82f6; margin-bottom: 8px; width: 100%; display: flex; align-items: center; justify-content: center; gap: 8px;';
+                                chatBtn.innerHTML = `<i class="fas fa-comments"></i> Conversa / Histórico`;
+                                
+                                const titleEsc = encodeURIComponent(targetData.title || '').replace(/'/g, "%27");
+                                const descEsc = encodeURIComponent(chatDescription).replace(/'/g, "%27");
+                                chatBtn.onclick = () => openChatModal(titleEsc, descEsc);
+                                
+                                actions.insertBefore(chatBtn, actions.firstChild);
+                            }
+
+                            // Remove o botão de opções anterior se houver
+                            const existingOptionsBtn = Array.from(actions.querySelectorAll('button')).find(btn => btn.innerHTML.includes('Opções do Pedido'));
+                            if (existingOptionsBtn) {
+                                existingOptionsBtn.remove();
+                            }
+
+                            const cardId = parseInt(cardEl.dataset.id);
+                            const btnGroup = document.getElementById(`btnGroup-${cardId}`);
+
+                            if (targetData.status === 'pending') {
+                                if (btnGroup) btnGroup.remove();
+                                
+                                const newBtnGroup = document.createElement('div');
+                                newBtnGroup.className = 'btn-group';
+                                newBtnGroup.id = `btnGroup-${cardId}`;
+                                newBtnGroup.style = 'display: grid; grid-template-columns: 1fr 1fr; gap: 10px; width: 100%;';
+                                
+                                const detailsBtn = cardEl.querySelector('[data-details]');
+                                let hasMultiplePending = false;
+                                if (detailsBtn) {
+                                    try {
+                                        const details = JSON.parse(decodeURIComponent(detailsBtn.dataset.details));
+                                        hasMultiplePending = details.filter(sub => sub.status === 'pending').length > 1;
+                                    } catch (e) {}
+                                }
+
+                                newBtnGroup.innerHTML = `
+                                    <button class="btn btn-approve" onclick="updateStatus(${cardId}, 'approved', null, ${hasMultiplePending})">
+                                        ${hasMultiplePending ? 'Aprovar Pendentes' : 'Aprovar'}
+                                    </button>
+                                    <button class="btn btn-reject" onclick="openRejectModal(${cardId}, '${targetData.type}', ${hasMultiplePending})">
+                                        ${hasMultiplePending ? 'Rejeitar Pendentes' : 'Rejeitar'}
+                                    </button>
+                                `;
+                                actions.appendChild(newBtnGroup);
+                            } else {
+                                if (btnGroup) btnGroup.remove();
+                                
+                                const optionsBtn = document.createElement('button');
+                                optionsBtn.className = 'btn';
+                                optionsBtn.style = 'background: var(--bg-main); border: 1px solid var(--border); color: var(--text-primary); width: 100%;';
+                                
+                                const reqTitle = encodeURIComponent(targetData.title || '');
+                                const reqReseller = encodeURIComponent(targetData.reseller || '');
+                                const reqType = targetData.type || '';
+                                
+                                optionsBtn.innerHTML = `<i class="fas fa-cog"></i> Opções do Pedido`;
+                                optionsBtn.onclick = () => openOptionsModal(cardId, reqType, targetData.status, reqTitle, reqReseller, true);
+                                
+                                actions.appendChild(optionsBtn);
+                            }
+                        }
+                    };
+
                     if (syncAll) {
                         const card = document.getElementById(`card-${id}`);
                         if (card) {
-                            card.dataset.status = status;
-                            const badge = card.querySelector('.badge-status');
-                            badge.className = `badge-status status-${status}`;
-                            badge.innerText = status === 'pending' ? 'Pendente' : (status === 'approved' ? 'Aprovado' : 'Rejeitado');
-
-                            if (status === 'rejected' && reason) {
-                                const body = card.querySelector('.card-body');
-                                let reasonDiv = body.querySelector('.rejection-info');
-                                if (!reasonDiv) {
-                                    reasonDiv = document.createElement('div');
-                                    reasonDiv.className = 'info-item rejection-info';
-                                    reasonDiv.style = 'color: var(--status-rejected); font-weight: bold; margin-top: 5px; display: flex; align-items: flex-start; gap: 10px; white-space: pre-wrap;';
-                                    body.appendChild(reasonDiv);
+                            updateCardElement(card, reqData);
+                            
+                            const detailsBtn = card.querySelector('[data-details]');
+                            if (detailsBtn) {
+                                try {
+                                    const details = JSON.parse(decodeURIComponent(detailsBtn.dataset.details));
+                                    details.forEach(sub => {
+                                        sub.status = reqData.status;
+                                        if (reqData.status === 'rejected' && reqData.rejectionReason) {
+                                            sub.rejectionReason = reqData.rejectionReason;
+                                        }
+                                    });
+                                    detailsBtn.dataset.details = encodeURIComponent(JSON.stringify(details));
+                                    
+                                    const groupedBadgeSpan = card.querySelector('.badge-grouped span');
+                                    if (groupedBadgeSpan) groupedBadgeSpan.remove();
+                                } catch(e) {
+                                    console.error(e);
                                 }
-                                reasonDiv.innerHTML = `<i class="fas fa-exclamation-circle" style="margin-top: 4px;"></i><span>${reason}</span>`;
                             }
-
-                            const btnGroup = document.getElementById(`btnGroup-${id}`);
-                            if (btnGroup) btnGroup.remove();
                         }
-                        await refreshStats();
-                        applyFilters();
+                        
+                        document.querySelectorAll('.request-card').forEach(c => {
+                            const detailsBtn = c.querySelector('[data-details]');
+                            if (detailsBtn) {
+                                try {
+                                    const details = JSON.parse(decodeURIComponent(detailsBtn.dataset.details));
+                                    const containsTarget = details.some(sub => sub.id === id);
+                                    if (containsTarget) {
+                                        details.forEach(sub => {
+                                            sub.status = reqData.status;
+                                            if (reqData.status === 'rejected' && reqData.rejectionReason) {
+                                                sub.rejectionReason = reqData.rejectionReason;
+                                            }
+                                            updateModalRow(sub.id, reqData);
+                                        });
+                                        detailsBtn.dataset.details = encodeURIComponent(JSON.stringify(details));
+                                        updateCardElement(c, reqData);
+                                        const groupedBadgeSpan = c.querySelector('.badge-grouped span');
+                                        if (groupedBadgeSpan) groupedBadgeSpan.remove();
+                                    }
+                                } catch (e) {
+                                    console.error(e);
+                                }
+                            }
+                        });
                     } else {
-                        // Ação Individual Granular: Para garantir a sincronia e recriar os grupos e botões
-                        // perfeitamente como o Admin espera, damos refresh sutil na página.
-                        location.reload();
+                        const card = document.getElementById(`card-${id}`);
+                        if (card) {
+                            updateCardElement(card, reqData);
+                        }
+
+                        updateModalRow(id, reqData);
+
+                        document.querySelectorAll('.request-card').forEach(c => {
+                            const detailsBtn = c.querySelector('[data-details]');
+                            if (detailsBtn) {
+                                try {
+                                    const details = JSON.parse(decodeURIComponent(detailsBtn.dataset.details));
+                                    let updatedAny = false;
+                                    details.forEach(sub => {
+                                        if (sub.id === id) {
+                                            sub.status = reqData.status;
+                                            if (reqData.status === 'rejected' && reqData.rejectionReason) {
+                                                sub.rejectionReason = reqData.rejectionReason;
+                                            }
+                                            updatedAny = true;
+                                        }
+                                    });
+                                    if (updatedAny) {
+                                        detailsBtn.dataset.details = encodeURIComponent(JSON.stringify(details));
+                                        
+                                        const hasAnyPending = details.some(sub => sub.status === 'pending');
+                                        if (!hasAnyPending) {
+                                            updateCardElement(c, reqData);
+                                            const groupedBadgeSpan = c.querySelector('.badge-grouped span');
+                                            if (groupedBadgeSpan) groupedBadgeSpan.remove();
+                                        } else {
+                                            const pendingCount = details.filter(sub => sub.status === 'pending').length;
+                                            const groupedBadgeSpan = c.querySelector('.badge-grouped span');
+                                            if (groupedBadgeSpan) {
+                                                groupedBadgeSpan.innerText = pendingCount;
+                                            }
+                                        }
+                                    }
+                                } catch (e) {
+                                    console.error(e);
+                                }
+                            }
+                        });
                     }
+
+                    await refreshStats();
+                    applyFilters();
                 } else {
                     alert('Erro ao atualizar status.');
                 }
             } catch (error) {
                 console.error('Erro:', error);
                 alert('Falha na comunicação com o servidor.');
+            }
+        }
+
+        function updateModalRow(rowId, targetData) {
+            const modalRow = document.getElementById(`modal-row-${rowId}`);
+            if (modalRow) {
+                const cells = modalRow.getElementsByTagName('td');
+                if (cells.length > 0) {
+                    const actionCell = cells[cells.length - 1];
+                    const badgeText = targetData.status === 'approved' ? 'Aprovado' : 'Rejeitado';
+                    
+                    const card = document.getElementById(`card-${rowId}`) || document.querySelector(`.request-card[data-details*="${rowId}"]`);
+                    let reqType = 'movie';
+                    let reqTitle = '';
+                    let reqReseller = '';
+                    if (card) {
+                        reqType = card.dataset.category || 'movie';
+                        reqTitle = encodeURIComponent(card.dataset.title || '');
+                        reqReseller = encodeURIComponent(card.dataset.reseller || '');
+                    }
+
+                    const hasChat = targetData.rejectionReason || (targetData.description && (targetData.description.includes('[Rejeitado pelo Admin') || targetData.description.includes('[Resposta do Revendedor')));
+                    let chatDescription = targetData.description || '';
+                    if (targetData.rejectionReason && !chatDescription.includes('[Rejeitado pelo Admin')) {
+                        chatDescription = (chatDescription ? chatDescription + '\n' : '') + `[Rejeitado pelo Admin - Motivo: ${targetData.rejectionReason}]`;
+                    }
+
+                    actionCell.innerHTML = `
+                        <div style="display: flex; gap: 8px; align-items: center; justify-content: center; width: 100%;">
+                            <span class="badge-status status-${targetData.status}" style="position: static; padding: 5px 8px; font-size: 0.75rem; font-weight: 700; text-transform: uppercase;">${badgeText}</span>
+                            ${hasChat ? `
+                            <button class="btn" style="background: rgba(37, 99, 235, 0.15); border: 1px solid #2563eb; color: #3b82f6; padding: 6px 10px; border-radius: 6px; font-size: 0.75rem; cursor: pointer; display: flex; align-items: center; justify-content: center; transition: 0.2s;" 
+                                    onmouseover="this.style.background='#2563eb'; this.style.color='white';"
+                                    onmouseout="this.style.background='rgba(37, 99, 235, 0.15)'; this.style.color='#3b82f6';"
+                                    onclick="openChatModal('${reqTitle}', '${encodeURIComponent(chatDescription)}')">
+                                <i class="fas fa-comment-dots"></i>
+                            </button>
+                            ` : ''}
+                            <button class="btn" style="background: #222; border: 1px solid #444; color: #fff; padding: 6px 10px; border-radius: 6px; font-size: 0.75rem; cursor: pointer; transition: 0.2s;" 
+                                    onmouseover="this.style.background='#333';"
+                                    onmouseout="this.style.background='#222';"
+                                    onclick="openOptionsModal(${rowId}, '${reqType}', '${targetData.status}', '${reqTitle}', '${reqReseller}', false)">
+                                <i class="fas fa-cog"></i>
+                            </button>
+                        </div>
+                    `;
+                }
             }
         }
 
