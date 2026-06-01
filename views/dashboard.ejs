@@ -500,16 +500,15 @@
     </header>
 
     <nav class="tabs">
-        <a onclick="filterCategory('all')" id="tab-all" class="tab active">TODOS</a>
         <a onclick="filterCategory('series')" id="tab-series" class="tab">SÉRIES</a>
         <a onclick="filterCategory('movie')" id="tab-movie" class="tab">FILMES</a>
+        <a onclick="filterCategory('all')" id="tab-all" class="tab active">TODOS</a>
         <a onclick="filterCategory('error')" id="tab-error" class="tab">ERROS REPORTADOS</a>
         <a href="/admin/resellers" class="tab">GESTÃO DE REVENDAS</a>
     </nav>
 
     <div class="stats-summary">
-        <div onclick="filterStatus('all')" id="stat-all" class="stat-pill active">📋 TODOS</div>
-        <div onclick="filterStatus('pending')" id="stat-pending" class="stat-pill">📊 PENDENTES: <strong>
+        <div onclick="filterStatus('pending')" id="stat-pending" class="stat-pill active">📊 PENDENTES: <strong>
                 <%= stats.pending %>
             </strong></div>
         <div onclick="filterStatus('approved')" id="stat-approved" class="stat-pill">✅ APROVADOS: <strong>
@@ -518,6 +517,7 @@
         <div onclick="filterStatus('rejected')" id="stat-rejected" class="stat-pill">❌ REJEITADOS: <strong>
                 <%= stats.rejected %>
             </strong></div>
+        <div onclick="filterStatus('all')" id="stat-all" class="stat-pill">📋 TODOS</div>
     </div>
 
     <!-- Barra de Busca e Ordenação -->
@@ -836,7 +836,7 @@
         let currentRequestType = null; // Para armazenar o tipo (movie/series)
         let currentSyncAll = true;
         let activeCategory = 'all';
-        let activeStatus = 'all';
+        let activeStatus = 'pending';
         let checkStatusInterval = null;
 
         async function checkWaStatus() {
@@ -1558,6 +1558,11 @@
 
         backToTopBtn.addEventListener('click', () => {
             window.scrollTo({ top: 0, behavior: 'smooth' });
+        });
+
+        // Aplica o filtro de status inicial (Pendentes) ao carregar a página
+        document.addEventListener('DOMContentLoaded', () => {
+            applyFilters();
         });
     </script>
 </body>
