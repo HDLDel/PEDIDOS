@@ -500,9 +500,9 @@
     </header>
 
     <nav class="tabs">
+        <a onclick="filterCategory('all')" id="tab-all" class="tab active">TODOS</a>
         <a onclick="filterCategory('series')" id="tab-series" class="tab">SÉRIES</a>
         <a onclick="filterCategory('movie')" id="tab-movie" class="tab">FILMES</a>
-        <a onclick="filterCategory('all')" id="tab-all" class="tab active">TODOS</a>
         <a onclick="filterCategory('error')" id="tab-error" class="tab">ERROS REPORTADOS</a>
         <a href="/admin/resellers" class="tab">GESTÃO DE REVENDAS</a>
     </nav>
@@ -712,6 +712,7 @@
                 <button class="btn-quick" onclick="setReason('JACONSTA')">JÁ CONSTA</button>
                 <button class="btn-quick" onclick="setReason('EXTERNO')">EXTERNO</button>
                 <button class="btn-quick" onclick="setReason('RECENTE')">RECENTE</button>
+                <button class="btn-quick" onclick="setReason('DUBLADO')">DUBLADO</button>
             </div>
             <textarea id="rejectionText" rows="15" placeholder="Ou digite um motivo personalizado..."></textarea>
             <div class="modal-footer">
@@ -1074,6 +1075,9 @@
                     break;
                 case 'RECENTE':
                     reasonText = 'Filme lançado recentemente no Cinema.\n\nSomente disponível em 1080 FullHD depois de 3 a 5 meses ao sair nos Streamings.\n\nFavor aguardar, o conteúdo será atualizado automaticamente.';
+                    break;
+                case 'DUBLADO':
+                    reasonText = `*🚨 Pedido Rejeitado — Motivo: Conteúdo Incompleto / Sem Dublagem Integral*\n\nInfelizmente, este conteúdo não existe totalmente dublado em português. A dublagem oficial foi realizada apenas até uma parte da obra e, após isso, a exibição no Brasil foi interrompida (geralmente por baixa audiência na TV ou falta de retorno financeiro), deixando o restante dos episódios sem tradução na nossa língua.\n\nEsse problema é muito comum em novelas turcas, mexicanas, doramas e séries/filmes asiáticos pelos seguintes motivos:\n\n*Formato longo e extenso:* Muitas dessas produções estrangeiras (especialmente novelas diárias) possuem centenas de episódios. O processo de dublagem profissional é extremamente caro e demorado, exigindo um investimento que as distribuidoras muitas vezes não conseguem pagar por inteiro.\n\n*Abandono de transmissão:* Quando uma emissora ou plataforma de streaming traz uma produção de nicho para o Brasil e o público não corresponde ao esperado, o projeto é cancelado no meio do caminho para evitar prejuízos.\n\n*Lançamento internacional lento:* Por conta do volume massivo de capítulos, o mercado global prioriza o lançamento de versões apenas legendadas para manter a transmissão ágil. A dublagem, quando acontece, é feita a passos muito lentos por distribuidoras locais.\n\n*Resumo:* O restante dos episódios só está disponível no idioma original com legendas. Como o nosso catálogo foca em conteúdos completos/dublados conforme solicitado, o pedido não poderá ser atendido.\n\nSem detalhes adicionais. Agradecemos a compreensão.`;
                     break;
                 default:
                     reasonText = '';
