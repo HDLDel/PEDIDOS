@@ -381,11 +381,11 @@
 
   <!-- Modal de Explicação/Resposta do Revendedor -->
   <div id="explanationModal" class="modal-overlay" style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.8); z-index: 1000; align-items: center; justify-content: center;">
-    <div style="background: #111; border: 1px solid #333; padding: 25px; border-radius: 12px; width: 90%; max-width: 500px; box-shadow: 0 10px 25px rgba(0,0,0,0.5);">
+    <div style="background: #111; border: 1px solid #333; padding: 25px; border-radius: 12px; width: 90%; max-width: 500px; box-shadow: 0 10px 25px rgba(0,0,0,0.5); max-height: 90vh; overflow-y: auto;">
       <h3 style="color: #fff; margin-bottom: 15px; font-weight: 700; display: flex; align-items: center; gap: 10px;">💬 Explicar / Responder</h3>
       <p style="font-size: 0.9rem; color: #aaa; margin-bottom: 10px;"><strong>Pedido:</strong> <span id="explainModalTitle" style="color: #fff;"></span></p>
       
-      <div id="explainModalReasonContainer" style="background: rgba(245, 158, 11, 0.1); border: 1px solid rgba(245, 158, 11, 0.2); padding: 10px; border-radius: 6px; margin-bottom: 15px; font-size: 0.85rem; display: none;">
+      <div id="explainModalReasonContainer" style="background: rgba(245, 158, 11, 0.1); border: 1px solid rgba(245, 158, 11, 0.2); padding: 10px; border-radius: 6px; margin-bottom: 15px; font-size: 0.85rem; display: none; max-height: 300px; overflow-y: auto; white-space: pre-wrap;">
         <strong style="color: #f59e0b;">Nota/Dúvida do Admin:</strong> <span id="explainModalReason" style="color: #fff;"></span>
       </div>
       
