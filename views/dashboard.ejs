@@ -518,10 +518,10 @@
     </header>
 
     <nav class="tabs">
-        <a onclick="filterCategory('all')" id="tab-all" class="tab active">TODOS</a>
-        <a onclick="filterCategory('series')" id="tab-series" class="tab">SÉRIES</a>
-        <a onclick="filterCategory('movie')" id="tab-movie" class="tab">FILMES</a>
-        <a onclick="filterCategory('error')" id="tab-error" class="tab">ERROS REPORTADOS</a>
+        <a onclick="filterCategory('all')" id="tab-all" class="tab active">TODOS (<span id="count-all">0</span>)</a>
+        <a onclick="filterCategory('series')" id="tab-series" class="tab">SÉRIES (<span id="count-series">0</span>)</a>
+        <a onclick="filterCategory('movie')" id="tab-movie" class="tab">FILMES (<span id="count-movie">0</span>)</a>
+        <a onclick="filterCategory('error')" id="tab-error" class="tab">ERROS (<span id="count-error">0</span>)</a>
         <a href="/admin/resellers" class="tab">GESTÃO DE REVENDAS</a>
     </nav>
 
@@ -884,6 +884,37 @@
                     card.classList.add('hidden');
                 }
             });
+
+            // Atualiza os contadores das categorias das abas em tempo real
+            updateCategoryCounters();
+        }
+
+        function updateCategoryCounters() {
+            const searchQuery = document.getElementById('searchInput').value.toLowerCase().trim();
+            
+            let countAll = 0;
+            let countSeries = 0;
+            let countMovie = 0;
+            let countError = 0;
+
+            document.querySelectorAll('.request-card').forEach(card => {
+                const statusMatch = activeStatus === 'all' || card.dataset.status === activeStatus;
+                const titleMatch = card.dataset.title.includes(searchQuery);
+                const resellerMatch = card.dataset.reseller.includes(searchQuery);
+                const searchMatch = !searchQuery || titleMatch || resellerMatch;
+
+                if (statusMatch && searchMatch) {
+                    countAll++;
+                    if (card.dataset.category === 'series') countSeries++;
+                    else if (card.dataset.category === 'movie') countMovie++;
+                    else if (card.dataset.category === 'error') countError++;
+                }
+            });
+
+            document.getElementById('count-all').innerText = countAll;
+            document.getElementById('count-series').innerText = countSeries;
+            document.getElementById('count-movie').innerText = countMovie;
+            document.getElementById('count-error').innerText = countError;
         }
 
         function sortCards() {
