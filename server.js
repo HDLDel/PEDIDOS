@@ -286,6 +286,34 @@ app.post('/api/requests/:id/respond', checkResellerAuth, (req, res) => {
     }
 });
 
+// API para o revendedor excluir seu próprio pedido pendente
+app.delete('/api/requests/revenda/:id', checkResellerAuth, (req, res) => {
+    const id = parseInt(req.params.id);
+    const resellerId = req.session.resellerId;
+
+    try {
+        const request = RequestModel.getById(id);
+        if (!request) {
+            return res.status(404).json({ error: 'Pedido não encontrado.' });
+        }
+
+        // Validação de propriedade: o pedido precisa pertencer ao revendedor
+        if (request.reseller_id !== resellerId) {
+            return res.status(403).json({ error: 'Acesso negado: Este pedido não pertence a você.' });
+        }
+
+        // Validação de status: somente pedidos pendentes podem ser excluídos
+        if (request.status !== 'pending') {
+            return res.status(400).json({ error: 'Apenas pedidos pendentes podem ser excluídos.' });
+        }
+
+        RequestModel.delete(id);
+        res.json({ success: true, message: 'Pedido excluído com sucesso.' });
+    } catch (e) {
+        res.status(500).json({ error: e.message });
+    }
+});
+
 // Telas de Solicitação
 app.get('/revenda/solicitar', checkResellerAuth, (req, res) => {
     const resellerId = req.session.resellerId;
