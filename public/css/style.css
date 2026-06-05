@@ -714,89 +714,89 @@ body {
 
 /* --- TEMA CLARO (LIGHT THEME) --- */
 :root.light-theme, body.light-theme, .light-theme {
-    --bg-main: #f4f4f5;
-    --bg-header: #ffffff;
-    --bg-card: #ffffff;
-    --bg-data: #e4e4e7;
-    --bg-input: #ffffff;
-    --border: #e4e4e7;
-    --border-card: #e4e4e7;
+    --bg-main: #e2e8f0; /* Fundo geral cinza médio confortável */
+    --bg-header: #f1f5f9; /* Cabeçalho off-white/cinza sutil */
+    --bg-card: #f1f5f9; /* Cards em cinza claro (sem branco puro) */
+    --bg-data: #cbd5e1; /* Divisores e fundos de dados */
+    --bg-input: #ffffff; /* Inputs brancos para legibilidade ao digitar */
+    --border: #cbd5e1; /* Bordas ligeiramente mais escuras para contorno */
+    --border-card: #cbd5e1;
     --border-hover: #dc2626;
-    --text-primary: #09090b;
-    --text-secondary: #27272a;
-    --text-muted: #71717a;
-    --shadow-card: 0 4px 20px rgba(0, 0, 0, 0.05);
-    --shadow-hover: 0 8px 40px rgba(220, 38, 38, 0.1);
+    --text-primary: #0f172a; /* Texto escuro de alto contraste */
+    --text-secondary: #334155;
+    --text-muted: #64748b;
+    --shadow-card: 0 4px 12px rgba(0, 0, 0, 0.04);
+    --shadow-hover: 0 6px 20px rgba(0, 0, 0, 0.06);
 }
 
 /* Ajustes no painel do administrador */
 .light-theme .header-fixed {
-    background: rgba(255, 255, 255, 0.9) !important;
+    background: rgba(249, 250, 251, 0.95) !important;
     border-bottom: 1px solid var(--border) !important;
-    box-shadow: 0 4px 10px rgba(0, 0, 0, 0.05) !important;
+    box-shadow: 0 4px 10px rgba(0, 0, 0, 0.03) !important;
 }
-.light-theme .stats-summary { background: #e4e4e7 !important; }
+.light-theme .stats-summary { background: var(--bg-data) !important; }
 .light-theme .card-title { color: var(--text-primary) !important; }
-.light-theme .card-actions { background: #f4f4f5 !important; border-top: 1px solid var(--border) !important; }
+.light-theme .card-actions { background: var(--bg-main) !important; border-top: 1px solid var(--border) !important; }
 .light-theme .toolbar input,
 .light-theme .toolbar select {
-    background: #ffffff !important;
+    background: var(--bg-input) !important;
     border-color: var(--border) !important;
     color: var(--text-primary) !important;
 }
-.light-theme .modal-content { background: #ffffff !important; border-color: var(--border) !important; }
+.light-theme .modal-content { background: var(--bg-card) !important; border-color: var(--border) !important; }
 .light-theme .modal-content h3,
 .light-theme .modal-content p strong,
 .light-theme .modal-content label,
 .light-theme .modal-content p span#optionsModalTitle,
 .light-theme .modal-content p span#optionsModalReseller {
-    color: #09090b !important;
+    color: var(--text-primary) !important;
 }
 .light-theme #explanationModal div,
 .light-theme #chatModal div,
 .light-theme #demoraModal div {
-    background: #ffffff !important;
+    background: var(--bg-card) !important;
     border-color: var(--border) !important;
     color: var(--text-primary) !important;
 }
 .light-theme textarea,
 .light-theme #explanationText {
-    background: #f4f4f5 !important;
+    background: var(--bg-main) !important;
     color: var(--text-primary) !important;
     border-color: var(--border) !important;
 }
 
 /* Ajustes nas subpáginas de admin (Gerenciamento, WhatsApp, BotBot) */
-.light-theme .reseller-table { background: #ffffff !important; border-color: #e4e4e7 !important; }
-.light-theme .reseller-table th { background: #e4e4e7 !important; color: #09090b !important; }
-.light-theme .reseller-table tr:hover { background: #f4f4f5 !important; }
-.light-theme .reseller-table td { border-bottom-color: #e4e4e7 !important; }
-.light-theme .btn-back { background: #e4e4e7 !important; color: #09090b !important; border: 1px solid #d4d4d8 !important; }
-.light-theme .btn-back:hover { background: #d4d4d8 !important; }
-.light-theme .btn-reset { background: #e4e4e7 !important; color: #09090b !important; border: 1px solid #d4d4d8 !important; }
-.light-theme .btn-reset:hover { background: #d4d4d8 !important; }
+.light-theme .reseller-table { background: var(--bg-card) !important; border-color: var(--border) !important; }
+.light-theme .reseller-table th { background: var(--bg-data) !important; color: var(--text-primary) !important; }
+.light-theme .reseller-table tr:hover { background: var(--bg-main) !important; }
+.light-theme .reseller-table td { border-bottom-color: var(--border) !important; }
+.light-theme .btn-back { background: var(--bg-data) !important; color: var(--text-primary) !important; border: 1px solid var(--border) !important; }
+.light-theme .btn-back:hover { background: var(--border) !important; }
+.light-theme .btn-reset { background: var(--bg-data) !important; color: var(--text-primary) !important; border: 1px solid var(--border) !important; }
+.light-theme .btn-reset:hover { background: var(--border) !important; }
 
 /* Ajustes no painel do revendedor */
 .light-theme .revenda-header { background: var(--bg-header) !important; border-bottom: 1px solid var(--border) !important; }
-.light-theme .request-form { background: #ffffff !important; border-color: var(--border) !important; }
+.light-theme .request-form { background: var(--bg-card) !important; border-color: var(--border) !important; }
 .light-theme .request-form label { color: var(--text-secondary) !important; }
 .light-theme .request-form select,
 .light-theme .request-form input,
 .light-theme .request-form textarea {
-    background: #f4f4f5 !important;
+    background: var(--bg-input) !important;
     color: var(--text-primary) !important;
     border-color: var(--border) !important;
 }
-.light-theme .btn-cancel { background: #e4e4e7 !important; color: var(--text-secondary) !important; border-color: var(--border) !important; }
-.light-theme .btn-cancel:hover { background: #d4d4d8 !important; color: var(--text-primary) !important; }
-.light-theme .audio-preference-group { background: #f4f4f5 !important; border-color: var(--border) !important; }
+.light-theme .btn-cancel { background: var(--bg-data) !important; color: var(--text-secondary) !important; border-color: var(--border) !important; }
+.light-theme .btn-cancel:hover { background: var(--border) !important; color: var(--text-primary) !important; }
+.light-theme .audio-preference-group { background: var(--bg-input) !important; border-color: var(--border) !important; }
 .light-theme .radio-container { color: var(--text-primary) !important; }
-.light-theme .radio-checkmark { background-color: #d4d4d8 !important; border-color: var(--border) !important; }
-.light-theme .tmdb-mini-card { background: #ffffff !important; border: 1px solid var(--border) !important; }
+.light-theme .radio-checkmark { background-color: var(--bg-data) !important; border-color: var(--border) !important; }
+.light-theme .tmdb-mini-card { background: var(--bg-card) !important; border: 1px solid var(--border) !important; }
 .light-theme .tmdb-mini-card .info { color: var(--text-primary) !important; }
-.light-theme .selected-preview { background: #ffffff !important; border: 1px solid var(--border) !important; color: var(--text-primary) !important; }
+.light-theme .selected-preview { background: var(--bg-card) !important; border: 1px solid var(--border) !important; color: var(--text-primary) !important; }
 .light-theme .selected-preview h3 { color: var(--text-primary) !important; }
-.light-theme .mini-card { background: #ffffff !important; border: 1px solid var(--border) !important; }
+.light-theme .mini-card { background: var(--bg-card) !important; border: 1px solid var(--border) !important; }
 .light-theme .requests-list { color: var(--text-primary) !important; }
 .light-theme .limit-warning { background: rgba(229, 9, 20, 0.05) !important; color: var(--accent-red) !important; }
 .light-theme .btn-logout i,
