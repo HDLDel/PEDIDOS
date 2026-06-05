@@ -353,13 +353,8 @@
                                 <%= req.time %>
                             </div>
                             <div class="meta">📝 <%= req.action %>
-                              <% if (req.rejectionReason && req.status === 'pending') { %>
-                               <div class="meta" style="color: #f59e0b; font-size: 0.8rem; background: rgba(245, 158, 11, 0.05); padding: 6px 10px; border-radius: 6px; margin-top: 8px; border-left: 3px solid #f59e0b; white-space: pre-wrap; width: 100%; display: block; font-weight: normal; text-align: left;">
-                                 <i class="fas fa-comment-dots" style="margin-right: 5px;"></i><strong>Nota do Admin:</strong><br><span style="color: #e2e8f0;"><%= req.rejectionReason %></span>
-                               </div>
-                             <% } %>
-                             <% 
-                               let hasChatHistory = req.rejectionReason || (req.description && (req.description.includes('[Rejeitado pelo Admin') || req.description.includes('[Resposta do Revendedor'))); 
+                              <% 
+                               let hasChatHistory = !!(req.rejectionReason || req.description); 
                                let replyCount = 0;
                                if (req.description) {
                                  replyCount = (req.description.match(/\[Resposta do Revendedor/g) || []).length;
@@ -369,11 +364,6 @@
                                  chatDescription = (chatDescription ? chatDescription + '\n' : '') + `[Rejeitado pelo Admin - Motivo: ${req.rejectionReason}]`;
                                }
                              %>
-                             <% if (req.description && !hasChatHistory) { %>
-                               <div class="meta" style="color: #3b82f6; font-size: 0.8rem; background: rgba(59, 130, 246, 0.05); padding: 6px 10px; border-radius: 6px; margin-top: 8px; border-left: 3px solid #3b82f6; white-space: pre-wrap; width: 100%; display: block; font-weight: normal; text-align: left;">
-                                 <i class="fas fa-comment-dots" style="margin-right: 5px;"></i><strong>Observação/Erro do Revendedor:</strong><br><span style="color: #e2e8f0;"><%= req.description %></span>
-                               </div>
-                             <% } %>
                                  <span class="status-badge <%= req.status %>">
                                    <%= req.status==='pending' ? '⏳ Pendente' : req.status==='approved' ? '✅ Aprovado'
                                      : '❌ Rejeitado' %>

@@ -636,14 +636,8 @@
                                         <div class="info-item" style="color: var(--status-approved);">
                                             <i class="fab fa-whatsapp"></i>
                                             <%= req.whatsapp %>
-                                        </div>
-                                        <% if(req.rejectionReason && req.status === 'pending') { %>
-                                            <div class="info-item" style="color: #f59e0b; font-size: 0.8rem; background: rgba(245, 158, 11, 0.05); padding: 6px 10px; border-radius: 6px; margin-top: 8px; border-left: 3px solid #f59e0b; white-space: pre-wrap; width: 100%; display: block; font-weight: normal;">
-                                                <i class="fas fa-comment-dots" style="margin-right: 5px;"></i><strong>Nota p/ Revendedor:</strong><br><span style="color: #e2e8f0;"><%= req.rejectionReason %></span>
-                                            </div>
-                                        <% } %>
-                                                <% 
-                                                    let hasChatHistory = req.rejectionReason || (req.description && (req.description.includes('[Rejeitado pelo Admin') || req.description.includes('[Resposta do Revendedor'))); 
+                                                                            <% 
+                                                    let hasChatHistory = !!(req.rejectionReason || req.description); 
                                                     let replyCount = 0;
                                                     if (req.description) {
                                                         replyCount = (req.description.match(/\[Resposta do Revendedor/g) || []).length;
@@ -653,20 +647,10 @@
                                                         chatDescription = (chatDescription ? chatDescription + '\n' : '') + `[Rejeitado pelo Admin - Motivo: ${req.rejectionReason}]`;
                                                     }
                                                 %>
-                                                <% if (req.description && !hasChatHistory) { %>
-                                                    <div class="info-item" style="color: #3b82f6; font-size: 0.8rem; background: rgba(59, 130, 246, 0.05); padding: 6px 10px; border-radius: 6px; margin-top: 8px; border-left: 3px solid #3b82f6; white-space: pre-wrap; width: 100%; display: block; font-weight: normal;">
-                                                        <i class="fas fa-comment-dots" style="margin-right: 5px;"></i><strong>Observação/Erro do Revendedor:</strong><br><span style="color: #e2e8f0;"><%= req.description %></span>
-                                                    </div>
-                                                <% } %>
                                                 <div class="info-item"><i class="far fa-calendar-alt"></i>
                                                     <%= req.date %>
                                                 </div>
-                                                <% if (replyCount > 0) { %>
-                                                    <div class="info-item" style="color: <%= replyCount >= 2 ? '#ef4444' : '#f59e0b' %>; font-weight: bold; margin-top: 4px;">
-                                                        <i class="fas fa-history"></i> Contestações: <%= replyCount %>/2 <%= replyCount >= 2 ? '(Limite Atingido)' : '' %>
-                                                    </div>
-                                                <% } %>
-                    </div>
+                     </div>
 
                     <div class="card-actions">
                         <% if (hasChatHistory) { %>
@@ -686,32 +670,35 @@
                                 <i class="fas fa-play"></i> JW
                             </button>
                         </div>
-                        <% if (allReqs.length> 1) { %>
+                        <% if (allReqs.length > 1) { %>
                             <button class="btn"
                                 style="background: #3b82f6; color: white; margin-bottom: 5px; width: 100%;"
                                 data-details="<%= encodeURIComponent(JSON.stringify([req, ...req.subRequests])) %>"
                                 onclick="openDetailsModal(this.dataset.details)">
-                                <i class="fas fa-list"></i> Histórico / Resolver
+                                <i class="fas fa-list"></i> Histórico de Pedidos
                             </button>
-                            <% } %>
-                                <% if (req.status==='pending' ) { %>
-                                    <div class="btn-group" id="btnGroup-<%= req.id %>"
-                                        style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px; width: 100%;">
-                                        <button class="btn btn-approve"
-                                            onclick="updateStatus(<%= req.id %>, 'approved', null, <%= countPending > 1 %>)">
-                                            <%= countPending > 1 ? 'Aprovar Pendentes' : 'Aprovar' %>
-                                        </button>
-                                        <button class="btn btn-reject"
-                                            onclick="openRejectModal(<%= req.id %>, '<%= req.type %>', <%= countPending > 1 %>)">
-                                            <%= countPending > 1 ? 'Rejeitar Pendentes' : 'Rejeitar' %>
-                                        </button>
-                                    </div>
-                                    <% } %>
-                                        <button class="btn"
-                                            style="background: var(--bg-main); border: 1px solid var(--border); color: var(--text-primary); width: 100%;"
-                                            onclick="openOptionsModal(<%= req.id %>, '<%= req.type %>', '<%= req.status %>', '<%= encodeURIComponent(req.title).replace(/'/g, "%27") %>', '<%= encodeURIComponent(req.reseller).replace(/'/g, "%27") %>', true)">
-                                            <i class="fas fa-cog"></i> Opções do Pedido
-                                        </button>
+                        <% } else { %>
+                            <button class="btn"
+                                style="background: var(--bg-main); border: 1px solid var(--border); color: var(--text-primary); margin-bottom: 5px; width: 100%;"
+                                data-details="<%= encodeURIComponent(JSON.stringify([req])) %>"
+                                onclick="openDetailsModal(this.dataset.details)">
+                                <i class="fas fa-cog"></i> Opções do Pedido
+                            </button>
+                        <% } %>
+                        <% if (req.status==='pending' ) { %>
+                            <div class="btn-group" id="btnGroup-<%= req.id %>"
+                                style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px; width: 100%;">
+                                <button class="btn btn-approve"
+                                    onclick="updateStatus(<%= req.id %>, 'approved', null, <%= countPending > 1 %>)">
+                                    <%= countPending > 1 ? 'Aprovar Pendentes' : 'Aprovar' %>
+                                </button>
+                                <button class="btn btn-reject"
+                                    onclick="openRejectModal(<%= req.id %>, '<%= req.type %>', <%= countPending > 1 %>)">
+                                    <%= countPending > 1 ? 'Rejeitar Pendentes' : 'Rejeitar' %>
+                                </button>
+                            </div>
+                        <% } %>
+                    </div>
                     </div>
             </article>
             <% }); %>
@@ -965,6 +952,10 @@
 
         function openDetailsModal(encodedData) {
             const data = JSON.parse(decodeURIComponent(encodedData));
+            const header = document.querySelector('#detailsModal .modal-header');
+            if (header) {
+                header.innerHTML = data.length > 1 ? '📦 Histórico de Pedidos Agrupados' : '⚙️ Opções do Pedido';
+            }
             const tbody = document.getElementById('detailsTableBody');
             tbody.innerHTML = '';
 
@@ -985,7 +976,7 @@
                 else if (req.requestType === 'error') extraInfo += `<br>⚠️ Erro reportado`;
 
                 let actionsHtml = '';
-                const hasChat = req.rejectionReason || (req.description && (req.description.includes('[Rejeitado pelo Admin') || req.description.includes('[Resposta do Revendedor')));
+                const hasChat = !!(req.rejectionReason || req.description);
                 let chatDesc = req.description || '';
                 if (req.rejectionReason && !chatDesc.includes('[Rejeitado pelo Admin')) {
                     chatDesc = (chatDesc ? chatDesc + '\n' : '') + `[Rejeitado pelo Admin - Motivo: ${req.rejectionReason}]`;
@@ -1130,29 +1121,6 @@
                             badge.innerText = targetData.status === 'pending' ? 'Pendente' : (targetData.status === 'approved' ? 'Aprovado' : 'Rejeitado');
                         }
 
-                        // Remove caixas explicativas e notas do corpo ao aprovar/rejeitar para manter o design limpo
-                        const body = cardEl.querySelector('.card-body');
-                        if (body) {
-                            const noteDivs = body.querySelectorAll('.info-item');
-                            noteDivs.forEach(div => {
-                                if (div.innerHTML.includes('Nota p/ Revendedor') || div.classList.contains('rejection-info')) {
-                                    div.remove();
-                                }
-                            });
-
-                            // Se o status for alterado de volta para PENDENTE e possuir uma nota de explicação
-                            if (targetData.status === 'pending' && targetData.rejectionReason) {
-                                let noteDiv = Array.from(body.querySelectorAll('.info-item')).find(div => div.innerHTML.includes('Nota p/ Revendedor'));
-                                if (!noteDiv) {
-                                    noteDiv = document.createElement('div');
-                                    noteDiv.className = 'info-item';
-                                    noteDiv.style = 'color: #f59e0b; font-size: 0.8rem; background: rgba(245, 158, 11, 0.05); padding: 6px 10px; border-radius: 6px; margin-top: 8px; border-left: 3px solid #f59e0b; white-space: pre-wrap; width: 100%; display: block; font-weight: normal;';
-                                    body.appendChild(noteDiv);
-                                }
-                                noteDiv.innerHTML = `<i class="fas fa-comment-dots" style="margin-right: 5px;"></i><strong>Nota p/ Revendedor:</strong><br><span style="color: #e2e8f0;">${targetData.rejectionReason}</span>`;
-                            }
-                        }
-
                         // Gerenciamento dos botões de ação e do botão de conversa
                         const actions = cardEl.querySelector('.card-actions');
                         if (actions) {
@@ -1163,7 +1131,7 @@
                             }
 
                             // Se houver histórico de conversa, recria o botão de forma dinâmica
-                            const hasChatHistory = targetData.rejectionReason || (targetData.description && (targetData.description.includes('[Rejeitado pelo Admin') || targetData.description.includes('[Resposta do Revendedor')));
+                            const hasChatHistory = !!(targetData.rejectionReason || targetData.description);
                             if (hasChatHistory) {
                                 let chatDescription = targetData.description || '';
                                 if (targetData.rejectionReason && !chatDescription.includes('[Rejeitado pelo Admin')) {
@@ -1182,22 +1150,11 @@
                                 actions.insertBefore(chatBtn, actions.firstChild);
                             }
 
-                            // Remove o botão de opções anterior se houver
-                            const existingOptionsBtn = Array.from(actions.querySelectorAll('button')).find(btn => btn.innerHTML.includes('Opções do Pedido'));
-                            if (existingOptionsBtn) {
-                                existingOptionsBtn.remove();
-                            }
-
                             const cardId = parseInt(cardEl.dataset.id);
                             const btnGroup = document.getElementById(`btnGroup-${cardId}`);
 
                             if (targetData.status === 'pending') {
                                 if (btnGroup) btnGroup.remove();
-                                
-                                const newBtnGroup = document.createElement('div');
-                                newBtnGroup.className = 'btn-group';
-                                newBtnGroup.id = `btnGroup-${cardId}`;
-                                newBtnGroup.style = 'display: grid; grid-template-columns: 1fr 1fr; gap: 10px; width: 100%;';
                                 
                                 const detailsBtn = cardEl.querySelector('[data-details]');
                                 let hasMultiplePending = false;
@@ -1208,6 +1165,11 @@
                                     } catch (e) {}
                                 }
 
+                                const newBtnGroup = document.createElement('div');
+                                newBtnGroup.className = 'btn-group';
+                                newBtnGroup.id = `btnGroup-${cardId}`;
+                                newBtnGroup.style = 'display: grid; grid-template-columns: 1fr 1fr; gap: 10px; width: 100%;';
+                                
                                 newBtnGroup.innerHTML = `
                                     <button class="btn btn-approve" onclick="updateStatus(${cardId}, 'approved', null, ${hasMultiplePending})">
                                         ${hasMultiplePending ? 'Aprovar Pendentes' : 'Aprovar'}
@@ -1219,19 +1181,6 @@
                                 actions.appendChild(newBtnGroup);
                             } else {
                                 if (btnGroup) btnGroup.remove();
-                                
-                                const optionsBtn = document.createElement('button');
-                                optionsBtn.className = 'btn';
-                                optionsBtn.style = 'background: var(--bg-main); border: 1px solid var(--border); color: var(--text-primary); width: 100%;';
-                                
-                                const reqTitle = encodeURIComponent(targetData.title || '');
-                                const reqReseller = encodeURIComponent(targetData.reseller || '');
-                                const reqType = targetData.type || '';
-                                
-                                optionsBtn.innerHTML = `<i class="fas fa-cog"></i> Opções do Pedido`;
-                                optionsBtn.onclick = () => openOptionsModal(cardId, reqType, targetData.status, reqTitle, reqReseller, true);
-                                
-                                actions.appendChild(optionsBtn);
                             }
                         }
                     };
@@ -1360,7 +1309,7 @@
                         reqReseller = encodeURIComponent(card.dataset.reseller || '');
                     }
 
-                    const hasChat = targetData.rejectionReason || (targetData.description && (targetData.description.includes('[Rejeitado pelo Admin') || targetData.description.includes('[Resposta do Revendedor')));
+                    const hasChat = !!(targetData.rejectionReason || targetData.description);
                     let chatDescription = targetData.description || '';
                     if (targetData.rejectionReason && !chatDescription.includes('[Rejeitado pelo Admin')) {
                         chatDescription = (chatDescription ? chatDescription + '\n' : '') + `[Rejeitado pelo Admin - Motivo: ${targetData.rejectionReason}]`;
