@@ -713,7 +713,7 @@ body {
 }
 
 /* --- TEMA CLARO (LIGHT THEME) --- */
-body.light-theme {
+:root.light-theme, body.light-theme, .light-theme {
     --bg-main: #f4f4f5;
     --bg-header: #ffffff;
     --bg-card: #ffffff;
@@ -730,77 +730,77 @@ body.light-theme {
 }
 
 /* Ajustes no painel do administrador */
-body.light-theme .header-fixed {
+.light-theme .header-fixed {
     background: rgba(255, 255, 255, 0.9) !important;
     border-bottom: 1px solid var(--border) !important;
     box-shadow: 0 4px 10px rgba(0, 0, 0, 0.05) !important;
 }
-body.light-theme .stats-summary { background: #e4e4e7 !important; }
-body.light-theme .card-title { color: var(--text-primary) !important; }
-body.light-theme .card-actions { background: #f4f4f5 !important; border-top: 1px solid var(--border) !important; }
-body.light-theme .toolbar input,
-body.light-theme .toolbar select {
+.light-theme .stats-summary { background: #e4e4e7 !important; }
+.light-theme .card-title { color: var(--text-primary) !important; }
+.light-theme .card-actions { background: #f4f4f5 !important; border-top: 1px solid var(--border) !important; }
+.light-theme .toolbar input,
+.light-theme .toolbar select {
     background: #ffffff !important;
     border-color: var(--border) !important;
     color: var(--text-primary) !important;
 }
-body.light-theme .modal-content { background: #ffffff !important; border-color: var(--border) !important; }
-body.light-theme .modal-content h3,
-body.light-theme .modal-content p strong,
-body.light-theme .modal-content label,
-body.light-theme .modal-content p span#optionsModalTitle,
-body.light-theme .modal-content p span#optionsModalReseller {
+.light-theme .modal-content { background: #ffffff !important; border-color: var(--border) !important; }
+.light-theme .modal-content h3,
+.light-theme .modal-content p strong,
+.light-theme .modal-content label,
+.light-theme .modal-content p span#optionsModalTitle,
+.light-theme .modal-content p span#optionsModalReseller {
     color: #09090b !important;
 }
-body.light-theme #explanationModal div,
-body.light-theme #chatModal div,
-body.light-theme #demoraModal div {
+.light-theme #explanationModal div,
+.light-theme #chatModal div,
+.light-theme #demoraModal div {
     background: #ffffff !important;
     border-color: var(--border) !important;
     color: var(--text-primary) !important;
 }
-body.light-theme textarea,
-body.light-theme #explanationText {
+.light-theme textarea,
+.light-theme #explanationText {
     background: #f4f4f5 !important;
     color: var(--text-primary) !important;
     border-color: var(--border) !important;
 }
 
 /* Ajustes nas subpáginas de admin (Gerenciamento, WhatsApp, BotBot) */
-body.light-theme .reseller-table { background: #ffffff !important; border-color: #e4e4e7 !important; }
-body.light-theme .reseller-table th { background: #e4e4e7 !important; color: #09090b !important; }
-body.light-theme .reseller-table tr:hover { background: #f4f4f5 !important; }
-body.light-theme .reseller-table td { border-bottom-color: #e4e4e7 !important; }
-body.light-theme .btn-back { background: #e4e4e7 !important; color: #09090b !important; border: 1px solid #d4d4d8 !important; }
-body.light-theme .btn-back:hover { background: #d4d4d8 !important; }
-body.light-theme .btn-reset { background: #e4e4e7 !important; color: #09090b !important; border: 1px solid #d4d4d8 !important; }
-body.light-theme .btn-reset:hover { background: #d4d4d8 !important; }
+.light-theme .reseller-table { background: #ffffff !important; border-color: #e4e4e7 !important; }
+.light-theme .reseller-table th { background: #e4e4e7 !important; color: #09090b !important; }
+.light-theme .reseller-table tr:hover { background: #f4f4f5 !important; }
+.light-theme .reseller-table td { border-bottom-color: #e4e4e7 !important; }
+.light-theme .btn-back { background: #e4e4e7 !important; color: #09090b !important; border: 1px solid #d4d4d8 !important; }
+.light-theme .btn-back:hover { background: #d4d4d8 !important; }
+.light-theme .btn-reset { background: #e4e4e7 !important; color: #09090b !important; border: 1px solid #d4d4d8 !important; }
+.light-theme .btn-reset:hover { background: #d4d4d8 !important; }
 
 /* Ajustes no painel do revendedor */
-body.light-theme .revenda-header { background: var(--bg-header) !important; border-bottom: 1px solid var(--border) !important; }
-body.light-theme .request-form { background: #ffffff !important; border-color: var(--border) !important; }
-body.light-theme .request-form label { color: var(--text-secondary) !important; }
-body.light-theme .request-form select,
-body.light-theme .request-form input,
-body.light-theme .request-form textarea {
+.light-theme .revenda-header { background: var(--bg-header) !important; border-bottom: 1px solid var(--border) !important; }
+.light-theme .request-form { background: #ffffff !important; border-color: var(--border) !important; }
+.light-theme .request-form label { color: var(--text-secondary) !important; }
+.light-theme .request-form select,
+.light-theme .request-form input,
+.light-theme .request-form textarea {
     background: #f4f4f5 !important;
     color: var(--text-primary) !important;
     border-color: var(--border) !important;
 }
-body.light-theme .btn-cancel { background: #e4e4e7 !important; color: var(--text-secondary) !important; border-color: var(--border) !important; }
-body.light-theme .btn-cancel:hover { background: #d4d4d8 !important; color: var(--text-primary) !important; }
-body.light-theme .audio-preference-group { background: #f4f4f5 !important; border-color: var(--border) !important; }
-body.light-theme .radio-container { color: var(--text-primary) !important; }
-body.light-theme .radio-checkmark { background-color: #d4d4d8 !important; border-color: var(--border) !important; }
-body.light-theme .tmdb-mini-card { background: #ffffff !important; border: 1px solid var(--border) !important; }
-body.light-theme .tmdb-mini-card .info { color: var(--text-primary) !important; }
-body.light-theme .selected-preview { background: #ffffff !important; border: 1px solid var(--border) !important; color: var(--text-primary) !important; }
-body.light-theme .selected-preview h3 { color: var(--text-primary) !important; }
-body.light-theme .mini-card { background: #ffffff !important; border: 1px solid var(--border) !important; }
-body.light-theme .requests-list { color: var(--text-primary) !important; }
-body.light-theme .limit-warning { background: rgba(229, 9, 20, 0.05) !important; color: var(--accent-red) !important; }
-body.light-theme .btn-logout i,
-body.light-theme .btn-logout { color: var(--text-secondary) !important; }
-body.light-theme .btn-logout:hover i,
-body.light-theme .btn-logout:hover { color: var(--accent-red) !important; }
+.light-theme .btn-cancel { background: #e4e4e7 !important; color: var(--text-secondary) !important; border-color: var(--border) !important; }
+.light-theme .btn-cancel:hover { background: #d4d4d8 !important; color: var(--text-primary) !important; }
+.light-theme .audio-preference-group { background: #f4f4f5 !important; border-color: var(--border) !important; }
+.light-theme .radio-container { color: var(--text-primary) !important; }
+.light-theme .radio-checkmark { background-color: #d4d4d8 !important; border-color: var(--border) !important; }
+.light-theme .tmdb-mini-card { background: #ffffff !important; border: 1px solid var(--border) !important; }
+.light-theme .tmdb-mini-card .info { color: var(--text-primary) !important; }
+.light-theme .selected-preview { background: #ffffff !important; border: 1px solid var(--border) !important; color: var(--text-primary) !important; }
+.light-theme .selected-preview h3 { color: var(--text-primary) !important; }
+.light-theme .mini-card { background: #ffffff !important; border: 1px solid var(--border) !important; }
+.light-theme .requests-list { color: var(--text-primary) !important; }
+.light-theme .limit-warning { background: rgba(229, 9, 20, 0.05) !important; color: var(--accent-red) !important; }
+.light-theme .btn-logout i,
+.light-theme .btn-logout { color: var(--text-secondary) !important; }
+.light-theme .btn-logout:hover i,
+.light-theme .btn-logout:hover { color: var(--accent-red) !important; }
 
