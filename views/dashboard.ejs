@@ -8,6 +8,17 @@
     <link rel="stylesheet" href="/css/style.css">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;900&display=swap" rel="stylesheet">
+    <script>
+        (function() {
+            const theme = localStorage.getItem('theme');
+            if (theme === 'light') {
+                document.documentElement.classList.add('light-theme');
+                document.addEventListener('DOMContentLoaded', () => {
+                    document.body.classList.add('light-theme');
+                });
+            }
+        })();
+    </script>
     <style>
         :root {
             --bg-main: #0a0a0a;
@@ -492,8 +503,11 @@
             <a href="/admin/botbot" id="bbStatusBtn" class="whatsapp-status-btn wa-off" style="text-decoration: none;">
                 <i class="fas fa-robot"></i> <span>BOTBOT</span>
             </a>
+            <button id="themeToggleBtn" style="background: transparent; border: none; color: var(--text-primary); font-size: 1.15rem; cursor: pointer; display: inline-flex; align-items: center; justify-content: center; width: 35px; height: 35px; border-radius: 50%; transition: background 0.3s; margin-left: 5px;" onclick="toggleTheme()" title="Alternar Tema">
+                <i class="fas fa-sun" id="themeIcon" style="color: #f59e0b;"></i>
+            </button>
             <a href="/admin/logout"
-                style="color: var(--text-muted); text-decoration: none; font-size: 0.85rem; font-weight: 600;">
+                style="color: var(--text-muted); text-decoration: none; font-size: 0.85rem; font-weight: 600; display: inline-flex; align-items: center; gap: 5px;">
                 <i class="fas fa-sign-out-alt"></i> Sair do Painel
             </a>
         </div>
@@ -688,13 +702,12 @@
                                             <%= countPending > 1 ? 'Rejeitar Pendentes' : 'Rejeitar' %>
                                         </button>
                                     </div>
-                                    <% } else { %>
+                                    <% } %>
                                         <button class="btn"
                                             style="background: var(--bg-main); border: 1px solid var(--border); color: var(--text-primary); width: 100%;"
                                             onclick="openOptionsModal(<%= req.id %>, '<%= req.type %>', '<%= req.status %>', '<%= encodeURIComponent(req.title).replace(/'/g, "%27") %>', '<%= encodeURIComponent(req.reseller).replace(/'/g, "%27") %>', true)">
                                             <i class="fas fa-cog"></i> Opções do Pedido
                                         </button>
-                                        <% } %>
                     </div>
             </article>
             <% }); %>
@@ -1564,9 +1577,30 @@
             window.scrollTo({ top: 0, behavior: 'smooth' });
         });
 
+        function toggleTheme() {
+            const isLight = document.body.classList.toggle('light-theme');
+            localStorage.setItem('theme', isLight ? 'light' : 'dark');
+            updateThemeIcon(isLight);
+        }
+
+        function updateThemeIcon(isLight) {
+            const icon = document.getElementById('themeIcon');
+            if (icon) {
+                if (isLight) {
+                    icon.className = 'fas fa-moon';
+                    icon.style.color = '#374151';
+                } else {
+                    icon.className = 'fas fa-sun';
+                    icon.style.color = '#f59e0b';
+                }
+            }
+        }
+
         // Aplica o filtro de status inicial (Pendentes) ao carregar a página
         document.addEventListener('DOMContentLoaded', () => {
             applyFilters();
+            const isLight = document.body.classList.contains('light-theme');
+            updateThemeIcon(isLight);
         });
     </script>
 </body>

@@ -7,6 +7,17 @@
     <link rel="stylesheet" href="/css/style.css">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;900&display=swap" rel="stylesheet">
+    <script>
+        (function() {
+            const theme = localStorage.getItem('theme');
+            if (theme === 'light') {
+                document.documentElement.classList.add('light-theme');
+                document.addEventListener('DOMContentLoaded', () => {
+                    document.body.classList.add('light-theme');
+                });
+            }
+        })();
+    </script>
     <style>
         :root {
             --bg-main: #0a0a0a;
@@ -61,7 +72,12 @@
     <div class="container">
         <header>
             <h1><i class="fas fa-users-cog"></i> Gestão de Revendedores</h1>
-            <a href="/admin/dashboard" class="btn-back"><i class="fas fa-arrow-left"></i> Voltar à Dashboard</a>
+            <div style="display: flex; align-items: center; gap: 15px;">
+                <button id="themeToggleBtn" style="background: transparent; border: none; color: var(--text-primary); font-size: 1.15rem; cursor: pointer; display: inline-flex; align-items: center; justify-content: center; width: 35px; height: 35px; border-radius: 50%; transition: background 0.3s;" onclick="toggleTheme()" title="Alternar Tema">
+                    <i class="fas fa-sun" id="themeIcon" style="color: #f59e0b;"></i>
+                </button>
+                <a href="/admin/dashboard" class="btn-back"><i class="fas fa-arrow-left"></i> Voltar à Dashboard</a>
+            </div>
         </header>
 
         <table class="reseller-table">
@@ -209,6 +225,30 @@
                 }
             } catch (e) { alert('Erro na comunicação.'); }
         };
+
+        function toggleTheme() {
+            const isLight = document.body.classList.toggle('light-theme');
+            localStorage.setItem('theme', isLight ? 'light' : 'dark');
+            updateThemeIcon(isLight);
+        }
+
+        function updateThemeIcon(isLight) {
+            const icon = document.getElementById('themeIcon');
+            if (icon) {
+                if (isLight) {
+                    icon.className = 'fas fa-moon';
+                    icon.style.color = '#374151';
+                } else {
+                    icon.className = 'fas fa-sun';
+                    icon.style.color = '#f59e0b';
+                }
+            }
+        }
+
+        document.addEventListener('DOMContentLoaded', () => {
+            const isLight = document.body.classList.contains('light-theme');
+            updateThemeIcon(isLight);
+        });
     </script>
 </body>
 </html>

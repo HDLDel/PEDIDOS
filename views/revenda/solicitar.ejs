@@ -5,6 +5,17 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Painel do Revendedor - VOD Premium</title>
     <link rel="stylesheet" href="/css/style.css">
+    <script>
+        (function() {
+            const theme = localStorage.getItem('theme');
+            if (theme === 'light') {
+                document.documentElement.classList.add('light-theme');
+                document.addEventListener('DOMContentLoaded', () => {
+                    document.body.classList.add('light-theme');
+                });
+            }
+        })();
+    </script>
     <link rel="stylesheet" href="/css/reseller.css">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
     <style>
@@ -187,10 +198,13 @@
 <body class="dark-theme">
     <header class="header">
         <div class="logo">VOD<span>PREMIUM</span></div>
-        <div class="user-info">
-            <a href="/revenda/dashboard" style="background: #333; color: white; border: none; padding: 0.6rem 1.2rem; border-radius: 0.5rem; font-weight: 700; font-size: 0.85rem; cursor: pointer; text-decoration: none; display: inline-flex; align-items: center; gap: 0.4rem; margin-right: 15px;"><i class="fas fa-arrow-left"></i> Voltar ao Painel</a>
+        <div class="user-info" style="display: flex; align-items: center; gap: 15px;">
+            <a href="/revenda/dashboard" style="background: #333; color: white; border: none; padding: 0.6rem 1.2rem; border-radius: 0.5rem; font-weight: 700; font-size: 0.85rem; cursor: pointer; text-decoration: none; display: inline-flex; align-items: center; gap: 0.4rem;"><i class="fas fa-arrow-left"></i> Voltar ao Painel</a>
             <span>Olá, <strong><%= reseller.name %></strong></span>
-            <a href="/revenda/logout" class="btn-logout"><i class="fas fa-sign-out-alt"></i></a>
+            <button id="themeToggleBtn" style="background: transparent; border: none; color: var(--text-primary); font-size: 1.15rem; cursor: pointer; display: inline-flex; align-items: center; justify-content: center; width: 35px; height: 35px; border-radius: 50%; transition: background 0.3s;" onclick="toggleTheme()" title="Alternar Tema">
+                <i class="fas fa-sun" id="themeIcon" style="color: #f59e0b;"></i>
+            </button>
+            <a href="/revenda/logout" class="btn-logout" style="margin-left: 5px;"><i class="fas fa-sign-out-alt"></i></a>
         </div>
     </header>
 
@@ -510,6 +524,30 @@
                 alert('Erro ao enviar pedido.');
             }
         };
+
+        function toggleTheme() {
+            const isLight = document.body.classList.toggle('light-theme');
+            localStorage.setItem('theme', isLight ? 'light' : 'dark');
+            updateThemeIcon(isLight);
+        }
+
+        function updateThemeIcon(isLight) {
+            const icon = document.getElementById('themeIcon');
+            if (icon) {
+                if (isLight) {
+                    icon.className = 'fas fa-moon';
+                    icon.style.color = '#374151';
+                } else {
+                    icon.className = 'fas fa-sun';
+                    icon.style.color = '#f59e0b';
+                }
+            }
+        }
+
+        document.addEventListener('DOMContentLoaded', () => {
+            const isLight = document.body.classList.contains('light-theme');
+            updateThemeIcon(isLight);
+        });
     </script>
 </body>
 </html>

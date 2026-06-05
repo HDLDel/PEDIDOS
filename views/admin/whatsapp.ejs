@@ -4,6 +4,18 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Conectar WhatsApp - VOD Premium</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;900&display=swap" rel="stylesheet">
+    <script>
+        (function() {
+            const theme = localStorage.getItem('theme');
+            if (theme === 'light') {
+                document.documentElement.classList.add('light-theme');
+                document.addEventListener('DOMContentLoaded', () => {
+                    document.body.classList.add('light-theme');
+                });
+            }
+        })();
+    </script>
     <link rel="stylesheet" href="/css/style.css">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
     <style>
@@ -32,6 +44,11 @@
 </head>
 <body>
     <div class="container">
+        <div style="display: flex; justify-content: flex-end; margin-bottom: -20px; margin-top: -15px;">
+            <button id="themeToggleBtn" style="background: transparent; border: none; color: var(--text-primary); font-size: 1.15rem; cursor: pointer; display: inline-flex; align-items: center; justify-content: center; width: 35px; height: 35px; border-radius: 50%; transition: background 0.3s;" onclick="toggleTheme()" title="Alternar Tema">
+                <i class="fas fa-sun" id="themeIcon" style="color: #f59e0b;"></i>
+            </button>
+        </div>
         <div id="statusBadge" class="status-badge status-disconnected">Aguardando...</div>
         <h2 id="statusTitle">WhatsApp</h2>
         <p id="statusDesc" style="color: var(--text-muted); margin-top: 0.5rem; height: 3lh;">Iniciando serviço...</p>
@@ -108,6 +125,30 @@
 
         setInterval(fetchStatus, 3000);
         fetchStatus();
+
+        function toggleTheme() {
+            const isLight = document.body.classList.toggle('light-theme');
+            localStorage.setItem('theme', isLight ? 'light' : 'dark');
+            updateThemeIcon(isLight);
+        }
+
+        function updateThemeIcon(isLight) {
+            const icon = document.getElementById('themeIcon');
+            if (icon) {
+                if (isLight) {
+                    icon.className = 'fas fa-moon';
+                    icon.style.color = '#374151';
+                } else {
+                    icon.className = 'fas fa-sun';
+                    icon.style.color = '#f59e0b';
+                }
+            }
+        }
+
+        document.addEventListener('DOMContentLoaded', () => {
+            const isLight = document.body.classList.contains('light-theme');
+            updateThemeIcon(isLight);
+        });
     </script>
 </body>
 </html>

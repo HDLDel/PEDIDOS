@@ -7,13 +7,24 @@
   <title>Meu Painel - <%= reseller.name %>
   </title>
   <link rel="stylesheet" href="/css/style.css">
+  <script>
+      (function() {
+          const theme = localStorage.getItem('theme');
+          if (theme === 'light') {
+              document.documentElement.classList.add('light-theme');
+              document.addEventListener('DOMContentLoaded', () => {
+                  document.body.classList.add('light-theme');
+              });
+          }
+      })();
+  </script>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;900&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
   <style>
     .revenda-header {
-      background: #050505;
+      background: var(--bg-header);
       padding: 1rem 2rem;
-      border-bottom: 1px solid #1a1a1a;
+      border-bottom: 1px solid var(--border);
       display: flex;
       justify-content: space-between;
       align-items: center;
@@ -205,10 +216,13 @@
 <body>
   <header class="revenda-header">
     <div class="logo">PORTAL <span>VOD</span></div>
-    <div class="user-info">
+    <div class="user-info" style="display: flex; align-items: center; gap: 15px;">
       <span>👤 <%= reseller.name %> | <%= reseller.whatsapp %></span>
+      <button id="themeToggleBtn" style="background: transparent; border: none; color: var(--text-primary); font-size: 1.15rem; cursor: pointer; display: inline-flex; align-items: center; justify-content: center; width: 35px; height: 35px; border-radius: 50%; transition: background 0.3s;" onclick="toggleTheme()" title="Alternar Tema">
+          <i class="fas fa-sun" id="themeIcon" style="color: #f59e0b;"></i>
+      </button>
       <a href="/revenda/solicitar" class="btn-solicitar">+ Nova Solicitação</a>
-      <a href="/revenda/logout" style="color: var(--text-muted); font-size: 0.8rem; text-decoration: none;">Sair</a>
+      <a href="/revenda/logout" style="color: var(--text-muted); font-size: 0.8rem; text-decoration: none; margin-left: 5px;">Sair</a>
     </div>
   </header>
 
@@ -574,6 +588,30 @@
         alert('Falha na comunicação com o servidor.');
       }
     }
+
+    function toggleTheme() {
+      const isLight = document.body.classList.toggle('light-theme');
+      localStorage.setItem('theme', isLight ? 'light' : 'dark');
+      updateThemeIcon(isLight);
+    }
+
+    function updateThemeIcon(isLight) {
+      const icon = document.getElementById('themeIcon');
+      if (icon) {
+        if (isLight) {
+          icon.className = 'fas fa-moon';
+          icon.style.color = '#374151';
+        } else {
+          icon.className = 'fas fa-sun';
+          icon.style.color = '#f59e0b';
+        }
+      }
+    }
+
+    document.addEventListener('DOMContentLoaded', () => {
+      const isLight = document.body.classList.contains('light-theme');
+      updateThemeIcon(isLight);
+    });
   </script>
 </body>
 </html>
