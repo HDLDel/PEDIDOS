@@ -774,14 +774,6 @@
             </div>
 
             <div style="display: flex; flex-direction: column; gap: 10px;">
-                <button id="optionsBtnApprove" class="btn btn-approve"
-                    style="width: 100%; padding: 12px; font-size: 0.85rem;" onclick="handleOptionsApprove()">
-                    <i class="fas fa-check"></i> Aprovar Pedido
-                </button>
-                <button id="optionsBtnReject" class="btn btn-reject"
-                    style="width: 100%; padding: 12px; font-size: 0.85rem;" onclick="handleOptionsReject()">
-                    <i class="fas fa-times"></i> Rejeitar Pedido
-                </button>
                 <button id="optionsBtnPending" class="btn"
                     style="background: transparent; border: 1px solid var(--status-pending); color: var(--status-pending); width: 100%; padding: 12px; font-size: 0.85rem;"
                     onclick="handleOptionsPending()">
@@ -828,6 +820,27 @@
                 style="margin-top: 1.5rem; border-top: 1px solid #222; padding-top: 15px; display: flex; justify-content: flex-end;">
                 <button class="btn" style="background: #333; color: #fff; padding: 10px 20px;"
                     onclick="closeChatModal()">FECHAR</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal de Adicionar Nota / Pedir Explicação (Customizado) -->
+    <div id="noteModal" class="modal-overlay" style="z-index: 3400;">
+        <div class="modal-content" style="max-width: 500px; background: #111; border: 1px solid #333; padding: 25px; border-radius: 12px; box-shadow: 0 10px 25px rgba(0,0,0,0.5);">
+            <h3 class="modal-header" id="noteModalHeader" style="color: #fff; margin-bottom: 15px; font-weight: 700; display: flex; align-items: center; gap: 10px; border-bottom: none; padding-bottom: 0;">
+                <i class="fas fa-comment-dots" style="color: #f59e0b;"></i> Pedir Explicação / Add Nota
+            </h3>
+            <p style="font-size: 0.9rem; color: #aaa; margin-bottom: 15px;">
+                <strong>Pedido:</strong> <span id="noteModalTitle" style="color: #fff;"></span>
+            </p>
+            <textarea id="noteModalText" rows="6" 
+                      style="width: 100%; background: #000; border: 1px solid #333; border-radius: 8px; color: #fff; padding: 12px; font-family: inherit; font-size: 0.9rem; margin-bottom: 20px; resize: vertical;" 
+                      placeholder="Escreva a sua pergunta ou observação para o revendedor..."></textarea>
+            <div style="display: flex; justify-content: flex-end; gap: 10px;">
+                <button class="btn" style="background: #333; color: #fff; padding: 10px 20px; border-radius: 8px; font-weight: 600; cursor: pointer;" 
+                        onclick="closeNoteModal()">CANCELAR</button>
+                <button class="btn" style="background: #2563eb; color: #fff; border: none; padding: 10px 20px; border-radius: 8px; font-weight: 600; cursor: pointer;" 
+                        id="noteModalConfirmBtn">SALVAR</button>
             </div>
         </div>
     </div>
@@ -1433,15 +1446,6 @@
             badge.innerText = status === 'pending' ? 'Pendente' : (status === 'approved' ? 'Aprovado' : 'Rejeitado');
 
             // Configure actions visibility
-            const approveBtn = document.getElementById('optionsBtnApprove');
-            const rejectBtn = document.getElementById('optionsBtnReject');
-            
-            approveBtn.style.display = status === 'approved' ? 'none' : 'flex';
-            rejectBtn.style.display = status === 'rejected' ? 'none' : 'flex';
-            
-            approveBtn.innerHTML = syncAll ? '<i class="fas fa-check"></i> Aprovar Todos os Pendentes' : '<i class="fas fa-check"></i> Aprovar Pedido';
-            rejectBtn.innerHTML = syncAll ? '<i class="fas fa-times"></i> Rejeitar Todos os Pendentes' : '<i class="fas fa-times"></i> Rejeitar Pedido';
-            
             document.getElementById('optionsBtnPending').style.display = status === 'pending' ? 'none' : 'flex';
             document.getElementById('optionsBtnAddNote').style.display = status === 'pending' ? 'flex' : 'none';
 
@@ -1522,28 +1526,56 @@
             document.getElementById('chatModal').style.display = 'none';
         }
 
-        function handleOptionsApprove() {
-            closeOptionsModal();
-            updateStatus(optionsRequestId, 'approved', null, optionsSyncAll);
-        }
 
-        function handleOptionsReject() {
-            closeOptionsModal();
-            openRejectModal(optionsRequestId, optionsRequestType, optionsSyncAll);
-        }
 
         function handleOptionsPending() {
             closeOptionsModal();
-            const note = prompt("Deseja deixar uma pergunta ou observação para o revendedor? (Deixe em branco para apenas retornar para Pendente):");
-            if (note === null) return; // cancelou
-            updateStatus(optionsRequestId, 'pending', note || null, optionsSyncAll);
+            openNoteModal('pending', (note) => {
+                updateStatus(optionsRequestId, 'pending', note || null, optionsSyncAll);
+            });
         }
 
         function handleOptionsAddNote() {
             closeOptionsModal();
-            const note = prompt("Digite a sua pergunta ou observação para o revendedor (ex: 'Me explica o erro reportado' ou 'Qual o problema com o áudio?'):");
-            if (!note || note.trim() === '') return;
-            updateStatus(optionsRequestId, 'pending', note, optionsSyncAll);
+            openNoteModal('add_note', (note) => {
+                updateStatus(optionsRequestId, 'pending', note, optionsSyncAll);
+            });
+        }
+
+        let noteModalAction = null;
+        function openNoteModal(actionType, confirmCallback) {
+            noteModalAction = actionType;
+            const cardTitle = document.getElementById('optionsModalTitle').innerText;
+            document.getElementById('noteModalTitle').innerText = cardTitle;
+            
+            const header = document.getElementById('noteModalHeader');
+            const textarea = document.getElementById('noteModalText');
+            
+            if (actionType === 'pending') {
+                header.innerHTML = '<i class="fas fa-undo" style="color: #f59e0b;"></i> Retornar para Pendente';
+                textarea.placeholder = "Deseja deixar uma pergunta ou observação? (Opcional, deixe em branco se não quiser adicionar nota)...";
+                textarea.value = '';
+            } else {
+                header.innerHTML = '<i class="fas fa-comment-dots" style="color: #f59e0b;"></i> Pedir Explicação / Add Nota';
+                textarea.placeholder = "Escreva aqui a sua pergunta ou observação detalhada para o revendedor...";
+                textarea.value = '';
+            }
+            
+            document.getElementById('noteModalConfirmBtn').onclick = () => {
+                const note = textarea.value.trim();
+                if (actionType === 'add_note' && !note) {
+                    alert('Por favor, digite a sua observação.');
+                    return;
+                }
+                confirmCallback(note);
+                closeNoteModal();
+            };
+            
+            document.getElementById('noteModal').style.display = 'flex';
+        }
+
+        function closeNoteModal() {
+            document.getElementById('noteModal').style.display = 'none';
         }
 
         function handleOptionsDelete() {

@@ -109,7 +109,7 @@
     }
 
     .revenda-stat-card.rejected .number {
-      color: #6b7280;
+      color: var(--status-rejected);
     }
 
     .section-title {
@@ -124,21 +124,23 @@
     .requests-list {
       display: grid;
       grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
-      gap: 1.25rem;
+      gap: 25px;
     }
 
     .request-card {
       background: var(--bg-card);
       border: 1px solid var(--border);
-      border-radius: 1rem;
+      border-radius: 15px;
       overflow: hidden;
-      transition: border-color 0.2s;
+      transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
       display: flex;
       flex-direction: column;
     }
 
     .request-card:hover {
+      transform: translateY(-8px);
       border-color: var(--accent-red);
+      box-shadow: 0 10px 30px rgba(229, 9, 20, 0.2);
     }
 
     .poster-container {
@@ -157,50 +159,65 @@
     }
 
     .request-card .info {
-      padding: 1rem;
+      padding: 18px;
       flex-grow: 1;
       display: flex;
       flex-direction: column;
     }
 
     .request-card .title {
+      margin: 0 0 12px 0;
+      font-size: 1.15rem;
       font-weight: 700;
-      font-size: 0.95rem;
-      margin-bottom: 0.5rem;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      color: #fff;
     }
 
-    .request-card .meta {
-      font-size: 0.8rem;
+    .info-item {
+      font-size: 0.85rem;
       color: var(--text-muted);
-      margin-bottom: 0.25rem;
+      margin-bottom: 6px;
+      display: flex;
+      align-items: center;
+      gap: 10px;
     }
 
-    .request-card .status-badge {
-      display: inline-block;
-      padding: 0.35rem 0.75rem;
-      border-radius: 0.5rem;
-      font-size: 0.75rem;
-      font-weight: 700;
+    .info-item i {
+      width: 16px;
+      text-align: center;
+      color: var(--accent-red);
+    }
+
+    .badge-status {
+      position: absolute;
+      top: 15px;
+      right: 15px;
+      padding: 6px 12px;
+      border-radius: 6px;
+      font-size: 11px;
+      font-weight: 900;
       text-transform: uppercase;
-      margin-top: 0.75rem;
+      background: rgba(0, 0, 0, 0.8);
+      backdrop-filter: blur(4px);
+      border: 1px solid;
+      z-index: 10;
     }
 
-    .status-badge.pending {
-      background: rgba(220, 38, 38, 0.15);
-      color: #ef4444;
-      border: 1px solid rgba(220, 38, 38, 0.3);
+    .status-pending {
+      border-color: var(--status-pending);
+      color: var(--status-pending);
     }
 
-    .status-badge.approved {
-      background: rgba(16, 185, 129, 0.15);
-      color: #10b981;
-      border: 1px solid rgba(16, 185, 129, 0.3);
+    .status-approved {
+      border-color: var(--status-approved);
+      color: var(--status-approved);
     }
 
-    .status-badge.rejected {
-      background: rgba(107, 114, 128, 0.15);
-      color: #9ca3af;
-      border: 1px solid rgba(107, 114, 128, 0.3);
+    .status-rejected {
+      border-color: var(--status-rejected);
+      color: var(--status-rejected);
     }
 
     .empty-state {
@@ -213,6 +230,22 @@
       font-size: 3rem;
       margin-bottom: 1rem;
       opacity: 0.5;
+    }
+
+    .btn {
+      padding: 10px;
+      border-radius: 8px;
+      border: 1px solid transparent;
+      font-weight: 800;
+      cursor: pointer;
+      font-size: 0.75rem;
+      transition: all 0.2s;
+      text-transform: uppercase;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 6px;
+      font-family: inherit;
     }
   </style>
 </head>
@@ -317,85 +350,86 @@
 
     <h2 class="section-title">📋 Meus Pedidos</h2>
 
-    <% if (requests.length===0) { %>
+    <% if (requests.length === 0) { %>
       <div class="empty-state">
         <div class="icon">📭</div>
         <h3>Nenhum pedido ainda</h3>
         <p>Clique em "Nova Solicitação" para fazer seu primeiro pedido.</p>
       </div>
-      <% } else { %>
-        <div class="requests-list">
-          <% requests.forEach(req=> { %>
-            <article class="request-card">
-              <div class="poster-container">
-                <img src="<%= req.poster %>" alt="<%= req.title %>" class="poster">
-              </div>
-              <div class="info">
-                <div class="title">
-                  <%= req.title %>
+    <% } else { %>
+      <div class="requests-list">
+        <% requests.forEach(req => { %>
+          <article class="request-card">
+            <div class="poster-container">
+              <img src="<%= req.poster %>" alt="<%= req.title %>" class="poster">
+              <span class="badge-status status-<%= req.status %>">
+                <%= req.status==='pending' ? 'Pendente' : req.status==='approved' ? 'Aprovado' : 'Rejeitado' %>
+              </span>
+            </div>
+            <div class="info">
+              <h4 class="title" title="<%= req.title %>">
+                <%= req.title %>
+              </h4>
+              <div class="info-item"><i class="fas fa-calendar-day"></i> Lançamento: <%= req.year || 'N/A' %></div>
+              
+              <% if (req.season) { %>
+                <div class="info-item"><i class="fas fa-list-ol"></i> Temporada <%= req.season %></div>
+              <% } %>
+              
+              <% if (req.episode) { %>
+                <div class="info-item"><i class="fas fa-list-ol"></i> Episódio <%= req.episode %></div>
+              <% } %>
+              
+              <% if (req.audioPreference) { %>
+                <div class="info-item"><i class="fas fa-volume-up"></i> Áudio: <strong><%= req.audioPreference %></strong></div>
+              <% } %>
+              
+              <div class="info-item"><i class="far fa-calendar-alt"></i> <%= req.date %> às <%= req.time %></div>
+              <div class="info-item"><i class="fas fa-tag"></i> <%= req.action %></div>
+              
+              <% 
+                let hasChatHistory = !!(req.rejectionReason || req.description); 
+                let replyCount = 0;
+                if (req.description) {
+                  replyCount = (req.description.match(/\[Resposta do Revendedor/g) || []).length;
+                }
+                let chatDescription = req.description || '';
+                if (req.rejectionReason && !chatDescription.includes('[Rejeitado pelo Admin')) {
+                  chatDescription = (chatDescription ? chatDescription + '\n' : '') + `[Rejeitado pelo Admin - Motivo: ${req.rejectionReason}]`;
+                }
+              %>
+              
+              <% if (hasChatHistory) { %>
+                <button class="btn" style="margin-top: 10px; background: rgba(37, 99, 235, 0.15); border: 1px solid #2563eb; color: #3b82f6; width: 100%;" 
+                        onclick="openChatModal('<%= encodeURIComponent(req.title).replace(/'/g, "%27") %>', '<%= encodeURIComponent(chatDescription).replace(/'/g, "%27") %>')">
+                  <i class="fas fa-comments"></i> Histórico de Conversa
+                </button>
+              <% } %>
+              
+              <% if (req.status !== 'approved' && replyCount < 2) { %>
+                <button class="btn" style="margin-top: 5px; background: #2563eb; color: white; width: 100%;" 
+                        onclick="openExplanationModal(<%= req.id %>, '<%= encodeURIComponent(req.title).replace(/'/g, "%27") %>', '<%= encodeURIComponent(req.rejectionReason || '').replace(/'/g, "%27") %>')">
+                  <i class="fas fa-comment-dots"></i> Responder / Explicar
+                </button>
+              <% } %>
+              
+              <% if (req.status !== 'approved' && replyCount >= 2) { %>
+                <div style="color: #ef4444; font-size: 0.75rem; margin-top: 8px; font-weight: bold; text-align: center; display: flex; align-items: center; justify-content: center; gap: 5px; background: rgba(239, 68, 68, 0.05); padding: 6px; border-radius: 6px; border: 1px dashed rgba(239, 68, 68, 0.3);">
+                  <i class="fas fa-ban"></i> Limite de contestações atingido (Máx: 2)
                 </div>
-                <div class="meta">📅 Lançamento: <%= req.year || 'N/A' %>
-                </div>
-                <% if (req.season) { %>
-                  <div class="meta">📺 Temporada <%= req.season %>
-                  </div>
-                  <% } %>
-                    <% if (req.episode) { %>
-                      <div class="meta">▶️ Episódio <%= req.episode %>
-                      </div>
-                      <% } %>
-                        <% if (req.audioPreference) { %>
-                          <div class="meta">🔊 Áudio: <strong>
-                              <%= req.audioPreference %>
-                            </strong></div>
-                          <% } %>
-                            <div class="meta">📅 <%= req.date %>
-                                <%= req.time %>
-                            </div>
-                            <div class="meta">📝 <%= req.action %>
-                              <% 
-                               let hasChatHistory = !!(req.rejectionReason || req.description); 
-                               let replyCount = 0;
-                               if (req.description) {
-                                 replyCount = (req.description.match(/\[Resposta do Revendedor/g) || []).length;
-                               }
-                               let chatDescription = req.description || '';
-                               if (req.rejectionReason && !chatDescription.includes('[Rejeitado pelo Admin')) {
-                                 chatDescription = (chatDescription ? chatDescription + '\n' : '') + `[Rejeitado pelo Admin - Motivo: ${req.rejectionReason}]`;
-                               }
-                             %>
-                                 <span class="status-badge <%= req.status %>">
-                                   <%= req.status==='pending' ? '⏳ Pendente' : req.status==='approved' ? '✅ Aprovado'
-                                     : '❌ Rejeitado' %>
-                                 </span>
-                                 <% if (hasChatHistory) { %>
-                                   <button class="btn-solicitar" style="margin-top: 10px; background: rgba(37, 99, 235, 0.15); border: 1px solid #2563eb; color: #3b82f6; width: 100%; justify-content: center; font-size: 0.75rem; padding: 6px 12px; border-radius: 6px; cursor: pointer; display: inline-flex; align-items: center; gap: 5px;" 
-                                           onclick="openChatModal('<%= encodeURIComponent(req.title).replace(/'/g, "%27") %>', '<%= encodeURIComponent(chatDescription).replace(/'/g, "%27") %>')">
-                                     <i class="fas fa-comments"></i> Histórico de Conversa
-                                   </button>
-                                 <% } %>
-                                <% if (req.status !== 'approved' && replyCount < 2) { %>
-                                  <button class="btn-solicitar" style="margin-top: 5px; background: #2563eb; width: 100%; justify-content: center; font-size: 0.75rem; padding: 6px 12px; border-radius: 6px; border: none; cursor: pointer;" 
-                                          onclick="openExplanationModal(<%= req.id %>, '<%= encodeURIComponent(req.title).replace(/'/g, "%27") %>', '<%= encodeURIComponent(req.rejectionReason || '').replace(/'/g, "%27") %>')">
-                                    💬 Responder / Explicar
-                                  </button>
-                                <% } %>
-                                <% if (req.status !== 'approved' && replyCount >= 2) { %>
-                                  <div style="color: #ef4444; font-size: 0.75rem; margin-top: 8px; font-weight: bold; text-align: center; display: flex; align-items: center; justify-content: center; gap: 5px; background: rgba(239, 68, 68, 0.05); padding: 6px; border-radius: 6px; border: 1px dashed rgba(239, 68, 68, 0.3);">
-                                    <i class="fas fa-ban"></i> ⚠️ Limite de contestações atingido (Máx: 2)
-                                  </div>
-                                <% } %>
-                                 <% if (req.status === 'pending') { %>
-                                   <button class="btn-solicitar" style="margin-top: 5px; background: rgba(220, 38, 38, 0.15); border: 1px solid #dc2626; color: #ef4444; width: 100%; justify-content: center; font-size: 0.75rem; padding: 6px 12px; border-radius: 6px; cursor: pointer; display: inline-flex; align-items: center; gap: 5px;" 
-                                           onclick="deleteRequest(<%= req.id %>, '<%= encodeURIComponent(req.title).replace(/'/g, "%27") %>')">
-                                     <i class="fas fa-trash-alt"></i> Excluir Pedido
-                                   </button>
-                                 <% } %>
-              </div>
-            </article>
-            <% }) %>
-        </div>
-        <% } %>
+              <% } %>
+              
+              <% if (req.status === 'pending') { %>
+                <button class="btn" style="margin-top: 5px; background: rgba(220, 38, 38, 0.15); border: 1px solid #dc2626; color: #ef4444; width: 100%;" 
+                        onclick="deleteRequest(<%= req.id %>, '<%= encodeURIComponent(req.title).replace(/'/g, "%27") %>')">
+                  <i class="fas fa-trash-alt"></i> Excluir Pedido
+                </button>
+              <% } %>
+            </div>
+          </article>
+        <% }) %>
+      </div>
+    <% } %>
   </main>
 
   <!-- Modal de Explicação/Resposta do Revendedor -->
