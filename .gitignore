@@ -10,3 +10,6 @@ test_output.html
 Painel Admin _ Portal VOD_files/
 *.user.js.wwebjs_auth/
 .wwebjs_auth/
+.wwebjs_cache/
+repomix-output.xml
+database.sqlite*
