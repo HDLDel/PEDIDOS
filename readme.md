@@ -178,3 +178,7 @@ Volte para as configurações do Worker.
 Vá em Triggers > Routes > Add Route.
 Coloque: gestorpedidos.click/*
 Selecione a Zona: gestorpedidos.click.
+
+
+
+http://zetsu.buzz/get.php?username=MD75yGCe3pFQNeA78OnI3mGer&password=FXjtmyryusZ4ZfDgf06Ns3z4x&type=m3u_plus

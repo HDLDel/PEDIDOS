@@ -80,6 +80,16 @@ db.exec(`
     key TEXT PRIMARY KEY,
     value TEXT
   );
+
+  CREATE TABLE IF NOT EXISTS m3u_contents (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    title TEXT NOT NULL,
+    type TEXT NOT NULL CHECK(type IN ('movie', 'series')),
+    normalized_title TEXT NOT NULL,
+    logo_hash TEXT
+  );
+
+  CREATE INDEX IF NOT EXISTS idx_m3u_normalized ON m3u_contents(normalized_title);
 `);
 
 // --- SISTEMA DE MIGRAÇÕES SEGURAS (WORLD CLASS) ---
@@ -98,6 +108,14 @@ safeAddColumn('resellers', 'password', 'TEXT');
 safeAddColumn('requests', 'audio_preference', 'TEXT');
 safeAddColumn('admins', 'email', 'TEXT');
 safeAddColumn('admins', 'phone', 'TEXT');
+safeAddColumn('m3u_contents', 'logo_hash', 'TEXT');
+
+// Garantir índice do logo_hash na tabela m3u_contents
+try {
+    db.exec('CREATE INDEX IF NOT EXISTS idx_m3u_logo_hash ON m3u_contents(logo_hash);');
+} catch (e) {
+    // ignorar
+}
 
 console.log('✅ Banco SQLite conectado em:', dbPath);
 

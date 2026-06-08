@@ -25,7 +25,9 @@ export class RequestModel {
         COALESCE(t.poster_path, 'https://via.placeholder.com/500x750?text=Sem+Poster') as poster,
         t.year,
         t.tmdb_id,
-        t.vote_average as voteAverage
+        t.vote_average as voteAverage,
+        t.title as tmdbTitle,
+        t.original_title as tmdbOriginalTitle
       FROM requests r
       JOIN resellers res ON r.reseller_id = res.id
       LEFT JOIN tmdb_contents t ON r.id = t.request_id

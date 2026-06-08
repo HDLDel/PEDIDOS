@@ -11,6 +11,7 @@ import { TmdbModel } from './models/TmdbModel.js';
 import { AdminModel } from './models/AdminModel.js';
 import { WhatsAppService } from './WhatsAppService.js';
 import { BotBotService } from './BotBotService.js';
+import { M3uModel } from './models/M3uModel.js';
 
 const app = express();
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
@@ -145,10 +146,56 @@ app.get('/admin/dashboard', checkAdminAuth, (req, res) => {
     let requests = RequestModel.getAll();
     const stats = RequestModel.getStats();
 
+    // Carregar dados da playlist M3U (títulos e hashes de imagem) para comparação
+    const { titleSet: m3uTitles, logoSet: m3uLogos } = M3uModel.getM3uData();
+    const hasM3uData = m3uTitles.size > 0 || m3uLogos.size > 0;
+
+    const checkInM3u = (item) => {
+        if (item.requestType === 'error') return null; // Erros não devem ser checados na M3U
+
+        // 1. Tentar correspondência por Pôster/Banner do TMDB (100% de precisão, evita homônimos de tipos diferentes)
+        // Se o pedido tiver um pôster associado vindo do TMDB, verificamos pelo hash do nome do arquivo
+        if (item.poster) {
+            const posterUrl = item.poster;
+            const slashIndex = posterUrl.lastIndexOf('/');
+            if (slashIndex !== -1) {
+                const logoHash = posterUrl.substring(slashIndex + 1).trim().toLowerCase();
+                // Ignorar imagens genéricas de sem pôster e checar no Set
+                if (logoHash && !logoHash.includes('placeholder') && m3uLogos.has(logoHash)) {
+                    const match = db.prepare('SELECT title FROM m3u_contents WHERE logo_hash = ? LIMIT 1').get(logoHash);
+                    return { inM3u: true, m3uTitle: match ? match.title : 'Por imagem' };
+                }
+            }
+        }
+
+        // 2. Tentar correspondência estrita por Título e Tipo
+        const matchTitles = [
+            item.title,
+            item.tmdbTitle,
+            item.tmdbOriginalTitle
+        ].filter(Boolean);
+
+        for (const title of matchTitles) {
+            const cleanTitle = M3uModel.cleanSeriesName(title);
+            const norm = M3uModel.normalizeTitle(cleanTitle);
+            
+            // Busca estrita pelo tipo correspondente do pedido (evita confundir filme "A Origem" com série "Origem")
+            if (m3uTitles.has(`${item.type}:${norm}`)) {
+                const match = db.prepare('SELECT title FROM m3u_contents WHERE type = ? AND normalized_title = ? LIMIT 1').get(item.type, norm);
+                return { inM3u: true, m3uTitle: match ? match.title : title };
+            }
+        }
+        return null;
+    };
+
     // LÓGICA DE AGRUPAMENTO MESTRE: Todos do mesmo TMDB ID dividem 1 card
     const groupedMap = new Map();
 
     requests.forEach(req => {
+        const m3uCheck = checkInM3u(req);
+        req.inM3u = !!m3uCheck;
+        req.m3uTitle = m3uCheck ? m3uCheck.m3uTitle : '';
+        
         const key = req.tmdb_id ? `tmdb-${req.tmdb_id}` : `manual-${req.type}-${req.title.toLowerCase()}`;
 
         if (!groupedMap.has(key)) {
@@ -171,7 +218,7 @@ app.get('/admin/dashboard', checkAdminAuth, (req, res) => {
     const groupedRequests = [...groupedMap.values()];
     groupedRequests.sort((a, b) => a.id - b.id);
 
-    res.render('dashboard', { requests: groupedRequests, stats });
+    res.render('dashboard', { requests: groupedRequests, stats, hasM3uData });
 });
 
 // Rota para Conexão do WhatsApp (Página Dedicada)
@@ -633,6 +680,31 @@ app.get('/api/tmdb/:requestId', checkAdminAuth, (req, res) => {
     const tmdbData = TmdbModel.getByRequestId(parseInt(req.params.requestId));
     if (!tmdbData) return res.status(404).json({ error: 'Dados TMDB não encontrados' });
     res.json(tmdbData);
+});
+
+// API - Obter status do sincronismo M3U
+app.get('/api/m3u/status', checkAdminAuth, (req, res) => {
+    try {
+        const source = M3uModel.getSetting('M3U_SOURCE', 'exemplo.m3u');
+        const lastSync = M3uModel.getSetting('M3U_LAST_SYNC', 'Nunca sincronizado');
+        const statsStr = M3uModel.getSetting('M3U_STATS', '{}');
+        const stats = JSON.parse(statsStr);
+        res.json({ success: true, source, lastSync, stats });
+    } catch (e) {
+        res.status(500).json({ error: e.message });
+    }
+});
+
+// API - Iniciar sincronismo M3U
+app.post('/api/m3u/sync', checkAdminAuth, async (req, res) => {
+    const { source } = req.body;
+    try {
+        const stats = await M3uModel.syncM3u(source);
+        res.json({ success: true, stats, message: 'Playlist M3U sincronizada com sucesso!' });
+    } catch (e) {
+        console.error("Erro na sincronização M3U:", e);
+        res.status(500).json({ error: e.message });
+    }
 });
 
 // --- TRATAMENTO DE ENCERRAMENTO ---

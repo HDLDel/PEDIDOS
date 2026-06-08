@@ -99,6 +99,14 @@
             border-color: #f59e0b;
         }
 
+        .wa-m3u {
+            color: #3b82f6;
+            border-color: #3b82f6;
+        }
+        .wa-m3u:hover {
+            background: rgba(59, 130, 246, 0.1);
+        }
+
         .logo h2 {
             font-weight: 900;
             letter-spacing: -1px;
@@ -507,6 +515,9 @@
             <a href="/admin/botbot" id="bbStatusBtn" class="whatsapp-status-btn wa-off" style="text-decoration: none;">
                 <i class="fas fa-robot"></i> <span>BOTBOT</span>
             </a>
+            <button id="m3uSyncBtn" class="whatsapp-status-btn wa-m3u" style="border: none; cursor: pointer; text-decoration: none;" onclick="openM3uModal()">
+                <i class="fas fa-list-ul"></i> <span>M3U PLAYLIST</span>
+            </button>
             <button id="themeToggleBtn" style="background: transparent; border: none; color: var(--text-primary); font-size: 1.15rem; cursor: pointer; display: inline-flex; align-items: center; justify-content: center; width: 35px; height: 35px; border-radius: 50%; transition: background 0.3s; margin-left: 5px;" onclick="toggleTheme()" title="Alternar Tema">
                 <i class="fas fa-sun" id="themeIcon" style="color: #f59e0b;"></i>
             </button>
@@ -542,6 +553,11 @@
     <div class="toolbar">
         <input type="text" id="searchInput" placeholder="Buscar por título do pedido ou nome da revenda..."
             onkeyup="applyFilters()">
+        <select id="m3uFilterSelect" onchange="applyFilters()">
+            <option value="all" selected>Todos (M3U)</option>
+            <option value="present">Presentes na M3U</option>
+            <option value="absent">Ausentes na M3U</option>
+        </select>
         <select id="sortSelect" onchange="sortCards()">
             <option value="oldest" selected>Mais Antigos (Data de Pedido)</option>
             <option value="newest">Mais Recentes (Data de Pedido)</option>
@@ -557,7 +573,8 @@
             <article class="request-card" id="card-<%= req.id %>" data-id="<%= req.id %>"
                 data-category="<%= req.requestType === 'error' ? 'error' : req.type %>" data-status="<%= req.status %>"
                 data-title="<%= (req.title || '').toLowerCase() %>"
-                data-reseller="<%= (req.reseller || '').toLowerCase() %>" data-year="<%= req.year || 0 %>">
+                data-reseller="<%= (req.reseller || '').toLowerCase() %>" data-year="<%= req.year || 0 %>"
+                data-in-m3u="<%= req.inM3u ? 'true' : 'false' %>">
 
                 <% let allReqs=[req]; if (req.subRequests) allReqs=allReqs.concat(req.subRequests); let
                     countDub=allReqs.filter(r=> r.audioPreference === 'Dublado' && r.requestType !== 'error').length;
@@ -613,6 +630,19 @@
                         <h4 class="card-title" title="<%= req.title %>">
                             <%= req.title %>
                         </h4>
+                        <% if (req.requestType !== 'error' && typeof hasM3uData !== 'undefined' && hasM3uData) { %>
+                            <div style="margin-bottom: 10px;">
+                                <% if (req.inM3u) { %>
+                                    <span style="display: inline-flex; align-items: center; gap: 4px; background: rgba(16, 185, 129, 0.15); color: #10b981; border: 1px solid rgba(16, 185, 129, 0.3); padding: 4px 8px; border-radius: 6px; font-size: 11px; font-weight: 700;" title="Na playlist M3U como: <%= req.m3uTitle %>">
+                                        <i class="fas fa-check-circle"></i> Presentes na M3U <%= req.m3uTitle && req.m3uTitle.toLowerCase() !== req.title.toLowerCase() ? `(como "${req.m3uTitle}")` : '' %>
+                                    </span>
+                                <% } else { %>
+                                    <span style="display: inline-flex; align-items: center; gap: 4px; background: rgba(239, 68, 68, 0.1); color: #f87171; border: 1px solid rgba(239, 68, 68, 0.2); padding: 4px 8px; border-radius: 6px; font-size: 11px; font-weight: 700;">
+                                        <i class="fas fa-times-circle"></i> Ausentes na M3U
+                                    </span>
+                                <% } %>
+                            </div>
+                        <% } %>
                         <div class="info-item"><i class="fas fa-calendar-day"></i> Lançamento: <%= req.year || 'N/A' %>
                         </div>
                         <div class="info-item"><i class="fas fa-tag"></i>
@@ -845,6 +875,38 @@
         </div>
     </div>
 
+    <!-- Modal de Playlist M3U -->
+    <div id="m3uModal" class="modal-overlay" style="z-index: 3150;">
+        <div class="modal-content" style="max-width: 500px; background: #111; border: 1px solid #333; padding: 25px; border-radius: 12px; box-shadow: 0 10px 25px rgba(0,0,0,0.5);">
+            <h3 class="modal-header" style="color: #fff; margin-bottom: 15px; font-weight: 700; display: flex; align-items: center; gap: 10px; border-bottom: none; padding-bottom: 0;">
+                <i class="fas fa-list-ul" style="color: #3b82f6;"></i> Sincronizar Playlist M3U
+            </h3>
+            
+            <div style="background: #0d0d0d; border: 1px solid var(--border); padding: 15px; border-radius: 8px; margin-bottom: 1.5rem; font-size: 0.9rem;">
+                <p style="margin-bottom: 8px; color: #aaa;"><strong>Última Sincronização:</strong> <span id="m3uLastSync" style="color: #fff;">Carregando...</span></p>
+                <p style="margin-bottom: 8px; color: #aaa;"><strong>Estatísticas:</strong> <span id="m3uStats" style="color: #fff;">Carregando...</span></p>
+            </div>
+
+            <div style="margin-bottom: 20px;">
+                <label for="m3uSourceInput" style="display: block; font-size: 0.9rem; color: #ccc; margin-bottom: 8px; font-weight: 600;">Link da Playlist M3U ou Caminho do Arquivo:</label>
+                <input type="text" id="m3uSourceInput" 
+                       style="width: 100%; background: #000; border: 1px solid #333; border-radius: 8px; color: #fff; padding: 12px; font-family: inherit; font-size: 0.9rem;" 
+                       placeholder="http://exemplo.com/lista.m3u ou exemplo.m3u">
+            </div>
+
+            <div id="m3uLoadingMsg" style="display: none; align-items: center; gap: 10px; color: #f59e0b; font-size: 0.9rem; margin-bottom: 20px;">
+                <i class="fas fa-spinner fa-spin"></i> <span>Processando playlist M3U... Isso pode demorar alguns segundos.</span>
+            </div>
+
+            <div style="display: flex; justify-content: flex-end; gap: 10px;">
+                <button class="btn" style="background: #333; color: #fff; padding: 10px 20px; border-radius: 8px; font-weight: 600; cursor: pointer;" 
+                        onclick="closeM3uModal()">FECHAR</button>
+                <button class="btn" style="background: #2563eb; color: #fff; border: none; padding: 10px 20px; border-radius: 8px; font-weight: 600; cursor: pointer;" 
+                        id="m3uSyncConfirmBtn" onclick="runM3uSync()">SINCRONIZAR AGORA</button>
+            </div>
+        </div>
+    </div>
+
     <button id="backToTop" class="back-to-top" title="Voltar ao topo">
         <i class="fas fa-chevron-up"></i>
     </button>
@@ -856,6 +918,71 @@
         let activeCategory = 'all';
         let activeStatus = 'pending';
         let checkStatusInterval = null;
+
+        async function openM3uModal() {
+            document.getElementById('m3uModal').style.display = 'flex';
+            document.getElementById('m3uLoadingMsg').style.display = 'none';
+            document.getElementById('m3uSyncConfirmBtn').disabled = false;
+            
+            // Buscar status atual do servidor
+            try {
+                const res = await fetch('/api/m3u/status');
+                const data = await res.json();
+                if (data.success) {
+                    document.getElementById('m3uSourceInput').value = data.source || 'exemplo.m3u';
+                    document.getElementById('m3uLastSync').innerText = data.lastSync || 'Nunca sincronizado';
+                    if (data.stats && typeof data.stats.movies !== 'undefined') {
+                        document.getElementById('m3uStats').innerText = `${data.stats.movies} filmes, ${data.stats.series} séries`;
+                    } else {
+                        document.getElementById('m3uStats').innerText = 'Sem dados de estatísticas';
+                    }
+                }
+            } catch (e) {
+                console.error("Erro ao obter status M3U:", e);
+            }
+        }
+
+        function closeM3uModal() {
+            document.getElementById('m3uModal').style.display = 'none';
+        }
+
+        async function runM3uSync() {
+            const source = document.getElementById('m3uSourceInput').value.trim();
+            if (!source) {
+                alert('Por favor, informe a URL ou caminho da playlist.');
+                return;
+            }
+
+            const confirmBtn = document.getElementById('m3uSyncConfirmBtn');
+            const loadingMsg = document.getElementById('m3uLoadingMsg');
+
+            confirmBtn.disabled = true;
+            loadingMsg.style.display = 'flex';
+
+            try {
+                const res = await fetch('/api/m3u/sync', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({ source })
+                });
+                const data = await res.json();
+                if (data.success) {
+                    alert('Sincronização M3U concluída com sucesso! A página será recarregada.');
+                    window.location.reload();
+                } else {
+                    alert('Erro na sincronização: ' + (data.error || 'Erro desconhecido'));
+                    confirmBtn.disabled = true;
+                    confirmBtn.disabled = false;
+                    loadingMsg.style.display = 'none';
+                }
+            } catch (e) {
+                alert('Falha crítica na sincronização: ' + e.message);
+                confirmBtn.disabled = false;
+                loadingMsg.style.display = 'none';
+            }
+        }
 
         async function checkWaStatus() {
             try {
@@ -882,6 +1009,7 @@
 
         function applyFilters() {
             const searchQuery = document.getElementById('searchInput').value.toLowerCase().trim();
+            const m3uFilter = document.getElementById('m3uFilterSelect').value;
 
             document.querySelectorAll('.request-card').forEach(card => {
                 const categoryMatch = activeCategory === 'all' || card.dataset.category === activeCategory;
@@ -891,7 +1019,11 @@
                 const resellerMatch = card.dataset.reseller.includes(searchQuery);
                 const searchMatch = !searchQuery || titleMatch || resellerMatch;
 
-                if (categoryMatch && statusMatch && searchMatch) {
+                const m3uMatch = m3uFilter === 'all' || 
+                    (m3uFilter === 'present' && card.dataset.inM3u === 'true') || 
+                    (m3uFilter === 'absent' && card.dataset.inM3u === 'false');
+
+                if (categoryMatch && statusMatch && searchMatch && m3uMatch) {
                     card.classList.remove('hidden');
                 } else {
                     card.classList.add('hidden');
