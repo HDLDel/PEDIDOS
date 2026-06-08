@@ -167,12 +167,17 @@ class M3uProcessor:
                     name = tvg_name_match.group(1) if tvg_name_match else ""
 
                 if name:
-                    current_item = {
-                        "name": name,
-                        "group_title": group_title,
-                        "logo_hash": logo_hash,
-                        "normalized_name": cls.normalize_title(name)
-                    }
+                     # Extrair ano do título (1900-2099) antes de qualquer outra limpeza
+                     year_match = re.search(r'\b(19\d{2}|20\d{2})\b', name)
+                     item_year = int(year_match.group(1)) if year_match else None
+
+                     current_item = {
+                         "name": name,
+                         "group_title": group_title,
+                         "logo_hash": logo_hash,
+                         "year": item_year,
+                         "normalized_name": cls.normalize_title(name)
+                     }
                 else:
                     current_item = None
 
@@ -203,7 +208,8 @@ class M3uProcessor:
                         "title": current_item["name"],
                         "type": type_,
                         "normalized_title": current_item["normalized_name"],
-                        "logo_hash": current_item["logo_hash"]
+                        "logo_hash": current_item["logo_hash"],
+                        "year": current_item["year"]
                     })
                 current_item = None
 
@@ -217,11 +223,18 @@ class M3uProcessor:
 Para comparar um pedido com os dados importados do M3U, utilize a seguinte lógica estruturada de decisão:
 
 ```python
-def check_if_exists_in_m3u(request_item, m3u_titles_set, m3u_logos_set) -> dict:
+def check_if_exists_in_m3u(request_item, m3u_titles_map, m3u_logos_set) -> dict:
     """
     Verifica se o pedido (request_item) já está presente na M3U.
     Retorna um dicionário indicando sucesso e qual nome bateu.
     """
+    # Helper para extrair ano de 4 dígitos de data do TMDB
+    def get_4digit_year(year_val):
+        if not year_val:
+            return None
+        match = re.search(r'\b(19\d{2}|20\d{2})\b', str(year_val))
+        return int(match.group(1)) if match else None
+
     # 1. RASTREAMENTO POR PÔSTER DO TMDB (100% de Precisão)
     # Evita falsos positivos como o filme "A Origem" (Inception) bater com a série "Origem" (FROM)
     if request_item.get("poster_path"):
@@ -234,7 +247,7 @@ def check_if_exists_in_m3u(request_item, m3u_titles_set, m3u_logos_set) -> dict:
                     "m3u_title": "Identificado por Imagem"
                 }
 
-    # 2. RASTREAMENTO ESTRITO POR TÍTULO + TIPO
+    # 2. RASTREAMENTO ESTRITO POR TÍTULO, TIPO E ANO
     # Comparamos os títulos possíveis (Digitado, Traduzido e Original)
     match_titles = [
         request_item.get("title"),
@@ -243,6 +256,7 @@ def check_if_exists_in_m3u(request_item, m3u_titles_set, m3u_logos_set) -> dict:
     ]
     # Remove valores nulos/vazios
     match_titles = [t for t in match_titles if t]
+    req_year = get_4digit_year(request_item.get("year"))
 
     for title in match_titles:
         # Limpar metadados do título do pedido
@@ -251,13 +265,25 @@ def check_if_exists_in_m3u(request_item, m3u_titles_set, m3u_logos_set) -> dict:
         
         # Chave estrita por tipo: ex: "series:from" ou "movie:divertidamente"
         key = f"{request_item['type']}:{norm_title}"
-        if key in m3u_titles_set:
-            return {
-                "matched": True,
-                "reason": "Por título e tipo",
-                # Aqui você buscaria no banco o título exato que gerou esse norm_title
-                "m3u_title": title 
-            }
+        if key in m3u_titles_map:
+            entries = m3u_titles_map[key]
+            matched_entry = None
+            
+            if req_year:
+                # 1. Tenta correspondência exata de ano
+                matched_entry = next((e for e in entries if e.get("year") == req_year), None)
+                # 2. Fallback para itens sem ano especificado na M3U
+                if not matched_entry:
+                    matched_entry = next((e for e in entries if not e.get("year")), None)
+            else:
+                matched_entry = entries[0]
+
+            if matched_entry:
+                return {
+                    "matched": True,
+                    "reason": f"Por título e tipo" + (f" (Ano: {matched_entry['year']})" if matched_entry.get('year') else ""),
+                    "m3u_title": matched_entry["title"]
+                }
 
     return {"matched": False, "reason": "Não encontrado na M3U", "m3u_title": ""}
 ```
@@ -268,11 +294,11 @@ def check_if_exists_in_m3u(request_item, m3u_titles_set, m3u_logos_set) -> dict:
 
 M3U de provedores costumam conter mais de 50.000 linhas. Para garantir um processamento ultra rápido no Python:
 
-1. **Deduplicação de VODs**: Remova duplicatas no Python antes de mandar para o banco, guardando chaves únicas em um dicionário:
+1. **Deduplicação de VODs**: Remova duplicatas no Python antes de mandar para o banco, guardando chaves únicas em um dicionário (incluindo o ano para não remover remakes homônimos):
    ```python
    unique_items = {}
    for item in parsed_items:
-       key = f"{item['type']}:{item['normalized_title']}"
+       key = f"{item['type']}:{item['normalized_title']}:{item['year'] or ''}"
        if key not in unique_items:
            unique_items[key] = item
    ```
@@ -281,8 +307,8 @@ M3U de provedores costumam conter mais de 50.000 linhas. Para garantir um proces
    cursor.execute("BEGIN TRANSACTION;")
    cursor.execute("DELETE FROM m3u_contents;")
    cursor.executemany(
-       "INSERT INTO m3u_contents (title, type, normalized_title, logo_hash) VALUES (?, ?, ?, ?);",
-       [(i['title'], i['type'], i['normalized_title'], i['logo_hash']) for i in unique_items.values()]
+       "INSERT INTO m3u_contents (title, type, normalized_title, logo_hash, year) VALUES (?, ?, ?, ?, ?);",
+       [(i['title'], i['type'], i['normalized_title'], i['logo_hash'], i['year']) for i in unique_items.values()]
    )
    cursor.execute("COMMIT;")
    ```

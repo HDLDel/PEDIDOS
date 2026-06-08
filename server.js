@@ -147,8 +147,15 @@ app.get('/admin/dashboard', checkAdminAuth, (req, res) => {
     const stats = RequestModel.getStats();
 
     // Carregar dados da playlist M3U (títulos e hashes de imagem) para comparação
-    const { titleSet: m3uTitles, logoSet: m3uLogos } = M3uModel.getM3uData();
+    const { titleMap: m3uTitles, logoSet: m3uLogos } = M3uModel.getM3uData();
     const hasM3uData = m3uTitles.size > 0 || m3uLogos.size > 0;
+
+    // Helper para extrair o ano de 4 dígitos de um valor de data/ano (ex: "15/04/2012" -> 2012)
+    const get4DigitYear = (yearVal) => {
+        if (!yearVal) return null;
+        const match = yearVal.toString().match(/\b(19\d{2}|20\d{2})\b/);
+        return match ? parseInt(match[1], 10) : null;
+    };
 
     const checkInM3u = (item) => {
         if (item.requestType === 'error') return null; // Erros não devem ser checados na M3U
@@ -168,21 +175,39 @@ app.get('/admin/dashboard', checkAdminAuth, (req, res) => {
             }
         }
 
-        // 2. Tentar correspondência estrita por Título e Tipo
+        // 2. Tentar correspondência estrita por Título, Tipo e Ano
         const matchTitles = [
             item.title,
             item.tmdbTitle,
             item.tmdbOriginalTitle
         ].filter(Boolean);
 
+        const reqYear = get4DigitYear(item.year);
+
         for (const title of matchTitles) {
             const cleanTitle = M3uModel.cleanSeriesName(title);
             const norm = M3uModel.normalizeTitle(cleanTitle);
+            const key = `${item.type}:${norm}`;
             
-            // Busca estrita pelo tipo correspondente do pedido (evita confundir filme "A Origem" com série "Origem")
-            if (m3uTitles.has(`${item.type}:${norm}`)) {
-                const match = db.prepare('SELECT title FROM m3u_contents WHERE type = ? AND normalized_title = ? LIMIT 1').get(item.type, norm);
-                return { inM3u: true, m3uTitle: match ? match.title : title };
+            if (m3uTitles.has(key)) {
+                const entries = m3uTitles.get(key) || [];
+                let matchedEntry = null;
+
+                if (reqYear) {
+                    // 1. Tenta correspondência exata de ano
+                    matchedEntry = entries.find(e => e.year === reqYear);
+                    // 2. Se não achou com ano exato, mas há entradas sem ano na M3U, aceita como fallback
+                    if (!matchedEntry) {
+                        matchedEntry = entries.find(e => !e.year);
+                    }
+                } else {
+                    // Sem ano informado no pedido, aceita a primeira ocorrência
+                    matchedEntry = entries[0];
+                }
+
+                if (matchedEntry) {
+                    return { inM3u: true, m3uTitle: matchedEntry.title };
+                }
             }
         }
         return null;

@@ -86,7 +86,8 @@ db.exec(`
     title TEXT NOT NULL,
     type TEXT NOT NULL CHECK(type IN ('movie', 'series')),
     normalized_title TEXT NOT NULL,
-    logo_hash TEXT
+    logo_hash TEXT,
+    year INTEGER
   );
 
   CREATE INDEX IF NOT EXISTS idx_m3u_normalized ON m3u_contents(normalized_title);
@@ -109,6 +110,7 @@ safeAddColumn('requests', 'audio_preference', 'TEXT');
 safeAddColumn('admins', 'email', 'TEXT');
 safeAddColumn('admins', 'phone', 'TEXT');
 safeAddColumn('m3u_contents', 'logo_hash', 'TEXT');
+safeAddColumn('m3u_contents', 'year', 'INTEGER');
 
 // Garantir índice do logo_hash na tabela m3u_contents
 try {

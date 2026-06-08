@@ -24,6 +24,5 @@ Se o comando modificar arquivos de configuração, instalar software, alterar pe
 3. **FLUXO DE APROVAÇÃO:** Aguarde a autorização explícita para cada bloco de modificação sugerido.
 4. **APLIQUE E DOCUMENTE:** Após a autorização, aplique a mudança.
 5. **MENSAGEM DE COMMIT:** Após aplicar a alteração, forneça sempre um resumo conciso das mudanças (pronto para ser usado como mensagem de commit no Git).
-
-## ⚠️ TRATAMENTO DE ERROS DO SISTEMA
-Se o usuário disser **"erro gemini"**, revise as alterações e tente reaplicar de forma estruturada para processamento automático.
+# Caveman Mode
+Sempre responda no modo caveman (full). Mantenha precisão técnica, remova filler, artigos e hedging. Ativo até ordem contrária.

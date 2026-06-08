@@ -109,10 +109,15 @@ export class M3uModel {
         }
 
         if (name) {
+          // Extrair ano do título (1900-2099) antes de qualquer outra limpeza
+          const yearMatch = name.match(/\b(19\d{2}|20\d{2})\b/);
+          const itemYear = yearMatch ? parseInt(yearMatch[1], 10) : null;
+
           currentItem = {
             name,
             groupTitle,
             logoHash,
+            year: itemYear,
             normalizedName: this.normalizeTitle(name)
           };
         } else {
@@ -146,7 +151,8 @@ export class M3uModel {
             title: currentItem.name,
             type,
             normalizedTitle: currentItem.normalizedName,
-            logoHash: currentItem.logoHash
+            logoHash: currentItem.logoHash,
+            year: currentItem.year
           });
         }
         currentItem = null;
@@ -187,9 +193,10 @@ export class M3uModel {
     console.log(`🔍 Total de itens extraídos da M3U: ${parsedItems.length}`);
 
     // Remover duplicatas em JS antes de salvar no SQLite para manter performance excepcional
+    // Chave única inclui o ano para permitir duplicatas de títulos homônimos/remakes (ex: Tudo é Possível 2012 vs 2022)
     const uniqueMap = new Map();
     for (const item of parsedItems) {
-      const key = `${item.type}:${item.normalizedTitle}`;
+      const key = `${item.type}:${item.normalizedTitle}:${item.year || ''}`;
       if (!uniqueMap.has(key)) {
         uniqueMap.set(key, item);
       }
@@ -203,12 +210,12 @@ export class M3uModel {
       db.prepare('DELETE FROM m3u_contents').run();
 
       const insertStmt = db.prepare(`
-        INSERT INTO m3u_contents (title, type, normalized_title, logo_hash)
-        VALUES (?, ?, ?, ?)
+        INSERT INTO m3u_contents (title, type, normalized_title, logo_hash, year)
+        VALUES (?, ?, ?, ?, ?)
       `);
 
       for (const item of items) {
-        insertStmt.run(item.title, item.type, item.normalizedTitle, item.logoHash);
+        insertStmt.run(item.title, item.type, item.normalizedTitle, item.logoHash, item.year);
       }
     });
 
@@ -236,25 +243,34 @@ export class M3uModel {
   // Busca todos os dados da M3U em Sets para comparação eficiente
   static getM3uData() {
     try {
-      const rows = db.prepare('SELECT normalized_title, type, logo_hash FROM m3u_contents').all();
-      const titleSet = new Set();
+      const rows = db.prepare('SELECT title, normalized_title, type, logo_hash, year FROM m3u_contents').all();
+      const titleMap = new Map();
       const logoSet = new Set();
       for (const row of rows) {
-        titleSet.add(`${row.type}:${row.normalized_title}`);
+        const key = `${row.type}:${row.normalized_title}`;
+        if (!titleMap.has(key)) {
+          titleMap.set(key, []);
+        }
+        titleMap.get(key).push({
+          title: row.title,
+          year: row.year,
+          logoHash: row.logo_hash
+        });
+
         if (row.logo_hash) {
           logoSet.add(row.logo_hash);
         }
       }
-      return { titleSet, logoSet };
+      return { titleMap, logoSet };
     } catch (e) {
-      return { titleSet: new Set(), logoSet: new Set() };
+      return { titleMap: new Map(), logoSet: new Set() };
     }
   }
 
   // Busca todos os títulos normalizados em um Set de strings "tipo:titulo_normalizado"
   static getNormalizedTitles() {
     const data = this.getM3uData();
-    return data.titleSet;
+    return new Set(data.titleMap.keys());
   }
 
   // Helpers simples para ler/gravar configurações globais na tabela settings
