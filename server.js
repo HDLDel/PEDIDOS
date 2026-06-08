@@ -160,19 +160,23 @@ app.get('/admin/dashboard', checkAdminAuth, (req, res) => {
     const checkInM3u = (item) => {
         if (item.requestType === 'error') return null; // Erros não devem ser checados na M3U
 
-        // 1. Tentar correspondência por Pôster/Banner do TMDB (100% de precisão, evita homônimos de tipos diferentes)
-        // Se o pedido tiver um pôster associado vindo do TMDB, verificamos pelo hash do nome do arquivo
+        // Extrair o hash da imagem do pedido, se existir
+        let reqLogoHash = null;
         if (item.poster) {
             const posterUrl = item.poster;
             const slashIndex = posterUrl.lastIndexOf('/');
             if (slashIndex !== -1) {
-                const logoHash = posterUrl.substring(slashIndex + 1).trim().toLowerCase();
-                // Ignorar imagens genéricas de sem pôster e checar no Set
-                if (logoHash && !logoHash.includes('placeholder') && m3uLogos.has(logoHash)) {
-                    const match = db.prepare('SELECT title FROM m3u_contents WHERE logo_hash = ? LIMIT 1').get(logoHash);
-                    return { inM3u: true, m3uTitle: match ? match.title : 'Por imagem' };
+                const hash = posterUrl.substring(slashIndex + 1).trim().toLowerCase();
+                if (hash && !hash.includes('placeholder')) {
+                    reqLogoHash = hash;
                 }
             }
+        }
+
+        // 1. Tentar correspondência por Pôster/Banner do TMDB (100% de precisão, evita homônimos de tipos diferentes)
+        if (reqLogoHash && m3uLogos.has(reqLogoHash)) {
+            const match = db.prepare('SELECT title FROM m3u_contents WHERE logo_hash = ? LIMIT 1').get(reqLogoHash);
+            return { inM3u: true, m3uTitle: match ? match.title : 'Por imagem' };
         }
 
         // 2. Tentar correspondência estrita por Título, Tipo e Ano
@@ -191,18 +195,30 @@ app.get('/admin/dashboard', checkAdminAuth, (req, res) => {
             
             if (m3uTitles.has(key)) {
                 const entries = m3uTitles.get(key) || [];
+                
+                // Se ambos (pedido e M3U) têm imagens de pôster válidas e elas são diferentes, desconsideramos o match
+                const validEntries = entries.filter(e => {
+                    if (reqLogoHash && e.logoHash) {
+                        const m3uLogoHash = e.logoHash.trim().toLowerCase();
+                        if (m3uLogoHash && !m3uLogoHash.includes('placeholder') && m3uLogoHash !== reqLogoHash) {
+                            return false; // Imagens diferentes -> conteúdos/remakes diferentes!
+                        }
+                    }
+                    return true;
+                });
+
                 let matchedEntry = null;
 
                 if (reqYear) {
                     // 1. Tenta correspondência exata de ano
-                    matchedEntry = entries.find(e => e.year === reqYear);
+                    matchedEntry = validEntries.find(e => e.year === reqYear);
                     // 2. Se não achou com ano exato, mas há entradas sem ano na M3U, aceita como fallback
                     if (!matchedEntry) {
-                        matchedEntry = entries.find(e => !e.year);
+                        matchedEntry = validEntries.find(e => !e.year);
                     }
                 } else {
                     // Sem ano informado no pedido, aceita a primeira ocorrência
-                    matchedEntry = entries[0];
+                    matchedEntry = validEntries[0];
                 }
 
                 if (matchedEntry) {
@@ -728,6 +744,17 @@ app.post('/api/m3u/sync', checkAdminAuth, async (req, res) => {
         res.json({ success: true, stats, message: 'Playlist M3U sincronizada com sucesso!' });
     } catch (e) {
         console.error("Erro na sincronização M3U:", e);
+        res.status(500).json({ error: e.message });
+    }
+});
+
+// API - Limpar dados M3U do banco
+app.post('/api/m3u/clear', checkAdminAuth, (req, res) => {
+    try {
+        M3uModel.clearM3u();
+        res.json({ success: true, message: 'Dados da M3U limpos com sucesso!' });
+    } catch (e) {
+        console.error("Erro ao limpar M3U:", e);
         res.status(500).json({ error: e.message });
     }
 });

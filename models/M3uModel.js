@@ -290,4 +290,14 @@ export class M3uModel {
       console.error(`Erro ao salvar configuração ${key}:`, e.message);
     }
   }
+
+  // Limpa todos os dados importados da M3U e as configurações associadas
+  static clearM3u() {
+    const clearTransaction = db.transaction(() => {
+      db.prepare('DELETE FROM m3u_contents').run();
+      db.prepare('DELETE FROM settings WHERE key IN (?, ?, ?)').run('M3U_SOURCE', 'M3U_LAST_SYNC', 'M3U_STATS');
+    });
+    clearTransaction();
+    console.log('✅ Dados da M3U limpos com sucesso no banco.');
+  }
 }

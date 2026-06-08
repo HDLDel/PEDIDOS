@@ -919,6 +919,9 @@
                     style="background: #333; color: #fff; padding: 10px 20px; border-radius: 8px; font-weight: 600; cursor: pointer;"
                     onclick="closeM3uModal()">FECHAR</button>
                 <button class="btn"
+                    style="background: #dc2626; color: #fff; border: none; padding: 10px 20px; border-radius: 8px; font-weight: 600; cursor: pointer;"
+                    id="m3uClearBtn" onclick="runM3uClear()">LIMPAR LISTA</button>
+                <button class="btn"
                     style="background: #2563eb; color: #fff; border: none; padding: 10px 20px; border-radius: 8px; font-weight: 600; cursor: pointer;"
                     id="m3uSyncConfirmBtn" onclick="runM3uSync()">SINCRONIZAR AGORA</button>
             </div>
@@ -999,6 +1002,31 @@
                 alert('Falha crítica na sincronização: ' + e.message);
                 confirmBtn.disabled = false;
                 loadingMsg.style.display = 'none';
+            }
+        }
+
+        async function runM3uClear() {
+            if (!confirm('Deseja realmente limpar todos os dados importados da M3U? Isso removerá o indicador de presença dos pedidos.')) return;
+            const clearBtn = document.getElementById('m3uClearBtn');
+            clearBtn.disabled = true;
+            try {
+                const res = await fetch('/api/m3u/clear', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    }
+                });
+                const data = await res.json();
+                if (data.success) {
+                    alert('Dados da M3U limpos com sucesso! A página será recarregada.');
+                    window.location.reload();
+                } else {
+                    alert('Erro ao limpar dados: ' + (data.error || 'Erro desconhecido'));
+                    clearBtn.disabled = false;
+                }
+            } catch (e) {
+                alert('Falha crítica ao limpar dados: ' + e.message);
+                clearBtn.disabled = false;
             }
         }
 
