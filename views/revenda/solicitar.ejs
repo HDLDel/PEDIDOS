@@ -275,11 +275,43 @@
                 <div id="extraFields" class="form-row hidden">
                     <div class="form-group">
                         <label>Temporada <span id="labelSeasonReq" class="hidden" style="color: var(--accent-red); font-size: 0.8rem; text-transform: lowercase;">(obrigatório)</span></label>
-                        <input type="number" id="reqSeason" min="1" placeholder="Ex: 2" oninput="this.value = this.value.replace(/[^0-9]/g, '')">
+                        <div style="display: flex; gap: 8px;">
+                            <select id="reqSeasonDigit1" style="flex: 1; text-align: center; font-size: 1.2rem; background: #050505; border: 2px solid #333; color: #fff; padding: 14px 18px; border-radius: 10px;">
+                                <option value=""></option>
+                                <% for (let i = 0; i <= 9; i++) { %>
+                                    <option value="<%= i %>"><%= i %></option>
+                                <% } %>
+                            </select>
+                            <select id="reqSeasonDigit2" style="flex: 1; text-align: center; font-size: 1.2rem; background: #050505; border: 2px solid #333; color: #fff; padding: 14px 18px; border-radius: 10px;">
+                                <option value=""></option>
+                                <% for (let i = 0; i <= 9; i++) { %>
+                                    <option value="<%= i %>"><%= i %></option>
+                                <% } %>
+                            </select>
+                        </div>
                     </div>
                     <div class="form-group">
-                        <label>Episódio(s) <span id="labelEpisodeReq" class="hidden" style="color: var(--accent-red); font-size: 0.8rem; text-transform: lowercase;">(obrigatório)</span></label>
-                        <input type="number" id="reqEpisode" min="1" placeholder="Ex: 10" oninput="this.value = this.value.replace(/[^0-9]/g, '')">
+                        <label>Episódio <span id="labelEpisodeReq" class="hidden" style="color: var(--accent-red); font-size: 0.8rem; text-transform: lowercase;">(obrigatório)</span></label>
+                        <div style="display: flex; gap: 8px;">
+                            <select id="reqEpisodeDigit1" style="flex: 1; text-align: center; font-size: 1.2rem; background: #050505; border: 2px solid #333; color: #fff; padding: 14px 18px; border-radius: 10px;">
+                                <option value=""></option>
+                                <% for (let i = 0; i <= 9; i++) { %>
+                                    <option value="<%= i %>"><%= i %></option>
+                                <% } %>
+                            </select>
+                            <select id="reqEpisodeDigit2" style="flex: 1; text-align: center; font-size: 1.2rem; background: #050505; border: 2px solid #333; color: #fff; padding: 14px 18px; border-radius: 10px;">
+                                <option value=""></option>
+                                <% for (let i = 0; i <= 9; i++) { %>
+                                    <option value="<%= i %>"><%= i %></option>
+                                <% } %>
+                            </select>
+                            <select id="reqEpisodeDigit3" style="flex: 1; text-align: center; font-size: 1.2rem; background: #050505; border: 2px solid #333; color: #fff; padding: 14px 18px; border-radius: 10px;">
+                                <option value=""></option>
+                                <% for (let i = 0; i <= 9; i++) { %>
+                                    <option value="<%= i %>"><%= i %></option>
+                                <% } %>
+                            </select>
+                        </div>
                     </div>
                 </div>
 
@@ -425,19 +457,29 @@
             document.getElementById('errorField').classList.toggle('hidden', !isError);
             
             const extraFields = document.getElementById('extraFields');
-            const seasonGroup = document.getElementById('reqSeason').parentElement;
-            const episodeGroup = document.getElementById('reqEpisode').parentElement;
+            const seasonGroup = document.getElementById('reqSeasonDigit1').closest('.form-group');
+            const episodeGroup = document.getElementById('reqEpisodeDigit1').closest('.form-group');
+
+            const resetSeasonDigits = () => {
+                document.getElementById('reqSeasonDigit1').value = '';
+                document.getElementById('reqSeasonDigit2').value = '';
+            };
+            const resetEpisodeDigits = () => {
+                document.getElementById('reqEpisodeDigit1').value = '';
+                document.getElementById('reqEpisodeDigit2').value = '';
+                document.getElementById('reqEpisodeDigit3').value = '';
+            };
 
             if (isSeries && !isError) {
                 if (action === 'content') {
                     extraFields.classList.add('hidden');
-                    document.getElementById('reqSeason').value = '';
-                    document.getElementById('reqEpisode').value = '';
+                    resetSeasonDigits();
+                    resetEpisodeDigits();
                 } else if (action === 'season') {
                     extraFields.classList.remove('hidden');
                     seasonGroup.classList.remove('hidden');
                     episodeGroup.classList.add('hidden');
-                    document.getElementById('reqEpisode').value = '';
+                    resetEpisodeDigits();
                 } else {
                     extraFields.classList.remove('hidden');
                     seasonGroup.classList.remove('hidden');
@@ -445,8 +487,8 @@
                 }
             } else {
                 extraFields.classList.add('hidden');
-                document.getElementById('reqSeason').value = '';
-                document.getElementById('reqEpisode').value = '';
+                resetSeasonDigits();
+                resetEpisodeDigits();
             }
 
             if (!isError) {
@@ -465,40 +507,64 @@
             const btnSubmit = document.querySelector('.btn-submit');
             let isValid = true;
 
+            const s1 = document.getElementById('reqSeasonDigit1').value;
+            const s2 = document.getElementById('reqSeasonDigit2').value;
+            const seasonVal = (s1 + s2).trim();
+
+            const e1 = document.getElementById('reqEpisodeDigit1').value;
+            const e2 = document.getElementById('reqEpisodeDigit2').value;
+            const e3 = document.getElementById('reqEpisodeDigit3').value;
+            const episodeVal = (e1 + e2 + e3).trim();
+
             if (action === 'error') {
                 const desc = document.getElementById('reqDescription').value.trim();
                 if (desc.length < 10) isValid = false;
             } else if (action === 'season') {
-                const season = document.getElementById('reqSeason').value.trim();
-                if (season.length === 0) isValid = false;
+                if (seasonVal.length === 0) isValid = false;
             } else if (action === 'episode') {
-                const episode = document.getElementById('reqEpisode').value.trim();
-                if (episode.length === 0) isValid = false;
+                if (seasonVal.length === 0 || episodeVal.length === 0) isValid = false;
             }
 
             btnSubmit.disabled = !isValid;
         }
 
         document.getElementById('reqDescription').addEventListener('input', validateForm);
-        document.getElementById('reqSeason').addEventListener('input', validateForm);
-        document.getElementById('reqEpisode').addEventListener('input', validateForm);
+        document.getElementById('reqSeasonDigit1').addEventListener('change', validateForm);
+        document.getElementById('reqSeasonDigit2').addEventListener('change', validateForm);
+        document.getElementById('reqEpisodeDigit1').addEventListener('change', validateForm);
+        document.getElementById('reqEpisodeDigit2').addEventListener('change', validateForm);
+        document.getElementById('reqEpisodeDigit3').addEventListener('change', validateForm);
 
         function resetForm() {
             document.getElementById('requestForm').classList.add('hidden');
             document.getElementById('tmdbResults').classList.remove('hidden');
             document.getElementById('tmdbSearch').value = '';
+            document.getElementById('reqSeasonDigit1').value = '';
+            document.getElementById('reqSeasonDigit2').value = '';
+            document.getElementById('reqEpisodeDigit1').value = '';
+            document.getElementById('reqEpisodeDigit2').value = '';
+            document.getElementById('reqEpisodeDigit3').value = '';
         }
 
         document.getElementById('requestForm').onsubmit = async (e) => {
             e.preventDefault();
             
+            const s1 = document.getElementById('reqSeasonDigit1').value;
+            const s2 = document.getElementById('reqSeasonDigit2').value;
+            const seasonVal = (s1 + s2).trim();
+
+            const e1 = document.getElementById('reqEpisodeDigit1').value;
+            const e2 = document.getElementById('reqEpisodeDigit2').value;
+            const e3 = document.getElementById('reqEpisodeDigit3').value;
+            const episodeVal = (e1 + e2 + e3).trim();
+
             const payload = {
                 tmdbId: document.getElementById('selectedId').value,
                 title: document.getElementById('selectedTitle').value,
                 type: document.getElementById('selectedType').value === 'tv' ? 'series' : 'movie',
                 requestType: document.getElementById('requestAction').value,
-                season: document.getElementById('reqSeason').value,
-                episode: document.getElementById('reqEpisode').value,
+                season: seasonVal || null,
+                episode: episodeVal || null,
                 description: document.getElementById('reqDescription').value,
                 date: new Date().toLocaleDateString('pt-BR'),
                 time: new Date().toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' }),

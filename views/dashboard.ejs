@@ -556,7 +556,7 @@
     <!-- Barra de Busca e Ordenação -->
     <div class="toolbar">
         <input type="text" id="searchInput" placeholder="Buscar por título do pedido ou nome da revenda..."
-            onkeyup="applyFilters()">
+            onkeyup="debouncedApplyFilters()">
         <select id="m3uFilterSelect" onchange="applyFilters()">
             <option value="all" selected>Todos (M3U)</option>
             <option value="present">Presentes na M3U</option>
@@ -659,10 +659,9 @@
                                     <%= req.action %>
                                 </div>
                                 <% if(req.season) { %>
-                                    <div class="info-item"><i class="fas fa-list-ol"></i> T<%= req.season %> | E<%=
-                                                req.episode || 'Full' %>
+                                    <div class="info-item"><i class="fas fa-list-ol"></i> T: <%= req.season %> | <%= req.episode ? 'E: ' + req.episode : 'Completa' %>
                                     </div>
-                                    <% } %>
+                                <% } %>
 
                                         <% if(req.audioPreference) { %>
                                             <div class="info-item"><i class="fas fa-volume-up"></i> Áudio: <strong>
@@ -933,6 +932,29 @@
     </button>
 
     <script>
+        const requestIdToCardIdMap = new Map();
+
+        function initRequestIdMap() {
+            requestIdToCardIdMap.clear();
+            document.querySelectorAll('.request-card').forEach(card => {
+                const cardId = parseInt(card.dataset.id);
+                if (!isNaN(cardId)) {
+                    requestIdToCardIdMap.set(cardId, cardId);
+                }
+                const detailsBtn = card.querySelector('[data-details]');
+                if (detailsBtn) {
+                    try {
+                        const details = JSON.parse(decodeURIComponent(detailsBtn.dataset.details));
+                        details.forEach(sub => {
+                            requestIdToCardIdMap.set(sub.id, cardId);
+                        });
+                    } catch (e) {
+                        console.error('Error parsing details for card ' + cardId, e);
+                    }
+                }
+            });
+        }
+
         let currentRequestId = null;
         let currentRequestType = null; // Para armazenar o tipo (movie/series)
         let currentSyncAll = true;
@@ -1053,9 +1075,22 @@
 
         setInterval(checkWaStatus, 5000); // Atualiza status a cada 5 segundos
 
+        let debounceTimer = null;
+        function debouncedApplyFilters() {
+            clearTimeout(debounceTimer);
+            debounceTimer = setTimeout(() => {
+                applyFilters();
+            }, 300);
+        }
+
         function applyFilters() {
             const searchQuery = document.getElementById('searchInput').value.toLowerCase().trim();
             const m3uFilter = document.getElementById('m3uFilterSelect').value;
+
+            let countAll = 0;
+            let countSeries = 0;
+            let countMovie = 0;
+            let countError = 0;
 
             document.querySelectorAll('.request-card').forEach(card => {
                 const categoryMatch = activeCategory === 'all' || card.dataset.category === activeCategory;
@@ -1069,30 +1104,12 @@
                     (m3uFilter === 'present' && card.dataset.inM3u === 'true') ||
                     (m3uFilter === 'absent' && card.dataset.inM3u === 'false');
 
-                if (categoryMatch && statusMatch && searchMatch && m3uMatch) {
+                const isVisible = categoryMatch && statusMatch && searchMatch && m3uMatch;
+                if (isVisible) {
                     card.classList.remove('hidden');
                 } else {
                     card.classList.add('hidden');
                 }
-            });
-
-            // Atualiza os contadores das categorias das abas em tempo real
-            updateCategoryCounters();
-        }
-
-        function updateCategoryCounters() {
-            const searchQuery = document.getElementById('searchInput').value.toLowerCase().trim();
-
-            let countAll = 0;
-            let countSeries = 0;
-            let countMovie = 0;
-            let countError = 0;
-
-            document.querySelectorAll('.request-card').forEach(card => {
-                const statusMatch = activeStatus === 'all' || card.dataset.status === activeStatus;
-                const titleMatch = card.dataset.title.includes(searchQuery);
-                const resellerMatch = card.dataset.reseller.includes(searchQuery);
-                const searchMatch = !searchQuery || titleMatch || resellerMatch;
 
                 if (statusMatch && searchMatch) {
                     countAll++;
@@ -1413,37 +1430,16 @@
                     };
 
                     if (syncAll) {
-                        const card = document.getElementById(`card-${id}`);
-                        if (card) {
-                            updateCardElement(card, reqData);
+                        const targetCardId = requestIdToCardIdMap.get(id);
+                        if (targetCardId) {
+                            const card = document.getElementById(`card-${targetCardId}`);
+                            if (card) {
+                                updateCardElement(card, reqData);
 
-                            const detailsBtn = card.querySelector('[data-details]');
-                            if (detailsBtn) {
-                                try {
-                                    const details = JSON.parse(decodeURIComponent(detailsBtn.dataset.details));
-                                    details.forEach(sub => {
-                                        sub.status = reqData.status;
-                                        if (reqData.status === 'rejected' && reqData.rejectionReason) {
-                                            sub.rejectionReason = reqData.rejectionReason;
-                                        }
-                                    });
-                                    detailsBtn.dataset.details = encodeURIComponent(JSON.stringify(details));
-
-                                    const groupedBadgeSpan = card.querySelector('.badge-grouped span');
-                                    if (groupedBadgeSpan) groupedBadgeSpan.remove();
-                                } catch (e) {
-                                    console.error(e);
-                                }
-                            }
-                        }
-
-                        document.querySelectorAll('.request-card').forEach(c => {
-                            const detailsBtn = c.querySelector('[data-details]');
-                            if (detailsBtn) {
-                                try {
-                                    const details = JSON.parse(decodeURIComponent(detailsBtn.dataset.details));
-                                    const containsTarget = details.some(sub => sub.id === id);
-                                    if (containsTarget) {
+                                const detailsBtn = card.querySelector('[data-details]');
+                                if (detailsBtn) {
+                                    try {
+                                        const details = JSON.parse(decodeURIComponent(detailsBtn.dataset.details));
                                         details.forEach(sub => {
                                             sub.status = reqData.status;
                                             if (reqData.status === 'rejected' && reqData.rejectionReason) {
@@ -1452,59 +1448,63 @@
                                             updateModalRow(sub.id, reqData);
                                         });
                                         detailsBtn.dataset.details = encodeURIComponent(JSON.stringify(details));
-                                        updateCardElement(c, reqData);
-                                        const groupedBadgeSpan = c.querySelector('.badge-grouped span');
+                                        updateCardElement(card, reqData);
+                                        const groupedBadgeSpan = card.querySelector('.badge-grouped span');
                                         if (groupedBadgeSpan) groupedBadgeSpan.remove();
+                                    } catch (e) {
+                                        console.error(e);
                                     }
-                                } catch (e) {
-                                    console.error(e);
                                 }
                             }
-                        });
+                        }
                     } else {
-                        const card = document.getElementById(`card-${id}`);
-                        if (card) {
-                            updateCardElement(card, reqData);
+                        const targetCardId = requestIdToCardIdMap.get(id);
+                        if (targetCardId) {
+                            const card = document.getElementById(`card-${targetCardId}`);
+                            if (card) {
+                                if (targetCardId === id) {
+                                    updateCardElement(card, reqData);
+                                }
+
+                                const detailsBtn = card.querySelector('[data-details]');
+                                if (detailsBtn) {
+                                    try {
+                                        const details = JSON.parse(decodeURIComponent(detailsBtn.dataset.details));
+                                        let updatedAny = false;
+                                        details.forEach(sub => {
+                                            if (sub.id === id) {
+                                                sub.status = reqData.status;
+                                                if (reqData.status === 'rejected' && reqData.rejectionReason) {
+                                                    sub.rejectionReason = reqData.rejectionReason;
+                                                }
+                                                updatedAny = true;
+                                            }
+                                        });
+
+                                        if (updatedAny) {
+                                            detailsBtn.dataset.details = encodeURIComponent(JSON.stringify(details));
+
+                                            const hasAnyPending = details.some(sub => sub.status === 'pending');
+                                            if (!hasAnyPending) {
+                                                updateCardElement(card, reqData);
+                                                const groupedBadgeSpan = card.querySelector('.badge-grouped span');
+                                                if (groupedBadgeSpan) groupedBadgeSpan.remove();
+                                            } else {
+                                                const pendingCount = details.filter(sub => sub.status === 'pending').length;
+                                                const groupedBadgeSpan = card.querySelector('.badge-grouped span');
+                                                if (groupedBadgeSpan) {
+                                                    groupedBadgeSpan.innerText = pendingCount;
+                                                }
+                                            }
+                                        }
+                                    } catch (e) {
+                                        console.error(e);
+                                    }
+                                }
+                            }
                         }
 
                         updateModalRow(id, reqData);
-
-                        document.querySelectorAll('.request-card').forEach(c => {
-                            const detailsBtn = c.querySelector('[data-details]');
-                            if (detailsBtn) {
-                                try {
-                                    const details = JSON.parse(decodeURIComponent(detailsBtn.dataset.details));
-                                    let updatedAny = false;
-                                    details.forEach(sub => {
-                                        if (sub.id === id) {
-                                            sub.status = reqData.status;
-                                            if (reqData.status === 'rejected' && reqData.rejectionReason) {
-                                                sub.rejectionReason = reqData.rejectionReason;
-                                            }
-                                            updatedAny = true;
-                                        }
-                                    });
-                                    if (updatedAny) {
-                                        detailsBtn.dataset.details = encodeURIComponent(JSON.stringify(details));
-
-                                        const hasAnyPending = details.some(sub => sub.status === 'pending');
-                                        if (!hasAnyPending) {
-                                            updateCardElement(c, reqData);
-                                            const groupedBadgeSpan = c.querySelector('.badge-grouped span');
-                                            if (groupedBadgeSpan) groupedBadgeSpan.remove();
-                                        } else {
-                                            const pendingCount = details.filter(sub => sub.status === 'pending').length;
-                                            const groupedBadgeSpan = c.querySelector('.badge-grouped span');
-                                            if (groupedBadgeSpan) {
-                                                groupedBadgeSpan.innerText = pendingCount;
-                                            }
-                                        }
-                                    }
-                                } catch (e) {
-                                    console.error(e);
-                                }
-                            }
-                        });
                     }
 
                     await refreshStats();
@@ -1526,7 +1526,8 @@
                     const actionCell = cells[cells.length - 1];
                     const badgeText = targetData.status === 'approved' ? 'Aprovado' : 'Rejeitado';
 
-                    const card = document.getElementById(`card-${rowId}`) || document.querySelector(`.request-card[data-details*="${rowId}"]`);
+                    const cardId = requestIdToCardIdMap.get(rowId);
+                    const card = cardId ? document.getElementById(`card-${cardId}`) : null;
                     let reqType = 'movie';
                     let reqTitle = '';
                     let reqReseller = '';
@@ -1547,16 +1548,16 @@
                             <span class="badge-status status-${targetData.status}" style="position: static; padding: 5px 8px; font-size: 0.75rem; font-weight: 700; text-transform: uppercase;">${badgeText}</span>
                             ${hasChat ? `
                             <button class="btn" style="background: rgba(37, 99, 235, 0.15); border: 1px solid #2563eb; color: #3b82f6; padding: 6px 10px; border-radius: 6px; font-size: 0.75rem; cursor: pointer; display: flex; align-items: center; justify-content: center; transition: 0.2s;" 
-                                    onmouseover="this.style.background='#2563eb'; this.style.color='white';"
-                                    onmouseout="this.style.background='rgba(37, 99, 235, 0.15)'; this.style.color='#3b82f6';"
-                                    onclick="openChatModal('${reqTitle}', '${encodeURIComponent(chatDescription)}')">
+                                     onmouseover="this.style.background='#2563eb'; this.style.color='white';"
+                                     onmouseout="this.style.background='rgba(37, 99, 235, 0.15)'; this.style.color='#3b82f6';"
+                                     onclick="openChatModal('${reqTitle}', '${encodeURIComponent(chatDescription)}')">
                                 <i class="fas fa-comment-dots"></i>
                             </button>
                             ` : ''}
                             <button class="btn" style="background: #222; border: 1px solid #444; color: #fff; padding: 6px 10px; border-radius: 6px; font-size: 0.75rem; cursor: pointer; transition: 0.2s;" 
-                                    onmouseover="this.style.background='#333';"
-                                    onmouseout="this.style.background='#222';"
-                                    onclick="openOptionsModal(${rowId}, '${reqType}', '${targetData.status}', '${reqTitle}', '${reqReseller}', false)">
+                                     onmouseover="this.style.background='#333';"
+                                     onmouseout="this.style.background='#222';"
+                                     onclick="openOptionsModal(${rowId}, '${reqType}', '${targetData.status}', '${reqTitle}', '${reqReseller}', false)">
                                 <i class="fas fa-cog"></i>
                             </button>
                         </div>
@@ -1802,6 +1803,7 @@
 
         // Aplica o filtro de status inicial (Pendentes) ao carregar a página
         document.addEventListener('DOMContentLoaded', () => {
+            initRequestIdMap();
             applyFilters();
             const isLight = document.documentElement.classList.contains('light-theme');
             updateThemeIcon(isLight);
