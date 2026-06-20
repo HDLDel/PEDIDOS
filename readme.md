@@ -182,3 +182,22 @@ Selecione a Zona: gestorpedidos.click.
 
 
 http://zetsu.buzz/get.php?username=MD75yGCe3pFQNeA78OnI3mGer&password=FXjtmyryusZ4ZfDgf06Ns3z4x&type=m3u_plus
+
+
+# Segredo para criptografia dos cookies de sessão
+SESSION_SECRET=coloque_aqui_uma_string_muito_longa_e_aleatoria
+
+# Credenciais do Administrador (usadas apenas no primeiro boot/seed)
+ADMIN_USERNAME=<ADMIN_USERNAME>
+ADMIN_PASSWORD=<SENHA_ADMIN>
+ADMIN_NAME="<ADMIN_NAME>"
+
+# Chave da API externa
+TMDB_API_KEY=<TMDB_API_KEY>
+
+# Configurações do WhatsApp
+WHATSAPP_API_URL=<WHATSAPP_API_URL>
+WHATSAPP_ENABLED=true
+
+# Token de autenticação entre o dashboard e o motor WhatsApp
+WHATSAPP_API_TOKEN=coloque_um_token_hex_64_caracteres_aqui

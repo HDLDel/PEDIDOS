@@ -1,6 +1,15 @@
 import db from '../db.js';
 import bcrypt from 'bcryptjs';
 
+const BCRYPT_HASH_REGEX = /^\$2[ayb]\$.*/;
+
+function hashPassword(password) {
+  // Se já for um hash bcrypt válido, usa como está (evita double-hash)
+  if (!password) return bcrypt.hashSync('<SENHA>', 10);
+  if (BCRYPT_HASH_REGEX.test(password)) return password;
+  return bcrypt.hashSync(password, 10);
+}
+
 export class ResellerModel {
   static getAll() {
     return db.prepare('SELECT * FROM resellers ORDER BY name ASC').all();
@@ -18,7 +27,7 @@ export class ResellerModel {
     const existing = db.prepare('SELECT * FROM resellers WHERE name = ?').get(name);
     if (existing) return existing;
 
-    const defaultPass = bcrypt.hashSync('<SENHA>', 10);
+    const defaultPass = hashPassword('<SENHA>');
     const stmt = db.prepare(`
       INSERT INTO resellers (name, email, phone, whatsapp, password)
       VALUES (?, ?, ?, ?, ?)
@@ -28,7 +37,7 @@ export class ResellerModel {
   }
 
   static create({ name, email, phone, whatsapp, password }) {
-    const hashedPassword = bcrypt.hashSync(password || '<SENHA>', 10);
+    const hashedPassword = hashPassword(password || '<SENHA>');
     const stmt = db.prepare(`
       INSERT INTO resellers (name, email, phone, whatsapp, password)
       VALUES (?, ?, ?, ?, ?)
@@ -55,9 +64,8 @@ export class ResellerModel {
     if (whatsapp !== undefined) { fields.push('whatsapp = ?'); values.push(whatsapp); }
     
     if (password !== undefined && password !== '') {
-      const hashedPassword = bcrypt.hashSync(password, 10);
       fields.push('password = ?');
-      values.push(hashedPassword);
+      values.push(hashPassword(password));
     }
 
     if (fields.length === 0) {

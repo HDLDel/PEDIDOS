@@ -43,7 +43,12 @@ app.use(session({
     secret: process.env.SESSION_SECRET || (function () { throw new Error('ERRO: SESSION_SECRET não configurado no .env'); })(),
     resave: false,
     saveUninitialized: false,
-    cookie: { secure: false } // Use 'true' em produção com HTTPS
+    cookie: {
+        secure: process.env.NODE_ENV === 'production', // true apenas com HTTPS
+        httpOnly: true,
+        sameSite: 'lax',
+        maxAge: 24 * 60 * 60 * 1000 // 1 dia
+    }
 }));
 
 app.set('view engine', 'ejs');
@@ -773,7 +778,7 @@ app.post('/api/tmdb/fetch', checkAdminAuth, async (req, res) => {
 });
 
 const PORT = 8080;
-app.listen(PORT, () => {
-    console.log(`🚀 Painel rodando em http://localhost:${PORT}`);
+app.listen(PORT, '127.0.0.1', () => {
+    console.log(`🚀 Painel rodando em http://127.0.0.1:${PORT}`);
     console.log(`📊 ${RequestModel.getStats().pending} pendentes, ${RequestModel.getStats().approved} aprovados, ${RequestModel.getStats().rejected} rejeitados`);
 });

@@ -2,10 +2,14 @@ import 'dotenv/config';
 
 export class WhatsAppService {
     static WA_API = 'http://localhost:8880';
+    static headers = {
+        'Content-Type': 'application/json',
+        'x-api-token': process.env.WHATSAPP_API_TOKEN || ''
+    };
 
     static async initialize() {
         try {
-            await fetch(`${this.WA_API}/start`, { method: 'POST' });
+            await fetch(`${this.WA_API}/start`, { method: 'POST', headers: this.headers });
         } catch (e) {
             console.error('❌ Não foi possível conectar ao Servidor Independente do WhatsApp na porta 8880.');
         }
@@ -13,7 +17,7 @@ export class WhatsAppService {
 
     static async getStatus() {
         try {
-            const res = await fetch(`${this.WA_API}/status`);
+            const res = await fetch(`${this.WA_API}/status`, { headers: this.headers });
             return await res.json();
         } catch (e) {
             return { status: 'disconnected', qr: null };
@@ -22,7 +26,7 @@ export class WhatsAppService {
 
     static async logout() {
         try {
-            await fetch(`${this.WA_API}/logout`, { method: 'POST' });
+            await fetch(`${this.WA_API}/logout`, { method: 'POST', headers: this.headers });
         } catch (e) {}
     }
 
@@ -40,7 +44,7 @@ export class WhatsAppService {
         try {
             await fetch(`${this.WA_API}/send`, {
                 method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
+                headers: this.headers,
                 body: JSON.stringify({ chatId, content: message })
             });
         } catch (e) {

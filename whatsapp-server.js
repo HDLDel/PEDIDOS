@@ -10,6 +10,22 @@ import qrcode from 'qrcode';
 const app = express();
 app.use(express.json());
 
+// Token de autenticação para endpoints protegidos
+const API_TOKEN = process.env.WHATSAPP_API_TOKEN;
+if (!API_TOKEN) {
+    console.error('❌ [WA-SERVER] WHATSAPP_API_TOKEN não configurado no .env!');
+    process.exit(1);
+}
+
+// Middleware de autenticação para endpoints que escrevem
+function requireToken(req, res, next) {
+    const token = req.headers['x-api-token'];
+    if (!token || token !== API_TOKEN) {
+        return res.status(401).json({ error: 'Token inválido ou ausente' });
+    }
+    next();
+}
+
 let client = null;
 let status = 'disconnected';
 let lastQR = null;
@@ -96,14 +112,16 @@ async function initWhatsApp() {
 }
 
 // Endpoints para o Dashboard consultar
+// /status é público (read-only, só devolve info)
 app.get('/status', (req, res) => res.json({ status, qr: lastQR }));
 
-app.post('/start', (req, res) => {
+// Endpoints que escrevem/controlam exigem token
+app.post('/start', requireToken, (req, res) => {
     initWhatsApp();
     res.json({ success: true });
 });
 
-app.post('/logout', async (req, res) => {
+app.post('/logout', requireToken, async (req, res) => {
     if (client) {
         try {
             await client.logout(); // Remove o aparelho vinculado do seu celular
@@ -123,7 +141,7 @@ app.post('/logout', async (req, res) => {
     res.json({ success: true });
 });
 
-app.post('/send', async (req, res) => {
+app.post('/send', requireToken, async (req, res) => {
     const { chatId, content } = req.body;
     if (status !== 'ready' || !client) return res.status(503).json({ error: 'WhatsApp offline' });
 
@@ -137,8 +155,8 @@ app.post('/send', async (req, res) => {
 });
 
 const PORT = 8880;
-app.listen(PORT, () => {
-    console.log(`📡 MOTOR WHATSAPP INDEPENDENTE: Rodando na porta ${PORT}`);
+app.listen(PORT, '127.0.0.1', () => {
+    console.log(`📡 MOTOR WHATSAPP INDEPENDENTE: Rodando em 127.0.0.1:${PORT}`);
 });
 
 process.on('uncaughtException', (e) => console.error('Erro isolado no motor WA:', e.message));
