@@ -414,19 +414,6 @@
             box-shadow: 0 0 0 2px rgba(47, 128, 237, 0.2);
         }
 
-        @media (max-width: 600px) {
-            .dashboard-control-panel {
-                max-width: calc(100% - 2rem);
-                padding: 10px;
-                margin: 10px auto;
-            }
-
-            .toolbar {
-                flex-direction: column;
-                padding: 0;
-            }
-        }
-
         /* Modal Styles */
         .modal-overlay {
             display: none;
@@ -444,19 +431,301 @@
 
         .modal-content {
             background: var(--bg-card);
-            padding: 2rem;
+            padding: 1.5rem;
             border-radius: 16px;
             width: 90%;
-            max-width: 900px;
+            max-height: 90vh;
+            overflow-y: auto;
             border: 1px solid var(--border);
-            box-shadow: 0 20px 40px rgba(0,0,0,0.5);
+            box-shadow: var(--shadow-hover);
+            font-size: 1rem;
+        }
+
+        .modal-content p, 
+        .modal-content td, 
+        .modal-content th, 
+        .modal-content label,
+        .modal-content select,
+        .modal-content option {
+            font-size: 1rem;
+        }
+
+        .modal-content .btn, 
+        .modal-content button {
+            font-size: 0.85rem;
+            padding: 8px 16px;
+            font-weight: 700;
+        }
+
+        .modal-content textarea {
+            font-size: 0.95rem;
         }
 
         .modal-header {
-            margin-bottom: 1.5rem;
+            margin-bottom: 1.2rem;
             font-weight: 900;
             color: var(--accent-red);
-            font-size: 1.2rem;
+            font-size: 1.5rem;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+            padding-bottom: 12px;
+        }
+
+        /* Classes de conversa de chat (Modais) */
+        .chat-bubble {
+            padding: 12px 16px;
+            border-radius: 10px;
+            font-size: 1.05rem;
+            word-break: break-word;
+            line-height: 1.5;
+            display: flex;
+            flex-direction: column;
+            gap: 4px;
+            box-shadow: 0 4px 10px rgba(0,0,0,0.3);
+            margin-bottom: 8px;
+        }
+        .chat-bubble.reseller {
+            background: rgba(37, 99, 235, 0.15);
+            border-left: 3px solid #2563eb;
+            color: #e2e8f0;
+            align-self: flex-end;
+            width: 90%;
+        }
+        .chat-bubble.rejection {
+            background: rgba(239, 68, 68, 0.15);
+            border-left: 3px solid #ef4444;
+            color: #e2e8f0;
+            align-self: flex-start;
+            width: 90%;
+        }
+        .chat-bubble.observation {
+            background: rgba(255, 255, 255, 0.05);
+            border-left: 3px solid #555;
+            color: #ccc;
+            align-self: flex-start;
+            width: 90%;
+        }
+        .chat-bubble-header {
+            font-weight: bold;
+            font-size: 0.85rem;
+            color: #fff;
+            opacity: 0.95;
+            margin-bottom: 2px;
+        }
+        .chat-bubble-content {
+            white-space: pre-wrap;
+        }
+
+        /* Otimizações para telas grandes (resoluções 2K/4K ou telas maiores que 1400px de largura) */
+        @media (min-width: 1400px) {
+            .modal-content {
+                padding: 2rem;
+                font-size: 1.35rem;
+            }
+
+            .modal-content p, 
+            .modal-content td, 
+            .modal-content th, 
+            .modal-content label,
+            .modal-content select,
+            .modal-content option {
+                font-size: 1.35rem !important;
+            }
+
+            .modal-content .btn, 
+            .modal-content button {
+                font-size: 1.15rem !important;
+                padding: 14px 24px !important;
+            }
+
+            .modal-content textarea {
+                font-size: 1.4rem !important;
+            }
+
+            .modal-header {
+                font-size: 2.2rem;
+                margin-bottom: 1.8rem;
+                padding-bottom: 16px;
+            }
+
+            .chat-bubble {
+                padding: 18px 24px;
+                font-size: 1.35rem;
+                gap: 8px;
+            }
+            .chat-bubble-header {
+                font-size: 1.1rem;
+                margin-bottom: 4px;
+            }
+        }
+
+        /* Otimizações para Celular e Telas Pequenas */
+        @media (max-width: 768px) {
+            body {
+                padding-top: 65px;
+            }
+            .header-fixed {
+                height: 55px;
+                padding: 0 0.8rem;
+            }
+            .logo h2 {
+                font-size: 1.05rem;
+            }
+            .whatsapp-status-btn span,
+            .user-info a span {
+                display: none !important;
+            }
+            .whatsapp-status-btn {
+                padding: 6px !important;
+                font-size: 0.9rem !important;
+                border-radius: 50% !important;
+                width: 32px;
+                height: 32px;
+                display: inline-flex;
+                align-items: center;
+                justify-content: center;
+            }
+            .user-info {
+                gap: 6px !important;
+            }
+            .user-info a[href="/admin/logout"] {
+                font-size: 1.05rem !important;
+                margin-left: 2px;
+            }
+
+            .dashboard-control-panel {
+                max-width: calc(100% - 1.5rem) !important;
+                margin: 10px auto !important;
+                padding: 10px !important;
+                border-radius: 12px;
+                gap: 8px;
+            }
+            .tabs {
+                gap: 8px 12px;
+                flex-wrap: wrap !important;
+                padding: 5px 0 !important;
+                justify-content: center;
+            }
+            .tab {
+                font-size: 0.78rem !important;
+                padding-bottom: 4px;
+            }
+            .stats-summary {
+                gap: 6px !important;
+                padding: 8px 2px !important;
+                flex-wrap: wrap !important;
+            }
+            .stat-pill {
+                flex: 1 1 calc(50% - 8px);
+                text-align: center;
+                font-size: 0.78rem !important;
+                padding: 6px 8px !important;
+            }
+            .toolbar {
+                flex-direction: column !important;
+                gap: 8px !important;
+                padding: 0 !important;
+            }
+            .toolbar input, .toolbar select {
+                width: 100% !important;
+                font-size: 0.85rem !important;
+                padding: 8px 12px !important;
+            }
+
+            .requests-grid {
+                grid-template-columns: 1fr !important;
+                padding: 10px 12px !important;
+            }
+
+            /* Modal mobile styles */
+            .modal-overlay {
+                padding: 10px !important;
+            }
+            .modal-content {
+                padding: 1rem !important;
+                width: 100% !important;
+                max-height: 95vh !important;
+                border-radius: 12px !important;
+            }
+            .modal-header {
+                font-size: 1.2rem !important;
+                margin-bottom: 0.8rem !important;
+                padding-bottom: 8px !important;
+            }
+            .modal-content p, 
+            .modal-content td, 
+            .modal-content th, 
+            .modal-content label,
+            .modal-content select,
+            .modal-content option {
+                font-size: 0.85rem !important;
+            }
+            .modal-content .btn, 
+            .modal-content button {
+                font-size: 0.8rem !important;
+                padding: 8px 12px !important;
+                height: auto !important;
+            }
+            .modal-content textarea {
+                font-size: 0.9rem !important;
+                min-height: 120px !important;
+            }
+            .chat-bubble {
+                padding: 10px 12px !important;
+                font-size: 0.85rem !important;
+                width: 95% !important;
+            }
+            .chat-bubble-header {
+                font-size: 0.75rem !important;
+            }
+            .quick-buttons {
+                gap: 6px !important;
+                margin-bottom: 1rem !important;
+            }
+            .btn-quick {
+                padding: 6px 10px !important;
+                font-size: 0.7rem !important;
+            }
+
+            /* Responsive details table inside detailsModal */
+            #detailsModal table, 
+            #detailsModal thead, 
+            #detailsModal tbody, 
+            #detailsModal th, 
+            #detailsModal td, 
+            #detailsModal tr {
+                display: block !important;
+            }
+            #detailsModal thead {
+                display: none !important;
+            }
+            #detailsModal tr {
+                border-bottom: 1px solid var(--border) !important;
+                padding: 10px 0 !important;
+                display: flex !important;
+                flex-direction: column !important;
+                gap: 4px !important;
+            }
+            #detailsModal td {
+                padding: 4px 0 !important;
+                border: none !important;
+                display: flex !important;
+                justify-content: space-between !important;
+                align-items: center !important;
+                width: 100% !important;
+                text-align: right !important;
+            }
+            #detailsModal td::before {
+                content: attr(data-label);
+                font-weight: bold;
+                color: var(--text-muted);
+                font-size: 0.8rem;
+                float: left;
+                text-align: left;
+            }
+            #detailsModal td[data-label="Ações"] {
+                justify-content: center !important;
+                margin-top: 6px;
+            }
         }
 
         .quick-buttons {
@@ -816,10 +1085,10 @@
 
     <!-- Modal de Detalhes Agrupados -->
     <div id="detailsModal" class="modal-overlay" style="z-index: 3000;">
-        <div class="modal-content" style="max-width: 950px; width: 95%;">
+        <div class="modal-content" style="max-width: 1300px; width: 95%;">
             <h3 class="modal-header">📦 Detalhes dos Pedidos Agrupados</h3>
             <div
-                style="max-height: 400px; overflow-y: auto; background: #000; border-radius: 8px; border: 1px solid var(--border); margin-bottom: 1.5rem;">
+                style="max-height: 65vh; overflow-y: auto; overflow-x: auto; width: 100%; background: #000; border-radius: 8px; border: 1px solid var(--border); margin-bottom: 1.5rem;">
                 <table style="width: 100%; border-collapse: collapse; text-align: left; font-size: 0.9rem;">
                     <thead style="background: #111; position: sticky; top: 0;">
                         <tr>
@@ -843,7 +1112,7 @@
 
     <!-- Modal de Opções Unificado -->
     <div id="optionsModal" class="modal-overlay" style="z-index: 3100;">
-        <div class="modal-content" style="max-width: 450px;">
+        <div class="modal-content" style="max-width: 550px; width: 95%;">
             <h3 class="modal-header" id="optionsModalHeader" style="display: flex; align-items: center; gap: 10px;"><i
                     class="fas fa-cog"></i> Opções do Pedido</h3>
 
@@ -889,8 +1158,7 @@
 
     <!-- Modal de Histórico de Conversa (Chat) -->
     <div id="chatModal" class="modal-overlay" style="z-index: 3300;">
-        <div class="modal-content"
-            style="max-width: 500px; background: #0d0d0d; border: 1px solid #222; box-shadow: 0 10px 25px rgba(0,0,0,0.8);">
+        <div class="modal-content" style="max-width: 800px; width: 95%;">
             <h3 class="modal-header"
                 style="display: flex; align-items: center; gap: 10px; border-bottom: 1px solid #222; padding-bottom: 15px;">
                 <i class="fas fa-comments" style="color: #3b82f6;"></i> Histórico de Conversa
@@ -900,7 +1168,7 @@
                     id="chatModalTitle" style="color: #fff; font-weight: bold;"></span></p>
 
             <div id="chatMessagesContainer"
-                style="max-height: 300px; overflow-y: auto; display: flex; flex-direction: column; gap: 12px; padding: 10px; background: #050505; border-radius: 8px; border: 1px solid #1a1a1a;">
+                style="max-height: 60vh; overflow-y: auto; display: flex; flex-direction: column; gap: 12px; padding: 15px; background: #050505; border-radius: 8px; border: 1px solid #1a1a1a;">
                 <!-- Mensagens injetadas dinamicamente -->
             </div>
 
@@ -914,8 +1182,7 @@
 
     <!-- Modal de Adicionar Nota / Pedir Explicação (Customizado) -->
     <div id="noteModal" class="modal-overlay" style="z-index: 3400;">
-        <div class="modal-content"
-            style="max-width: 500px; background: #111; border: 1px solid #333; padding: 25px; border-radius: 12px; box-shadow: 0 10px 25px rgba(0,0,0,0.5);">
+        <div class="modal-content" style="max-width: 700px; width: 95%;">
             <h3 class="modal-header" id="noteModalHeader"
                 style="color: #fff; margin-bottom: 15px; font-weight: 700; display: flex; align-items: center; gap: 10px; border-bottom: none; padding-bottom: 0;">
                 <i class="fas fa-comment-dots" style="color: #f59e0b;"></i> Pedir Explicação / Add Nota
@@ -939,8 +1206,7 @@
 
     <!-- Modal de Playlist M3U -->
     <div id="m3uModal" class="modal-overlay" style="z-index: 3150;">
-        <div class="modal-content"
-            style="max-width: 500px; background: #111; border: 1px solid #333; padding: 25px; border-radius: 12px; box-shadow: 0 10px 25px rgba(0,0,0,0.5);">
+        <div class="modal-content" style="max-width: 700px; width: 95%;">
             <h3 class="modal-header"
                 style="color: #fff; margin-bottom: 15px; font-weight: 700; display: flex; align-items: center; gap: 10px; border-bottom: none; padding-bottom: 0;">
                 <i class="fas fa-list-ul" style="color: #3b82f6;"></i> Sincronizar Playlist M3U
@@ -1480,11 +1746,11 @@
 
                 tbody.innerHTML += `
                     <tr id="modal-row-${req.id}" style="border-bottom: 1px solid #222; transition: background 0.2s;" onmouseover="this.style.background='rgba(255,255,255,0.02)'" onmouseout="this.style.background='transparent'">
-                        <td style="padding: 12px 15px; color: #fff; font-weight: 600;">${req.reseller}</td>
-                        <td style="padding: 12px 15px; color: #fff;">${req.action}</td>
-                        <td style="padding: 12px 15px; color: var(--text-muted);">${extraInfo || '-'}</td>
-                        <td style="padding: 12px 15px; color: var(--text-muted);">${req.date} ${req.time}</td>
-                        <td style="padding: 12px 15px; display: flex; gap: 8px; justify-content: center; align-items: center;">${actionsHtml}</td>
+                        <td data-label="Revendedor" style="padding: 12px 15px; color: #fff; font-weight: 600;">${req.reseller}</td>
+                        <td data-label="Ação" style="padding: 12px 15px; color: #fff;">${req.action}</td>
+                        <td data-label="Detalhes" style="padding: 12px 15px; color: var(--text-muted);">${extraInfo || '-'}</td>
+                        <td data-label="Data" style="padding: 12px 15px; color: var(--text-muted);">${req.date} ${req.time}</td>
+                        <td data-label="Ações" style="padding: 12px 15px; display: flex; gap: 8px; justify-content: center; align-items: center;">${actionsHtml}</td>
                     </tr>
                 `;
             });
@@ -1742,12 +2008,12 @@
                 let isReseller = trimmed.startsWith('[Resposta do Revendedor');
                 let isRejection = trimmed.startsWith('[Rejeitado pelo Admin');
 
-                let bubbleStyle = '';
+                let bubbleClass = '';
                 let headerText = '';
                 let contentText = '';
 
                 if (isReseller) {
-                    bubbleStyle = 'background: rgba(37, 99, 235, 0.15); border-left: 3px solid #2563eb; color: #e2e8f0; align-self: flex-end; width: 90%;';
+                    bubbleClass = 'reseller';
                     const match = trimmed.match(/\[Resposta do Revendedor em ([^\]]+)\]:\s*([\s\S]*)/);
                     if (match) {
                         headerText = `👤 Revendedor (${match[1]})`;
@@ -1757,7 +2023,7 @@
                         contentText = trimmed;
                     }
                 } else if (isRejection) {
-                    bubbleStyle = 'background: rgba(239, 68, 68, 0.15); border-left: 3px solid #ef4444; color: #e2e8f0; align-self: flex-start; width: 90%;';
+                    bubbleClass = 'rejection';
                     const match = trimmed.match(/\[Rejeitado pelo Admin - Motivo: ([^\]]+)\]\s*([\s\S]*)/);
                     if (match) {
                         headerText = `🚨 Rejeição - Motivo: ${match[1]}`;
@@ -1767,15 +2033,15 @@
                         contentText = trimmed;
                     }
                 } else {
-                    bubbleStyle = 'background: rgba(255, 255, 255, 0.05); border-left: 3px solid #555; color: #ccc; align-self: flex-start; width: 90%;';
+                    bubbleClass = 'observation';
                     headerText = `📝 Observações do Pedido`;
                     contentText = trimmed;
                 }
 
                 container.innerHTML += `
-                    <div style="padding: 10px 12px; border-radius: 8px; font-size: 0.85rem; word-break: break-word; line-height: 1.4; display: flex; flex-direction: column; gap: 4px; box-shadow: 0 2px 5px rgba(0,0,0,0.2); ${bubbleStyle}">
-                        <div style="font-weight: bold; font-size: 0.75rem; color: #fff; opacity: 0.9; margin-bottom: 2px;">${headerText}</div>
-                        <div style="white-space: pre-wrap;">${contentText}</div>
+                    <div class="chat-bubble ${bubbleClass}">
+                        <div class="chat-bubble-header">${headerText}</div>
+                        <div class="chat-bubble-content">${contentText}</div>
                     </div>
                 `;
             });
