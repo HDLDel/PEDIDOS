@@ -1,9 +1,9 @@
 .request-section {
-    background: #1a1a1a;
+    background: var(--bg-card);
     padding: 25px;
-    border-radius: 12px;
+    border-radius: 16px;
     margin-bottom: 30px;
-    border: 1px solid #333;
+    border: 1px solid var(--border-card);
 }
 
 .search-box {
@@ -15,10 +15,16 @@
 .search-box input {
     flex: 1;
     padding: 12px;
-    border-radius: 6px;
-    border: 1px solid #444;
-    background: #000;
-    color: #fff;
+    border-radius: 8px;
+    border: 1px solid var(--border-card);
+    background: var(--bg-input);
+    color: var(--text-primary);
+    outline: none;
+    transition: border-color 0.2s;
+}
+
+.search-box input:focus {
+    border-color: var(--accent-blue);
 }
 
 .tmdb-results-grid {
@@ -29,16 +35,17 @@
 }
 
 .tmdb-mini-card {
-    background: #252525;
-    border-radius: 8px;
+    background: var(--bg-card);
+    border-radius: 12px;
     overflow: hidden;
     cursor: pointer;
-    transition: transform 0.2s;
+    transition: transform 0.2s, border-color 0.2s;
+    border: 1px solid var(--border-card);
 }
 
 .tmdb-mini-card:hover {
-    transform: scale(1.05);
-    border: 1px solid #e50914;
+    transform: scale(1.03);
+    border-color: var(--accent-blue);
 }
 
 .tmdb-mini-card img {
@@ -50,21 +57,23 @@
 .tmdb-mini-card .info {
     padding: 10px;
     font-size: 13px;
+    color: var(--text-secondary);
 }
 
 .selected-preview {
     display: flex;
     gap: 20px;
-    background: #252525;
+    background: var(--bg-card);
     padding: 15px;
-    border-radius: 8px;
+    border-radius: 12px;
     margin-bottom: 20px;
     align-items: center;
+    border: 1px solid var(--border-card);
 }
 
 .selected-preview img {
     width: 80px;
-    border-radius: 4px;
+    border-radius: 8px;
 }
 
 .hidden { display: none; }
@@ -72,13 +81,14 @@
 .mini-card {
     display: flex;
     align-items: center;
-    background: #1a1a1a;
+    background: var(--bg-card);
     padding: 12px;
     border-radius: 8px;
     margin-bottom: 10px;
     gap: 15px;
+    border: 1px solid var(--border-card);
 }
 
-.status-pending { background: #ffc107; }
-.status-approved { background: #28a745; }
-.status-rejected { background: #dc3545; }
+.status-pending { background: var(--status-pending); color: #000; }
+.status-approved { background: var(--status-approved); color: #fff; }
+.status-rejected { background: var(--status-rejected); color: #fff; }

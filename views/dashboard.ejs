@@ -25,17 +25,17 @@
     </script>
     <style>
         :root {
-            --bg-main: #0a0a0a;
-            --bg-card: #141414;
-            --bg-nav: #000000;
-            --accent-red: #e50914;
-            --text-primary: #ffffff;
-            --text-muted: #b3b3b3;
-            --border: #2b2b2b;
+            --bg-main: #0b0b0f;
+            --bg-card: #161a20;
+            --bg-nav: #0b0b0f;
+            --accent-red: #ef4444;
+            --text-primary: #f2f4f8;
+            --text-muted: #a6adb8;
+            --border: #2a2f3a;
             --status-pending: #f59e0b;
-            --status-approved: #10b981;
+            --status-approved: #22c55e;
             --status-rejected: #ef4444;
-            --btn-blue: #007bff;
+            --btn-blue: #2f80ed;
             --btn-justwatch: #fbc02d;
         }
 
@@ -59,14 +59,14 @@
             left: 0;
             width: 100%;
             height: 70px;
-            background: rgba(0, 0, 0, 0.9);
+            background: rgba(11, 11, 15, 0.95);
             backdrop-filter: blur(10px);
             display: flex;
             justify-content: space-between;
             align-items: center;
             padding: 0 2rem;
-            border-bottom: 1px solid var(--border);
-            box-shadow: 0 4px 10px rgba(0, 0, 0, 0.5);
+            border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.4);
             z-index: 2000;
         }
 
@@ -74,96 +74,107 @@
             display: flex;
             align-items: center;
             gap: 8px;
-            padding: 8px 15px;
+            padding: 6px 14px;
             border-radius: 50px;
-            font-size: 0.8rem;
+            font-size: 0.75rem;
             font-weight: 700;
             cursor: pointer;
             border: 1px solid var(--border);
             background: var(--bg-card);
-            transition: 0.3s;
+            transition: all 0.2s ease;
         }
 
         .wa-on {
-            color: #10b981;
-            border-color: #10b981;
+            color: var(--status-approved);
+            border-color: var(--status-approved);
         }
 
         .wa-off {
-            color: #ef4444;
-            border-color: #ef4444;
+            color: var(--status-rejected);
+            border-color: var(--status-rejected);
         }
 
         .wa-qr {
-            color: #f59e0b;
-            border-color: #f59e0b;
+            color: var(--status-pending);
+            border-color: var(--status-pending);
         }
 
         .wa-m3u {
-            color: #3b82f6;
-            border-color: #3b82f6;
+            color: var(--btn-blue);
+            border-color: var(--btn-blue);
         }
 
         .wa-m3u:hover {
-            background: rgba(59, 130, 246, 0.1);
+            background: rgba(47, 128, 237, 0.1);
         }
 
         .logo h2 {
             font-weight: 900;
             letter-spacing: -1px;
+            font-size: 1.3rem;
         }
 
         .stats-summary {
             display: flex;
             justify-content: center;
-            gap: 15px;
-            padding: 20px;
-            background: #080808;
+            gap: 12px;
+            padding: 15px 20px;
+            background: var(--bg-main);
         }
 
         .stat-pill {
             background: var(--bg-card);
-            padding: 8px 16px;
+            padding: 6px 14px;
             border-radius: 50px;
             border: 1px solid var(--border);
-            font-size: 0.85rem;
+            font-size: 0.9rem;
             font-weight: 600;
             cursor: pointer;
+            color: var(--text-muted);
+            transition: all 0.2s ease;
+        }
+
+        .stat-pill:hover {
+            border-color: var(--text-primary);
+            color: var(--text-primary);
         }
 
         .stat-pill.active {
-            border-color: var(--accent-red);
-            background: rgba(229, 9, 20, 0.1);
+            border-color: var(--btn-blue);
+            background: rgba(47, 128, 237, 0.1);
+            color: var(--text-primary);
         }
 
         .stat-pill strong {
-            color: var(--accent-red);
+            color: var(--btn-blue);
             margin: 0 4px;
         }
 
         .requests-grid {
             display: grid;
-            grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
-            gap: 25px;
-            padding: 20px 3rem;
+            grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
+            gap: 12px;
+            padding: 15px 2rem;
             max-width: 100%;
             margin: 0 auto;
         }
 
         .request-card {
             background: var(--bg-card);
-            border-radius: 15px;
+            border-radius: 16px;
             overflow: hidden;
             border: 1px solid var(--border);
             transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
             display: flex;
             flex-direction: column;
+            padding: 6px;
+            box-shadow: 0 8px 24px rgba(0, 0, 0, 0.5);
         }
 
         .request-card:hover {
-            transform: translateY(-8px);
-            border-color: var(--accent-red);
-            box-shadow: 0 10px 30px rgba(229, 9, 20, 0.2);
+            transform: translateY(-4px);
+            border-color: var(--btn-blue);
+            box-shadow: 0 12px 30px rgba(0, 0, 0, 0.7), 0 0 15px rgba(47, 128, 237, 0.15);
         }
 
         .poster-container {
@@ -171,7 +182,9 @@
             width: 100%;
             aspect-ratio: 2/3;
             height: auto;
-            background: #1a1a1a;
+            background: #0d0f13;
+            border-radius: 12px;
+            overflow: hidden;
         }
 
         .poster-img {
@@ -182,14 +195,14 @@
 
         .badge-status {
             position: absolute;
-            top: 15px;
-            right: 15px;
-            padding: 6px 12px;
+            top: 8px;
+            right: 8px;
+            padding: 4px 8px;
             border-radius: 6px;
             font-size: 11px;
-            font-weight: 900;
+            font-weight: 800;
             text-transform: uppercase;
-            background: rgba(0, 0, 0, 0.8);
+            background: rgba(0, 0, 0, 0.75);
             backdrop-filter: blur(4px);
             border: 1px solid;
             z-index: 10;
@@ -211,52 +224,55 @@
         }
 
         .card-body {
-            padding: 18px;
+            padding: 8px 6px;
             flex-grow: 1;
+            display: flex;
+            flex-direction: column;
+            gap: 6px;
         }
 
         .card-title {
-            margin: 0 0 12px 0;
+            margin: 0;
             font-size: 1.15rem;
             font-weight: 700;
             white-space: nowrap;
             overflow: hidden;
             text-overflow: ellipsis;
-            color: #fff;
+            color: var(--text-primary);
         }
 
         .info-item {
             font-size: 0.85rem;
             color: var(--text-muted);
-            margin-bottom: 6px;
+            margin-bottom: 2px;
             display: flex;
             align-items: center;
-            gap: 10px;
+            gap: 8px;
         }
 
         .info-item i {
-            width: 16px;
+            width: 14px;
             text-align: center;
-            color: var(--accent-red);
+            color: var(--btn-blue);
         }
 
         .card-actions {
-            padding: 15px;
+            padding: 8px 0 0 0;
             border-top: 1px solid var(--border);
             display: flex;
             flex-direction: column;
-            gap: 10px;
-            background: #0c0c0c;
+            gap: 6px;
+            margin-top: auto;
         }
 
         .btn-group {
             display: grid;
             grid-template-columns: 1fr 1fr;
-            gap: 10px;
+            gap: 6px;
         }
 
         .btn {
-            padding: 10px;
+            padding: 8px;
             border-radius: 8px;
             border: 1px solid transparent;
             font-weight: 800;
@@ -268,6 +284,7 @@
             align-items: center;
             justify-content: center;
             gap: 6px;
+            height: 34px;
         }
 
         .btn-tmdb {
@@ -277,14 +294,13 @@
         }
 
         .btn-tmdb:hover {
-            background: #0056b3;
+            background: var(--btn-blue-hover);
         }
 
         .btn-justwatch {
             background: var(--btn-justwatch);
             color: #000;
             width: 100%;
-            margin-bottom: 5px;
         }
 
         .btn-justwatch:hover {
@@ -313,12 +329,26 @@
             color: white;
         }
 
+        .dashboard-control-panel {
+            background: var(--bg-card);
+            border: 1px solid var(--border);
+            border-radius: 16px;
+            padding: 16px;
+            max-width: calc(100% - 6rem);
+            margin: 20px auto;
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+            box-shadow: 0 8px 24px rgba(0, 0, 0, 0.4);
+        }
+
         .tabs {
             display: flex;
-            gap: 30px;
-            padding: 10px 20px;
+            gap: 20px;
+            padding: 5px 10px;
             justify-content: center;
-            margin-bottom: 10px;
+            margin-bottom: 0;
+            border-bottom: none;
         }
 
         .tab {
@@ -328,13 +358,17 @@
             font-size: 0.9rem;
             padding-bottom: 8px;
             border-bottom: 3px solid transparent;
-            transition: 0.3s;
+            transition: 0.2s;
             cursor: pointer;
         }
 
+        .tab:hover {
+            color: var(--text-primary);
+        }
+
         .tab.active {
-            color: var(--accent-red);
-            border-bottom-color: var(--accent-red);
+            color: var(--btn-blue);
+            border-bottom-color: var(--btn-blue);
         }
 
         .request-card.hidden {
@@ -344,23 +378,23 @@
         /* Toolbar (Search & Sort) */
         .toolbar {
             display: flex;
-            gap: 15px;
-            padding: 0 3rem 10px;
+            gap: 12px;
+            padding: 5px 10px;
             max-width: 100%;
-            margin: 0 auto;
+            margin: 0;
         }
 
         .toolbar input,
         .toolbar select {
-            padding: 12px 15px;
+            padding: 10px 14px;
             border-radius: 8px;
             border: 1px solid var(--border);
-            background: #080808;
+            background: var(--bg-input);
             color: var(--text-primary);
             font-family: inherit;
             font-size: 0.95rem;
             outline: none;
-            transition: 0.3s;
+            transition: all 0.2s;
         }
 
         .toolbar input {
@@ -369,14 +403,20 @@
 
         .toolbar input:focus,
         .toolbar select:focus {
-            border-color: var(--accent-red);
-            box-shadow: 0 0 0 2px rgba(229, 9, 20, 0.2);
+            border-color: var(--btn-blue);
+            box-shadow: 0 0 0 2px rgba(47, 128, 237, 0.2);
         }
 
         @media (max-width: 600px) {
+            .dashboard-control-panel {
+                max-width: calc(100% - 2rem);
+                padding: 10px;
+                margin: 10px auto;
+            }
+
             .toolbar {
                 flex-direction: column;
-                padding: 0 1rem 20px;
+                padding: 0;
             }
         }
 
@@ -392,21 +432,24 @@
             z-index: 3000;
             align-items: center;
             justify-content: center;
+            backdrop-filter: blur(4px);
         }
 
         .modal-content {
-            background: #1a1a1a;
+            background: var(--bg-card);
             padding: 2rem;
-            border-radius: 1rem;
+            border-radius: 16px;
             width: 90%;
             max-width: 900px;
             border: 1px solid var(--border);
+            box-shadow: 0 20px 40px rgba(0,0,0,0.5);
         }
 
         .modal-header {
             margin-bottom: 1.5rem;
             font-weight: 900;
             color: var(--accent-red);
+            font-size: 1.2rem;
         }
 
         .quick-buttons {
@@ -417,19 +460,21 @@
         }
 
         .btn-quick {
-            background: #333;
-            color: #fff;
-            padding: 10px 15px;
+            background: var(--bg-data);
+            color: var(--text-secondary);
+            padding: 8px 12px;
             border-radius: 6px;
-            font-size: 0.8rem;
-            border: 1px solid #444;
+            font-size: 0.75rem;
+            border: 1px solid var(--border);
             cursor: pointer;
             transition: all 0.2s;
             font-weight: 600;
         }
 
         .btn-quick:hover {
-            background: var(--accent-red);
+            background: var(--btn-blue);
+            color: white;
+            border-color: var(--btn-blue);
         }
 
         .modal-footer {
@@ -441,20 +486,20 @@
 
         textarea {
             width: 100%;
-            background: #000;
+            background: var(--bg-input);
             border: 1px solid var(--border);
-            color: #fff;
-            padding: 20px;
+            color: var(--text-primary);
+            padding: 15px;
             border-radius: 8px;
             resize: vertical;
-            min-height: 450px;
+            min-height: 250px;
             font-family: inherit;
-            font-size: 1.05rem;
+            font-size: 0.95rem;
             line-height: 1.6;
         }
 
         textarea:focus {
-            border-color: var(--accent-red);
+            border-color: var(--btn-blue);
             outline: none;
         }
 
@@ -463,18 +508,18 @@
             position: fixed;
             bottom: 30px;
             right: 30px;
-            width: 50px;
-            height: 50px;
-            background-color: var(--accent-red);
+            width: 45px;
+            height: 45px;
+            background-color: var(--btn-blue);
             color: white;
             border-radius: 50%;
             display: flex;
             align-items: center;
             justify-content: center;
-            font-size: 20px;
+            font-size: 16px;
             cursor: pointer;
             border: none;
-            box-shadow: 0 4px 15px rgba(229, 9, 20, 0.4);
+            box-shadow: 0 4px 15px rgba(47, 128, 237, 0.4);
             z-index: 2500;
             opacity: 0;
             visibility: hidden;
@@ -488,12 +533,13 @@
 
         .back-to-top:hover {
             transform: translateY(-5px);
-            background-color: #ff0f1a;
+            background-color: var(--btn-blue-hover);
         }
 
         @media (max-width: 600px) {
             .requests-grid {
                 grid-template-columns: 1fr;
+                padding: 10px 1rem;
             }
 
             .header-fixed {
@@ -532,44 +578,46 @@
         </div>
     </header>
 
-    <nav class="tabs">
-        <a onclick="filterCategory('all')" id="tab-all" class="tab active">TODOS (<span id="count-all">0</span>)</a>
-        <a onclick="filterCategory('series')" id="tab-series" class="tab">SÉRIES (<span id="count-series">0</span>)</a>
-        <a onclick="filterCategory('movie')" id="tab-movie" class="tab">FILMES (<span id="count-movie">0</span>)</a>
-        <a onclick="filterCategory('error')" id="tab-error" class="tab">ERROS (<span id="count-error">0</span>)</a>
-        <a href="/admin/resellers" class="tab">GESTÃO DE REVENDAS</a>
-    </nav>
+    <div class="dashboard-control-panel">
+        <nav class="tabs">
+            <a onclick="filterCategory('all')" id="tab-all" class="tab active">TODOS (<span id="count-all">0</span>)</a>
+            <a onclick="filterCategory('series')" id="tab-series" class="tab">SÉRIES (<span id="count-series">0</span>)</a>
+            <a onclick="filterCategory('movie')" id="tab-movie" class="tab">FILMES (<span id="count-movie">0</span>)</a>
+            <a onclick="filterCategory('error')" id="tab-error" class="tab">ERROS (<span id="count-error">0</span>)</a>
+            <a href="/admin/resellers" class="tab">GESTÃO DE REVENDAS</a>
+        </nav>
 
-    <div class="stats-summary">
-        <div onclick="filterStatus('pending')" id="stat-pending" class="stat-pill active">📊 PENDENTES: <strong>
-                <%= stats.pending %>
-            </strong></div>
-        <div onclick="filterStatus('approved')" id="stat-approved" class="stat-pill">✅ APROVADOS: <strong>
-                <%= stats.approved %>
-            </strong></div>
-        <div onclick="filterStatus('rejected')" id="stat-rejected" class="stat-pill">❌ REJEITADOS: <strong>
-                <%= stats.rejected %>
-            </strong></div>
-        <div onclick="filterStatus('all')" id="stat-all" class="stat-pill">📋 TODOS</div>
-    </div>
+        <div class="stats-summary">
+            <div onclick="filterStatus('pending')" id="stat-pending" class="stat-pill active">📊 PENDENTES: <strong>
+                    <%= stats.pending %>
+                </strong></div>
+            <div onclick="filterStatus('approved')" id="stat-approved" class="stat-pill">✅ APROVADOS: <strong>
+                    <%= stats.approved %>
+                </strong></div>
+            <div onclick="filterStatus('rejected')" id="stat-rejected" class="stat-pill">❌ REJEITADOS: <strong>
+                    <%= stats.rejected %>
+                </strong></div>
+            <div onclick="filterStatus('all')" id="stat-all" class="stat-pill">📋 TODOS</div>
+        </div>
 
-    <!-- Barra de Busca e Ordenação -->
-    <div class="toolbar">
-        <input type="text" id="searchInput" placeholder="Buscar por título do pedido ou nome da revenda..."
-            onkeyup="debouncedApplyFilters()">
-        <select id="m3uFilterSelect" onchange="applyFilters()">
-            <option value="all" selected>Todos (M3U)</option>
-            <option value="present">Presentes na M3U</option>
-            <option value="absent">Ausentes na M3U</option>
-        </select>
-        <select id="sortSelect" onchange="sortCards()">
-            <option value="oldest" selected>Mais Antigos (Data de Pedido)</option>
-            <option value="newest">Mais Recentes (Data de Pedido)</option>
-            <option value="yearDesc">Ano de Lançamento (Novo - Antigo)</option>
-            <option value="yearAsc">Ano de Lançamento (Antigo - Novo)</option>
-            <option value="resellerAsc">Revendedor (A - Z)</option>
-            <option value="resellerDesc">Revendedor (Z - A)</option>
-        </select>
+        <!-- Barra de Busca e Ordenação -->
+        <div class="toolbar">
+            <input type="text" id="searchInput" placeholder="Buscar por título do pedido ou nome da revenda..."
+                onkeyup="debouncedApplyFilters()">
+            <select id="m3uFilterSelect" onchange="applyFilters()">
+                <option value="all" selected>Todos (M3U)</option>
+                <option value="present">Presentes na M3U</option>
+                <option value="absent">Ausentes na M3U</option>
+            </select>
+            <select id="sortSelect" onchange="sortCards()">
+                <option value="oldest" selected>Mais Antigos (Data de Pedido)</option>
+                <option value="newest">Mais Recentes (Data de Pedido)</option>
+                <option value="yearDesc">Ano de Lançamento (Novo - Antigo)</option>
+                <option value="yearAsc">Ano de Lançamento (Antigo - Novo)</option>
+                <option value="resellerAsc">Revendedor (A - Z)</option>
+                <option value="resellerDesc">Revendedor (Z - A)</option>
+            </select>
+        </div>
     </div>
 
     <main class="requests-grid">
@@ -596,41 +644,42 @@
                         </span>
                         <% if (allReqs.length> 1) { %>
                             <div class="badge-grouped"
-                                style="position: absolute; top: 15px; left: 15px; background: rgba(59, 130, 246, 0.9); color: white; padding: 4px 8px; border-radius: 6px; font-size: 11px; font-weight: 800; z-index: 10; border: 1px solid #3b82f6;">
+                                style="position: absolute; top: 8px; left: 8px; background: rgba(47, 128, 237, 0.9); color: white; padding: 4px 8px; border-radius: 6px; font-size: 10px; font-weight: 800; z-index: 10; border: 1px solid #2f80ed;">
                                 <i class="fas fa-layer-group"></i>
                                 <%= allReqs.length %> AGRUPADOS
                                     <% if (countPending> 0) { %><span
-                                            style="background: #ef4444; border-radius: 50%; padding: 2px 5px; margin-left: 5px;">
-                                            <%= countPending %>
-                                        </span>
-                                        <% } %>
+                                             style="background: #ef4444; border-radius: 50%; padding: 2px 5px; margin-left: 5px;">
+                                             <%= countPending %>
+                                         </span>
+                                         <% } %>
                             </div>
                             <% } %>
 
                                 <div
-                                    style="position: absolute; bottom: 10px; left: 10px; display: flex; flex-direction: column; gap: 5px; z-index: 10;">
+                                    style="position: absolute; bottom: 8px; left: 8px; display: flex; flex-direction: column; gap: 5px; z-index: 10;">
                                     <% if (countDub> 0) { %><span
-                                            style="background: rgba(16, 185, 129, 0.95); color: white; padding: 3px 6px; border-radius: 4px; font-size: 10px; font-weight: bold; border: 1px solid #10b981;"><i
-                                                class="fas fa-microphone"></i>
-                                            <%= countDub %> DUB
-                                        </span>
-                                        <% } %>
-                                            <% if (countLeg> 0) { %><span
-                                                    style="background: rgba(245, 158, 11, 0.95); color: white; padding: 3px 6px; border-radius: 4px; font-size: 10px; font-weight: bold; border: 1px solid #f59e0b;"><i
-                                                        class="fas fa-closed-captioning"></i>
-                                                    <%= countLeg %> LEG
-                                                </span>
-                                                <% } %>
-                                                    <% if (countErr> 0) { %><span
-                                                            style="background: rgba(239, 68, 68, 0.95); color: white; padding: 3px 6px; border-radius: 4px; font-size: 10px; font-weight: bold; border: 1px solid #ef4444;"><i
-                                                                class="fas fa-exclamation-triangle"></i>
-                                                            <%= countErr %> ERRO
-                                                        </span>
-                                                        <% } %>
+                                             style="background: rgba(34, 197, 94, 0.95); color: white; padding: 3px 6px; border-radius: 4px; font-size: 10px; font-weight: bold; border: 1px solid #22c55e;"><i
+                                                 class="fas fa-microphone"></i>
+                                             <%= countDub %> DUB
+                                         </span>
+                                         <% } %>
+                                             <% if (countLeg> 0) { %><span
+                                                     style="background: rgba(245, 158, 11, 0.95); color: white; padding: 3px 6px; border-radius: 4px; font-size: 10px; font-weight: bold; border: 1px solid #f59e0b;"><i
+                                                         class="fas fa-closed-captioning"></i>
+                                                     <%= countLeg %> LEG
+                                                 </span>
+                                                 <% } %>
+                                                     <% if (countErr> 0) { %><span
+                                                             style="background: rgba(239, 68, 68, 0.95); color: white; padding: 3px 6px; border-radius: 4px; font-size: 10px; font-weight: bold; border: 1px solid #ef4444;"><i
+                                                                 class="fas fa-exclamation-triangle"></i>
+                                                             <%= countErr %> ERRO
+                                                         </span>
+                                                         <% } %>
                                 </div>
                     </div>
 
                     <div class="card-body">
+                        <div style="font-size: 0.65rem; text-transform: uppercase; color: var(--text-muted); font-weight: 800; letter-spacing: 0.5px; margin-bottom: 2px;">TÍTULO</div>
                         <h4 class="card-title" title="<%= req.title %>">
                             <%= req.title %>
                         </h4>

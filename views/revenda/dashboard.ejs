@@ -26,21 +26,27 @@
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
   <style>
     .revenda-header {
-      background: var(--bg-header);
+      background: rgba(11, 11, 15, 0.95);
       padding: 1rem 2rem;
-      border-bottom: 1px solid var(--border);
+      border-bottom: 1px solid rgba(255, 255, 255, 0.05);
       display: flex;
       justify-content: space-between;
       align-items: center;
+      backdrop-filter: blur(10px);
+      position: sticky;
+      top: 0;
+      z-index: 100;
+      box-shadow: 0 4px 20px rgba(0, 0, 0, 0.4);
     }
 
     .revenda-header .logo {
       font-size: 1.2rem;
       font-weight: 900;
+      color: var(--text-primary);
     }
 
     .revenda-header .logo span {
-      color: var(--accent-red);
+      color: var(--btn-blue);
     }
 
     .revenda-header .user-info {
@@ -52,11 +58,11 @@
     }
 
     .revenda-header .btn-solicitar {
-      background: var(--accent-red);
+      background: var(--btn-blue);
       color: white;
       border: none;
       padding: 0.6rem 1.2rem;
-      border-radius: 0.5rem;
+      border-radius: 8px;
       font-weight: 700;
       font-size: 0.85rem;
       cursor: pointer;
@@ -64,6 +70,11 @@
       display: inline-flex;
       align-items: center;
       gap: 0.4rem;
+      transition: all 0.2s ease;
+    }
+
+    .revenda-header .btn-solicitar:hover {
+      background: var(--accent-blue-hover);
     }
 
     .revenda-container {
@@ -75,37 +86,44 @@
     .revenda-stats {
       display: grid;
       grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
-      gap: 1rem;
+      gap: 12px;
       margin-bottom: 2rem;
     }
 
     .revenda-stat-card {
       background: var(--bg-card);
       border: 1px solid var(--border);
-      border-radius: 1rem;
-      padding: 1.25rem;
+      border-radius: 16px;
+      padding: 1rem;
       text-align: center;
+      transition: all 0.2s ease;
+      box-shadow: 0 8px 24px rgba(0, 0, 0, 0.4);
+    }
+
+    .revenda-stat-card:hover {
+      border-color: var(--btn-blue);
     }
 
     .revenda-stat-card .number {
       font-size: 2rem;
       font-weight: 900;
       margin-bottom: 0.25rem;
+      color: var(--text-primary);
     }
 
     .revenda-stat-card .label {
-      font-size: 0.8rem;
+      font-size: 0.85rem;
       color: var(--text-muted);
       text-transform: uppercase;
       letter-spacing: 0.05em;
     }
 
     .revenda-stat-card.pending .number {
-      color: var(--accent-red);
+      color: var(--status-pending);
     }
 
     .revenda-stat-card.approved .number {
-      color: #10b981;
+      color: var(--status-approved);
     }
 
     .revenda-stat-card.rejected .number {
@@ -119,36 +137,40 @@
       display: flex;
       align-items: center;
       gap: 0.5rem;
+      color: var(--text-primary);
     }
 
     .requests-list {
       display: grid;
-      grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
-      gap: 25px;
+      grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
+      gap: 12px;
     }
 
     .request-card {
       background: var(--bg-card);
       border: 1px solid var(--border);
-      border-radius: 15px;
+      border-radius: 16px;
       overflow: hidden;
       transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
       display: flex;
       flex-direction: column;
+      padding: 6px;
+      box-shadow: 0 8px 24px rgba(0, 0, 0, 0.5);
     }
 
     .request-card:hover {
-      transform: translateY(-8px);
-      border-color: var(--accent-red);
-      box-shadow: 0 10px 30px rgba(229, 9, 20, 0.2);
+      transform: translateY(-4px);
+      border-color: var(--btn-blue);
+      box-shadow: 0 12px 30px rgba(0, 0, 0, 0.7), 0 0 15px rgba(47, 128, 237, 0.15);
     }
 
     .poster-container {
       width: 100%;
       aspect-ratio: 2/3;
-      background: #111;
+      background: #0d0f13;
       position: relative;
-      border-bottom: 1px solid var(--border);
+      border-radius: 12px;
+      overflow: hidden;
     }
 
     .poster-container .poster {
@@ -159,47 +181,48 @@
     }
 
     .request-card .info {
-      padding: 18px;
+      padding: 8px 6px;
       flex-grow: 1;
       display: flex;
       flex-direction: column;
+      gap: 6px;
     }
 
     .request-card .title {
-      margin: 0 0 12px 0;
+      margin: 0;
       font-size: 1.15rem;
       font-weight: 700;
       white-space: nowrap;
       overflow: hidden;
       text-overflow: ellipsis;
-      color: #fff;
+      color: var(--text-primary);
     }
 
     .info-item {
       font-size: 0.85rem;
       color: var(--text-muted);
-      margin-bottom: 6px;
+      margin-bottom: 2px;
       display: flex;
       align-items: center;
-      gap: 10px;
+      gap: 8px;
     }
 
     .info-item i {
-      width: 16px;
+      width: 14px;
       text-align: center;
-      color: var(--accent-red);
+      color: var(--btn-blue);
     }
 
     .badge-status {
       position: absolute;
-      top: 15px;
-      right: 15px;
-      padding: 6px 12px;
+      top: 8px;
+      right: 8px;
+      padding: 4px 8px;
       border-radius: 6px;
       font-size: 11px;
-      font-weight: 900;
+      font-weight: 800;
       text-transform: uppercase;
-      background: rgba(0, 0, 0, 0.8);
+      background: rgba(0, 0, 0, 0.75);
       backdrop-filter: blur(4px);
       border: 1px solid;
       z-index: 10;
@@ -224,6 +247,7 @@
       text-align: center;
       padding: 4rem 2rem;
       color: var(--text-muted);
+      grid-column: 1 / -1;
     }
 
     .empty-state .icon {
@@ -233,7 +257,7 @@
     }
 
     .btn {
-      padding: 10px;
+      padding: 8px;
       border-radius: 8px;
       border: 1px solid transparent;
       font-weight: 800;
@@ -246,6 +270,22 @@
       justify-content: center;
       gap: 6px;
       font-family: inherit;
+      height: 34px;
+    }
+
+    /* Modal Styles */
+    .modal-overlay {
+      display: none;
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background: rgba(0, 0, 0, 0.85);
+      z-index: 3000;
+      align-items: center;
+      justify-content: center;
+      backdrop-filter: blur(4px);
     }
   </style>
 </head>
@@ -254,7 +294,7 @@
   <header class="revenda-header">
     <div class="logo">PORTAL <span>VOD</span></div>
     <div class="user-info" style="display: flex; align-items: center; gap: 15px;">
-      <span>👤 <%= reseller.name %> | <%= reseller.whatsapp %></span>
+      <span><%= reseller.name %> | <%= reseller.whatsapp %></span>
       <button id="themeToggleBtn" style="background: transparent; border: none; color: var(--text-primary); font-size: 1.15rem; cursor: pointer; display: inline-flex; align-items: center; justify-content: center; width: 35px; height: 35px; border-radius: 50%; transition: background 0.3s;" onclick="toggleTheme()" title="Alternar Tema">
           <i class="fas fa-sun" id="themeIcon" style="color: #f59e0b;"></i>
       </button>
@@ -367,6 +407,7 @@
               </span>
             </div>
             <div class="info">
+              <div style="font-size: 0.65rem; text-transform: uppercase; color: var(--text-muted); font-weight: 800; letter-spacing: 0.5px; margin-bottom: 2px;">TÍTULO</div>
               <h4 class="title" title="<%= req.title %>">
                 <%= req.title %>
               </h4>
