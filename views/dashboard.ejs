@@ -37,6 +37,13 @@
             --status-rejected: #ef4444;
             --btn-blue: #2f80ed;
             --btn-justwatch: #fbc02d;
+            --shadow-card: 0 8px 24px rgba(255, 255, 255, 0.05);
+            --shadow-hover: 0 12px 30px rgba(255, 255, 255, 0.1), 0 0 15px rgba(47, 128, 237, 0.25);
+        }
+
+        .light-theme {
+            --shadow-card: 0 8px 24px rgba(0, 0, 0, 0.08) !important;
+            --shadow-hover: 0 12px 30px rgba(0, 0, 0, 0.12), 0 0 15px rgba(47, 128, 237, 0.15) !important;
         }
 
         * {
@@ -152,7 +159,7 @@
 
         .requests-grid {
             display: grid;
-            grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
+            grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
             gap: 12px;
             padding: 15px 2rem;
             max-width: 100%;
@@ -168,13 +175,13 @@
             display: flex;
             flex-direction: column;
             padding: 6px;
-            box-shadow: 0 8px 24px rgba(0, 0, 0, 0.5);
+            box-shadow: var(--shadow-card);
         }
 
         .request-card:hover {
             transform: translateY(-4px);
             border-color: var(--btn-blue);
-            box-shadow: 0 12px 30px rgba(0, 0, 0, 0.7), 0 0 15px rgba(47, 128, 237, 0.15);
+            box-shadow: var(--shadow-hover);
         }
 
         .poster-container {
@@ -621,20 +628,36 @@
     </div>
 
     <main class="requests-grid">
-        <% requests.forEach(req=> { %>
+        <% requests.forEach(req=> { 
+            let allReqs = [req];
+            if (req.subRequests) allReqs = allReqs.concat(req.subRequests);
+            let statuses = [...new Set(allReqs.map(r => r.status))].join(',');
+            let countDub = allReqs.filter(r => r.audioPreference === 'Dublado' && r.requestType !== 'error').length;
+            let countLeg = allReqs.filter(r => r.audioPreference === 'Legendado' && r.requestType !== 'error').length;
+            let countErr = allReqs.filter(r => r.requestType === 'error').length;
+            let countPending = allReqs.filter(r => r.status === 'pending').length;
+            let hasChatHistory = allReqs.some(r => r.rejectionReason || r.description);
+            let chatDescription = '';
+            allReqs.forEach(r => {
+                let desc = r.description || '';
+                if (r.rejectionReason && !desc.includes('[Rejeitado pelo Admin')) {
+                    desc = (desc ? desc + '\n' : '') + `[Rejeitado pelo Admin - Motivo: ${r.rejectionReason}]`;
+                }
+                if (desc) {
+                    chatDescription += (chatDescription ? '\n\n' : '') + desc;
+                }
+            });
+            let hasAnyPending = allReqs.some(r => r.status === 'pending');
+        %>
             <article class="request-card" id="card-<%= req.id %>" data-id="<%= req.id %>"
-                data-category="<%= req.requestType === 'error' ? 'error' : req.type %>" data-status="<%= req.status %>"
+                data-category="<%= req.requestType === 'error' ? 'error' : req.type %>" 
+                data-status="<%= req.status %>"
+                data-statuses="<%= statuses %>"
                 data-title="<%= (req.title || '').toLowerCase() %>"
                 data-reseller="<%= (req.reseller || '').toLowerCase() %>" data-year="<%= req.year || 0 %>"
-                data-in-m3u="<%= req.inM3u ? 'true' : 'false' %>">
+                data-in-m3u="<%= req.inM3u ? 'true' : 'false' %>"
+                data-all-requests="<%= encodeURIComponent(JSON.stringify(allReqs)) %>">
 
-                <% let allReqs=[req]; if (req.subRequests) allReqs=allReqs.concat(req.subRequests); let
-                    countDub=allReqs.filter(r=> r.audioPreference === 'Dublado' && r.requestType !== 'error').length;
-                    let countLeg = allReqs.filter(r => r.audioPreference === 'Legendado' && r.requestType !==
-                    'error').length;
-                    let countErr = allReqs.filter(r => r.requestType === 'error').length;
-                    let countPending = allReqs.filter(r => r.status === 'pending').length;
-                    %>
                     <div class="poster-container">
                         <img src="<%= req.poster || 'https://via.placeholder.com/500x750?text=Sem+Poster' %>"
                             class="poster-img" alt="Poster">
@@ -642,40 +665,34 @@
                             <%= req.status==='pending' ? 'Pendente' : (req.status==='approved' ? 'Aprovado'
                                 : 'Rejeitado' ) %>
                         </span>
-                        <% if (allReqs.length> 1) { %>
-                            <div class="badge-grouped"
-                                style="position: absolute; top: 8px; left: 8px; background: rgba(47, 128, 237, 0.9); color: white; padding: 4px 8px; border-radius: 6px; font-size: 10px; font-weight: 800; z-index: 10; border: 1px solid #2f80ed;">
-                                <i class="fas fa-layer-group"></i>
-                                <%= allReqs.length %> AGRUPADOS
-                                    <% if (countPending> 0) { %><span
-                                             style="background: #ef4444; border-radius: 50%; padding: 2px 5px; margin-left: 5px;">
-                                             <%= countPending %>
-                                         </span>
-                                         <% } %>
-                            </div>
-                            <% } %>
+                        
+                        <div class="badge-grouped"
+                            style="position: absolute; top: 8px; left: 8px; background: rgba(47, 128, 237, 0.9); color: white; padding: 4px 8px; border-radius: 6px; font-size: 10px; font-weight: 800; z-index: 10; border: 1px solid #2f80ed; <%= allReqs.length > 1 ? '' : 'display: none;' %>">
+                            <i class="fas fa-layer-group"></i>
+                            <span class="badge-grouped-text"><%= allReqs.length %> AGRUPADOS</span>
+                            <span class="badge-grouped-pending" style="background: #ef4444; border-radius: 50%; padding: 2px 5px; margin-left: 5px; <%= countPending > 0 ? '' : 'display: none;' %>">
+                                 <%= countPending %>
+                            </span>
+                        </div>
 
-                                <div
-                                    style="position: absolute; bottom: 8px; left: 8px; display: flex; flex-direction: column; gap: 5px; z-index: 10;">
-                                    <% if (countDub> 0) { %><span
-                                             style="background: rgba(34, 197, 94, 0.95); color: white; padding: 3px 6px; border-radius: 4px; font-size: 10px; font-weight: bold; border: 1px solid #22c55e;"><i
-                                                 class="fas fa-microphone"></i>
-                                             <%= countDub %> DUB
-                                         </span>
-                                         <% } %>
-                                             <% if (countLeg> 0) { %><span
-                                                     style="background: rgba(245, 158, 11, 0.95); color: white; padding: 3px 6px; border-radius: 4px; font-size: 10px; font-weight: bold; border: 1px solid #f59e0b;"><i
-                                                         class="fas fa-closed-captioning"></i>
-                                                     <%= countLeg %> LEG
-                                                 </span>
-                                                 <% } %>
-                                                     <% if (countErr> 0) { %><span
-                                                             style="background: rgba(239, 68, 68, 0.95); color: white; padding: 3px 6px; border-radius: 4px; font-size: 10px; font-weight: bold; border: 1px solid #ef4444;"><i
-                                                                 class="fas fa-exclamation-triangle"></i>
-                                                             <%= countErr %> ERRO
-                                                         </span>
-                                                         <% } %>
-                                </div>
+                        <div class="audio-badges-container"
+                            style="position: absolute; bottom: 8px; left: 8px; display: flex; flex-direction: column; gap: 5px; z-index: 10;">
+                            <span class="badge-audio badge-dub"
+                                     style="background: rgba(34, 197, 94, 0.95); color: white; padding: 3px 6px; border-radius: 4px; font-size: 10px; font-weight: bold; border: 1px solid #22c55e; <%= countDub > 0 ? '' : 'display: none;' %>">
+                                     <i class="fas fa-microphone"></i>
+                                     <span class="count-value"><%= countDub %></span> DUB
+                            </span>
+                            <span class="badge-audio badge-leg"
+                                     style="background: rgba(245, 158, 11, 0.95); color: white; padding: 3px 6px; border-radius: 4px; font-size: 10px; font-weight: bold; border: 1px solid #f59e0b; <%= countLeg > 0 ? '' : 'display: none;' %>">
+                                     <i class="fas fa-closed-captioning"></i>
+                                     <span class="count-value"><%= countLeg %></span> LEG
+                            </span>
+                            <span class="badge-audio badge-err"
+                                     style="background: rgba(239, 68, 68, 0.95); color: white; padding: 3px 6px; border-radius: 4px; font-size: 10px; font-weight: bold; border: 1px solid #ef4444; <%= countErr > 0 ? '' : 'display: none;' %>">
+                                     <i class="fas fa-exclamation-triangle"></i>
+                                     <span class="count-value"><%= countErr %></span> ERRO
+                            </span>
+                        </div>
                     </div>
 
                     <div class="card-body">
@@ -724,7 +741,6 @@
                                                 <div class="info-item" style="color: var(--status-approved);">
                                                     <i class="fab fa-whatsapp"></i>
                                                     <%= req.whatsapp %>
-                                                    <% let hasChatHistory=!!(req.rejectionReason || req.description); let replyCount=0; if (req.description) { replyCount=(req.description.match(/\[Resposta do Revendedor/g) || []).length; } let chatDescription=req.description || '' ; if (req.rejectionReason && !chatDescription.includes('[Rejeitado pelo Admin')) { chatDescription=(chatDescription ? chatDescription + '\n' : '' ) + `[Rejeitado pelo Admin - Motivo: ${req.rejectionReason}]`; } %>
                                                             <div class="info-item"><i class="far fa-calendar-alt"></i>
                                                                 <%= req.date %>
                                                             </div>
@@ -732,51 +748,42 @@
 
                                                 <div class="card-actions">
                                                     <div style="display: flex; gap: 5px; margin-bottom: 5px;">
-                                                        <button class="btn btn-tmdb"
-                                                            onclick="window.open('https://www.themoviedb.org/search?query=<%= encodeURIComponent(req.title).replace(/'/g, "%27") %>', '_blank')">
-                                                            <i class="fas fa-search"></i> TMDB
+                                                         <button class="btn btn-tmdb"
+                                                             onclick="window.open('https://www.themoviedb.org/search?query=<%= encodeURIComponent(req.title).replace(/'/g, "%27") %>', '_blank')">
+                                                             <i class="fas fa-search"></i> TMDB
+                                                         </button>
+                                                         <button class="btn btn-justwatch"
+                                                             onclick="window.open('https://www.justwatch.com/br/busca?q=<%= encodeURIComponent(req.title).replace(/'/g, "%27") %>', '_blank')">
+                                                             <i class="fas fa-play"></i> JW
+                                                         </button>
+                                                    </div>
+                                                    <button class="btn btn-chat-history"
+                                                        style="background: rgba(37, 99, 235, 0.15); border: 1px solid #2563eb; color: #3b82f6; margin-bottom: 8px; width: 100%; align-items: center; justify-content: center; gap: 8px; <%= hasChatHistory ? 'display: flex;' : 'display: none;' %>"
+                                                        onclick="openChatModal('<%= encodeURIComponent(req.title).replace(/'/g, "%27") %>', '<%= encodeURIComponent(chatDescription).replace(/'/g, "%27") %>')">
+                                                            <i class="fas fa-comments"></i> Conversa / Histórico
+                                                    </button>
+                                                    <button class="btn btn-details-action"
+                                                        style="margin-bottom: 5px; width: 100%; <%= allReqs.length > 1 ? 'background: #3b82f6; color: white;' : 'background: #f59e0b; color: #000;' %>"
+                                                        data-details="<%= encodeURIComponent(JSON.stringify(allReqs)) %>"
+                                                        onclick="openDetailsModal(this.dataset.details)">
+                                                        <% if (allReqs.length > 1) { %>
+                                                            <i class="fas fa-list"></i> Histórico de Pedidos
+                                                        <% } else { %>
+                                                            <i class="fas fa-cog"></i> Opções do Pedido
+                                                        <% } %>
+                                                    </button>
+                                                    <div class="btn-group approval-btn-group"
+                                                        id="btnGroup-<%= req.id %>"
+                                                        style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px; width: 100%; <%= hasAnyPending ? '' : 'display: none;' %>">
+                                                        <button class="btn btn-approve"
+                                                            onclick="updateStatus(<%= req.id %>, 'approved', null, <%= countPending > 1 %>)">
+                                                            <%= countPending > 1 ? 'Aprovar Pendentes' : 'Aprovar' %>
                                                         </button>
-                                                        <button class="btn btn-justwatch"
-                                                            onclick="window.open('https://www.justwatch.com/br/busca?q=<%= encodeURIComponent(req.title).replace(/'/g, "%27") %>', '_blank')">
-                                                            <i class="fas fa-play"></i> JW
+                                                        <button class="btn btn-reject"
+                                                            onclick="openRejectModal(<%= req.id %>, '<%= req.type %>', <%= countPending > 1 %>)">
+                                                            <%= countPending > 1 ? 'Rejeitar Pendentes' : 'Rejeitar' %>
                                                         </button>
                                                     </div>
-                                                    <% if (hasChatHistory) { %>
-                                                        <button class="btn"
-                                                            style="background: rgba(37, 99, 235, 0.15); border: 1px solid #2563eb; color: #3b82f6; margin-bottom: 8px; width: 100%; display: flex; align-items: center; justify-content: center; gap: 8px;"
-                                                            onclick="openChatModal('<%= encodeURIComponent(req.title).replace(/'/g, "%27") %>', '<%= encodeURIComponent(chatDescription).replace(/'/g, "%27") %>')">
-                                                                <i class="fas fa-comments"></i> Conversa / Histórico
-                                                        </button>
-                                                        <% } %>
-                                                            <% if (allReqs.length> 1) { %>
-                                                                <button class="btn"
-                                                                    style="background: #3b82f6; color: white; margin-bottom: 5px; width: 100%;"
-                                                                    data-details="<%= encodeURIComponent(JSON.stringify([req, ...req.subRequests])) %>"
-                                                                    onclick="openDetailsModal(this.dataset.details)">
-                                                                    <i class="fas fa-list"></i> Histórico de Pedidos
-                                                                </button>
-                                                                <% } else { %>
-                                                                    <button class="btn"
-                                                                        style="background: #f59e0b; color: #000; margin-bottom: 5px; width: 100%;"
-                                                                        data-details="<%= encodeURIComponent(JSON.stringify([req])) %>"
-                                                                        onclick="openDetailsModal(this.dataset.details)">
-                                                                        <i class="fas fa-cog"></i> Opções do Pedido
-                                                                    </button>
-                                                                    <% } %>
-                                                                        <% if (req.status==='pending' ) { %>
-                                                                            <div class="btn-group"
-                                                                                id="btnGroup-<%= req.id %>"
-                                                                                style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px; width: 100%;">
-                                                                                <button class="btn btn-approve"
-                                                                                    onclick="updateStatus(<%= req.id %>, 'approved', null, <%= countPending > 1 %>)">
-                                                                                    <%= countPending > 1 ? 'Aprovar Pendentes' : 'Aprovar' %>
-                                                                                </button>
-                                                                                <button class="btn btn-reject"
-                                                                                    onclick="openRejectModal(<%= req.id %>, '<%= req.type %>', <%= countPending > 1 %>)">
-                                                                                    <%= countPending > 1 ? 'Rejeitar Pendentes' : 'Rejeitar' %>
-                                                                                </button>
-                                                                            </div>
-                                                                            <% } %>
                                                 </div>
                     </div>
             </article>
@@ -1132,6 +1139,150 @@
             }, 300);
         }
 
+        function updateCardDisplayForStatus(card, status) {
+            const allRequests = JSON.parse(decodeURIComponent(card.dataset.allRequests));
+            
+            // Determine filtered list of requests
+            let filteredRequests = [];
+            if (status === 'approved') {
+                filteredRequests = allRequests.filter(r => r.status === 'approved');
+            } else if (status === 'rejected') {
+                filteredRequests = allRequests.filter(r => r.status === 'rejected');
+            } else {
+                // For pending, all, and other cases, show complete history
+                filteredRequests = allRequests;
+            }
+
+            // 1. Update main status badge
+            const mainReq = filteredRequests[0] || allRequests[0];
+            const badgeStatus = card.querySelector('.badge-status');
+            if (badgeStatus) {
+                badgeStatus.className = `badge-status status-${mainReq.status}`;
+                badgeStatus.innerText = mainReq.status === 'pending' ? 'Pendente' : (mainReq.status === 'approved' ? 'Aprovado' : 'Rejeitado');
+            }
+
+            // 2. Update grouped badge
+            const badgeGrouped = card.querySelector('.badge-grouped');
+            if (badgeGrouped) {
+                if (filteredRequests.length > 1) {
+                    badgeGrouped.style.display = 'block';
+                    const textSpan = badgeGrouped.querySelector('.badge-grouped-text');
+                    if (textSpan) {
+                        textSpan.innerText = `${filteredRequests.length} AGRUPADOS`;
+                    }
+                    const pendingSpan = badgeGrouped.querySelector('.badge-grouped-pending');
+                    if (pendingSpan) {
+                        const pendingCount = filteredRequests.filter(r => r.status === 'pending').length;
+                        if (pendingCount > 0) {
+                            pendingSpan.style.display = 'inline-block';
+                            pendingSpan.innerText = pendingCount;
+                        } else {
+                            pendingSpan.style.display = 'none';
+                        }
+                    }
+                } else {
+                    badgeGrouped.style.display = 'none';
+                }
+            }
+
+            // 3. Update audio/error badges
+            const countDub = filteredRequests.filter(r => r.audioPreference === 'Dublado' && r.requestType !== 'error').length;
+            const countLeg = filteredRequests.filter(r => r.audioPreference === 'Legendado' && r.requestType !== 'error').length;
+            const countErr = filteredRequests.filter(r => r.requestType === 'error').length;
+
+            const badgeDub = card.querySelector('.badge-dub');
+            if (badgeDub) {
+                if (countDub > 0) {
+                    badgeDub.style.display = 'inline-block';
+                    badgeDub.querySelector('.count-value').innerText = countDub;
+                } else {
+                    badgeDub.style.display = 'none';
+                }
+            }
+            const badgeLeg = card.querySelector('.badge-leg');
+            if (badgeLeg) {
+                if (countLeg > 0) {
+                    badgeLeg.style.display = 'inline-block';
+                    badgeLeg.querySelector('.count-value').innerText = countLeg;
+                } else {
+                    badgeLeg.style.display = 'none';
+                }
+            }
+            const badgeErr = card.querySelector('.badge-err');
+            if (badgeErr) {
+                if (countErr > 0) {
+                    badgeErr.style.display = 'inline-block';
+                    badgeErr.querySelector('.count-value').innerText = countErr;
+                } else {
+                    badgeErr.style.display = 'none';
+                }
+            }
+
+            // 4. Update details action button
+            const detailsBtn = card.querySelector('.btn-details-action');
+            if (detailsBtn) {
+                detailsBtn.dataset.details = encodeURIComponent(JSON.stringify(filteredRequests));
+                if (filteredRequests.length > 1) {
+                    detailsBtn.style.background = '#3b82f6';
+                    detailsBtn.style.color = 'white';
+                    detailsBtn.innerHTML = `<i class="fas fa-list"></i> Histórico de Pedidos`;
+                } else {
+                    detailsBtn.style.background = '#f59e0b';
+                    detailsBtn.style.color = '#000';
+                    detailsBtn.innerHTML = `<i class="fas fa-cog"></i> Opções do Pedido`;
+                }
+            }
+
+            // 5. Update Chat / Conversa button
+            const chatBtn = card.querySelector('.btn-chat-history');
+            if (chatBtn) {
+                const chatRequests = filteredRequests.filter(r => r.rejectionReason || r.description);
+                if (chatRequests.length > 0) {
+                    chatBtn.style.display = 'flex';
+                    // Build combined chat description from filtered requests
+                    let combinedChatDesc = '';
+                    chatRequests.forEach(req => {
+                        let desc = req.description || '';
+                        if (req.rejectionReason && !desc.includes('[Rejeitado pelo Admin')) {
+                            desc = (desc ? desc + '\n' : '') + `[Rejeitado pelo Admin - Motivo: ${req.rejectionReason}]`;
+                        }
+                        if (desc) {
+                            combinedChatDesc += (combinedChatDesc ? '\n\n' : '') + desc;
+                        }
+                    });
+                    
+                    const titleEsc = encodeURIComponent(mainReq.title || '').replace(/'/g, "%27");
+                    const descEsc = encodeURIComponent(combinedChatDesc).replace(/'/g, "%27");
+                    chatBtn.onclick = () => openChatModal(titleEsc, descEsc);
+                } else {
+                    chatBtn.style.display = 'none';
+                }
+            }
+
+            // 6. Update Approve/Reject button group
+            const approvalGroup = card.querySelector('.approval-btn-group');
+            if (approvalGroup) {
+                const pendingRequests = filteredRequests.filter(r => r.status === 'pending');
+                if (pendingRequests.length > 0) {
+                    approvalGroup.style.display = 'grid';
+                    const approveBtn = approvalGroup.querySelector('.btn-approve');
+                    const rejectBtn = approvalGroup.querySelector('.btn-reject');
+                    const isMultiplePending = pendingRequests.length > 1;
+                    
+                    if (approveBtn) {
+                        approveBtn.innerText = isMultiplePending ? 'Aprovar Pendentes' : 'Aprovar';
+                        approveBtn.onclick = () => updateStatus(mainReq.id, 'approved', null, isMultiplePending);
+                    }
+                    if (rejectBtn) {
+                        rejectBtn.innerText = isMultiplePending ? 'Rejeitar Pendentes' : 'Rejeitar';
+                        rejectBtn.onclick = () => openRejectModal(mainReq.id, mainReq.type, isMultiplePending);
+                    }
+                } else {
+                    approvalGroup.style.display = 'none';
+                }
+            }
+        }
+
         function applyFilters() {
             const searchQuery = document.getElementById('searchInput').value.toLowerCase().trim();
             const m3uFilter = document.getElementById('m3uFilterSelect').value;
@@ -1143,7 +1294,9 @@
 
             document.querySelectorAll('.request-card').forEach(card => {
                 const categoryMatch = activeCategory === 'all' || card.dataset.category === activeCategory;
-                const statusMatch = activeStatus === 'all' || card.dataset.status === activeStatus;
+                
+                const cardStatuses = card.dataset.statuses.split(',');
+                const statusMatch = activeStatus === 'all' || cardStatuses.includes(activeStatus);
 
                 const titleMatch = card.dataset.title.includes(searchQuery);
                 const resellerMatch = card.dataset.reseller.includes(searchQuery);
@@ -1156,6 +1309,7 @@
                 const isVisible = categoryMatch && statusMatch && searchMatch && m3uMatch;
                 if (isVisible) {
                     card.classList.remove('hidden');
+                    updateCardDisplayForStatus(card, activeStatus);
                 } else {
                     card.classList.add('hidden');
                 }
@@ -1401,159 +1555,45 @@
                 if (response.ok) {
                     const reqData = await response.json(); // Recebe o objeto do banco de dados atualizado
 
-                    const updateCardElement = (cardEl, targetData) => {
-                        cardEl.dataset.status = targetData.status;
-                        const badge = cardEl.querySelector('.badge-status');
-                        if (badge) {
-                            badge.className = `badge-status status-${targetData.status}`;
-                            badge.innerText = targetData.status === 'pending' ? 'Pendente' : (targetData.status === 'approved' ? 'Aprovado' : 'Rejeitado');
-                        }
-
-                        // Gerenciamento dos botões de ação e do botão de conversa
-                        const actions = cardEl.querySelector('.card-actions');
-                        if (actions) {
-                            // Remove o botão de conversa existente para evitar duplicações
-                            const existingChatBtn = Array.from(actions.querySelectorAll('button')).find(btn => btn.innerHTML.includes('Conversa / Histórico'));
-                            if (existingChatBtn) {
-                                existingChatBtn.remove();
-                            }
-
-                            // Se houver histórico de conversa, recria o botão de forma dinâmica
-                            const hasChatHistory = !!(targetData.rejectionReason || targetData.description);
-                            if (hasChatHistory) {
-                                let chatDescription = targetData.description || '';
-                                if (targetData.rejectionReason && !chatDescription.includes('[Rejeitado pelo Admin')) {
-                                    chatDescription = (chatDescription ? chatDescription + '\n' : '') + `[Rejeitado pelo Admin - Motivo: ${targetData.rejectionReason}]`;
-                                }
-
-                                const chatBtn = document.createElement('button');
-                                chatBtn.className = 'btn';
-                                chatBtn.style = 'background: rgba(37, 99, 235, 0.15); border: 1px solid #2563eb; color: #3b82f6; margin-bottom: 8px; width: 100%; display: flex; align-items: center; justify-content: center; gap: 8px;';
-                                chatBtn.innerHTML = `<i class="fas fa-comments"></i> Conversa / Histórico`;
-
-                                const titleEsc = encodeURIComponent(targetData.title || '').replace(/'/g, "%27");
-                                const descEsc = encodeURIComponent(chatDescription).replace(/'/g, "%27");
-                                chatBtn.onclick = () => openChatModal(titleEsc, descEsc);
-
-                                const firstChild = actions.firstElementChild;
-                                if (firstChild) {
-                                    actions.insertBefore(chatBtn, firstChild.nextElementSibling);
-                                } else {
-                                    actions.appendChild(chatBtn);
-                                }
-                            }
-
-                            const cardId = parseInt(cardEl.dataset.id);
-                            const btnGroup = document.getElementById(`btnGroup-${cardId}`);
-
-                            if (targetData.status === 'pending') {
-                                if (btnGroup) btnGroup.remove();
-
-                                const detailsBtn = cardEl.querySelector('[data-details]');
-                                let hasMultiplePending = false;
-                                if (detailsBtn) {
-                                    try {
-                                        const details = JSON.parse(decodeURIComponent(detailsBtn.dataset.details));
-                                        hasMultiplePending = details.filter(sub => sub.status === 'pending').length > 1;
-                                    } catch (e) { }
-                                }
-
-                                const newBtnGroup = document.createElement('div');
-                                newBtnGroup.className = 'btn-group';
-                                newBtnGroup.id = `btnGroup-${cardId}`;
-                                newBtnGroup.style = 'display: grid; grid-template-columns: 1fr 1fr; gap: 10px; width: 100%;';
-
-                                newBtnGroup.innerHTML = `
-                                    <button class="btn btn-approve" onclick="updateStatus(${cardId}, 'approved', null, ${hasMultiplePending})">
-                                        ${hasMultiplePending ? 'Aprovar Pendentes' : 'Aprovar'}
-                                    </button>
-                                    <button class="btn btn-reject" onclick="openRejectModal(${cardId}, '${targetData.type}', ${hasMultiplePending})">
-                                        ${hasMultiplePending ? 'Rejeitar Pendentes' : 'Rejeitar'}
-                                    </button>
-                                `;
-                                actions.appendChild(newBtnGroup);
-                            } else {
-                                if (btnGroup) btnGroup.remove();
-                            }
-                        }
-                    };
-
-                    if (syncAll) {
-                        const targetCardId = requestIdToCardIdMap.get(id);
-                        if (targetCardId) {
-                            const card = document.getElementById(`card-${targetCardId}`);
-                            if (card) {
-                                updateCardElement(card, reqData);
-
-                                const detailsBtn = card.querySelector('[data-details]');
-                                if (detailsBtn) {
-                                    try {
-                                        const details = JSON.parse(decodeURIComponent(detailsBtn.dataset.details));
-                                        details.forEach(sub => {
-                                            sub.status = reqData.status;
-                                            if (reqData.status === 'rejected' && reqData.rejectionReason) {
-                                                sub.rejectionReason = reqData.rejectionReason;
-                                            }
-                                            updateModalRow(sub.id, reqData);
-                                        });
-                                        detailsBtn.dataset.details = encodeURIComponent(JSON.stringify(details));
-                                        updateCardElement(card, reqData);
-                                        const groupedBadgeSpan = card.querySelector('.badge-grouped span');
-                                        if (groupedBadgeSpan) groupedBadgeSpan.remove();
-                                    } catch (e) {
-                                        console.error(e);
-                                    }
-                                }
-                            }
-                        }
-                    } else {
-                        const targetCardId = requestIdToCardIdMap.get(id);
-                        if (targetCardId) {
-                            const card = document.getElementById(`card-${targetCardId}`);
-                            if (card) {
-                                if (targetCardId === id) {
-                                    updateCardElement(card, reqData);
-                                }
-
-                                const detailsBtn = card.querySelector('[data-details]');
-                                if (detailsBtn) {
-                                    try {
-                                        const details = JSON.parse(decodeURIComponent(detailsBtn.dataset.details));
-                                        let updatedAny = false;
-                                        details.forEach(sub => {
-                                            if (sub.id === id) {
-                                                sub.status = reqData.status;
-                                                if (reqData.status === 'rejected' && reqData.rejectionReason) {
-                                                    sub.rejectionReason = reqData.rejectionReason;
-                                                }
-                                                updatedAny = true;
-                                            }
-                                        });
-
-                                        if (updatedAny) {
-                                            detailsBtn.dataset.details = encodeURIComponent(JSON.stringify(details));
-
-                                            const hasAnyPending = details.some(sub => sub.status === 'pending');
-                                            if (!hasAnyPending) {
-                                                updateCardElement(card, reqData);
-                                                const groupedBadgeSpan = card.querySelector('.badge-grouped span');
-                                                if (groupedBadgeSpan) groupedBadgeSpan.remove();
-                                            } else {
-                                                const pendingCount = details.filter(sub => sub.status === 'pending').length;
-                                                const groupedBadgeSpan = card.querySelector('.badge-grouped span');
-                                                if (groupedBadgeSpan) {
-                                                    groupedBadgeSpan.innerText = pendingCount;
-                                                }
-                                            }
+                    // Encontrar o card correspondente ao id da request atualizado
+                    const targetCardId = requestIdToCardIdMap.get(id);
+                    if (targetCardId) {
+                        const card = document.getElementById(`card-${targetCardId}`);
+                        if (card) {
+                            // Carregar todas as requisições associadas a este card
+                            const allRequests = JSON.parse(decodeURIComponent(card.dataset.allRequests));
+                            
+                            // Se syncAll for true, atualizamos todos os sub-pedidos do grupo que tenham status pendente
+                            allRequests.forEach(sub => {
+                                if (syncAll) {
+                                    if (sub.id === id || sub.status === 'pending') {
+                                        sub.status = reqData.status;
+                                        if (reqData.status === 'rejected' && reqData.rejectionReason) {
+                                            sub.rejectionReason = reqData.rejectionReason;
                                         }
-                                    } catch (e) {
-                                        console.error(e);
+                                    }
+                                } else {
+                                    if (sub.id === id) {
+                                        sub.status = reqData.status;
+                                        if (reqData.status === 'rejected' && reqData.rejectionReason) {
+                                            sub.rejectionReason = reqData.rejectionReason;
+                                        }
                                     }
                                 }
-                            }
-                        }
+                            });
 
-                        updateModalRow(id, reqData);
+                            // Atualizar os atributos do card
+                            card.dataset.allRequests = encodeURIComponent(JSON.stringify(allRequests));
+                            card.dataset.statuses = [...new Set(allRequests.map(r => r.status))].join(',');
+
+                            // Atualizar a exibição visual do card na tela com base no filtro ativo
+                            updateCardDisplayForStatus(card, activeStatus);
+
+                            // Atualizar as linhas do modal de detalhes se estiver aberto
+                            allRequests.forEach(sub => {
+                                updateModalRow(sub.id, sub);
+                            });
+                        }
                     }
 
                     await refreshStats();
@@ -1622,12 +1662,9 @@
                 let idsToDelete = [id];
                 if (syncAll) {
                     const card = document.getElementById(`card-${id}`);
-                    if (card) {
-                        const detailsBtn = card.querySelector('[data-details]');
-                        if (detailsBtn) {
-                            const data = JSON.parse(decodeURIComponent(detailsBtn.dataset.details));
-                            idsToDelete = data.map(r => r.id);
-                        }
+                    if (card && card.dataset.allRequests) {
+                        const data = JSON.parse(decodeURIComponent(card.dataset.allRequests));
+                        idsToDelete = data.map(r => r.id);
                     }
                 }
 
