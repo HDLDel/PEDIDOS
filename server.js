@@ -38,15 +38,17 @@ process.on('uncaughtException', (err) => {
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
+app.set('trust proxy', 1); // Cloudflare
+
 // Configuração da sessão
 app.use(session({
     secret: process.env.SESSION_SECRET || (function () { throw new Error('ERRO: SESSION_SECRET não configurado no .env'); })(),
     resave: false,
     saveUninitialized: false,
     cookie: {
-        secure: process.env.NODE_ENV === 'production', // true apenas com HTTPS
+        secure: true, // Cloudflare termina HTTPS
         httpOnly: true,
-        sameSite: 'lax',
+        sameSite: 'none', // permite iframe cross-origin no palantir
         maxAge: 24 * 60 * 60 * 1000 // 1 dia
     }
 }));
