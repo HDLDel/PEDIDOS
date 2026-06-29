@@ -4,6 +4,9 @@ data/vod.sqlite-journal
 data/vod.sqlite-shm
 data/vod.sqlite-wal
 .env
+.env.*
+config.json
+config.*.json
 .vscode/
 npm-debug.log*
 test_output.html
@@ -13,3 +16,7 @@ Painel Admin _ Portal VOD_files/
 .wwebjs_cache/
 repomix-output.xml
 database.sqlite*
+
+# Video files
+*.mp4
+*.mkv
