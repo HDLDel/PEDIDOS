@@ -20,3 +20,6 @@ database.sqlite*
 # Video files
 *.mp4
 *.mkv
+
+# Deploy script containing secrets
+deploy.py
