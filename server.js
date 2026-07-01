@@ -777,12 +777,15 @@ function getPalantirConfig() {
 app.get('/api/palantir/search', checkAdminAuth, async (req, res) => {
     const pc = getPalantirConfig();
     if (!pc) return res.status(400).json({ error: 'Palantir não configurado. Verifique PALANTIR_API_URL e PALANTIR_API_TOKEN no .env' });
-    const { title, tmdb_id } = req.query;
+    const { title, tmdb_id, type, season, episode } = req.query;
     if (!title && !tmdb_id) return res.status(400).json({ error: 'Parâmetro title ou tmdb_id é obrigatório' });
     try {
         const params = new URLSearchParams({ token: pc.token });
         if (title) params.append('title', title);
         if (tmdb_id) params.append('tmdb_id', tmdb_id);
+        if (type) params.append('type', type);
+        if (season) params.append('season', season);
+        if (episode) params.append('episode', episode);
         const response = await fetch(`${pc.url}/api/external/availability?${params}`, { signal: AbortSignal.timeout(15000) });
         if (!response.ok) {
             const text = await response.text();
@@ -798,13 +801,13 @@ app.get('/api/palantir/search', checkAdminAuth, async (req, res) => {
 app.post('/api/palantir/download', checkAdminAuth, async (req, res) => {
     const pc = getPalantirConfig();
     if (!pc) return res.status(400).json({ error: 'Palantir não configurado.' });
-    const { title, tmdb_id } = req.body;
-    if (!title && !tmdb_id) return res.status(400).json({ error: 'Parâmetro title ou tmdb_id é obrigatório' });
+    const { title, tmdb_id, type, season, episode, name: dlName, url: dlUrl, category } = req.body;
+    if (!title && !tmdb_id && !dlName) return res.status(400).json({ error: 'Parâmetro title, tmdb_id ou name é obrigatório' });
     try {
         const response = await fetch(`${pc.url}/api/external/download?token=${pc.token}`, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ title, tmdb_id }),
+            body: JSON.stringify({ title, tmdb_id, type, season, episode, name: dlName, url: dlUrl, category }),
             signal: AbortSignal.timeout(15000)
         });
         if (!response.ok) {
