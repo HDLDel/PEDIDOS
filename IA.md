@@ -1,1 +1,0 @@
-/home/<USUARIO>/Dev/IA.md

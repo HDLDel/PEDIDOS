@@ -944,6 +944,7 @@
                 data-title="<%= (req.title || '').toLowerCase() %>"
                 data-reseller="<%= (req.reseller || '').toLowerCase() %>" data-year="<%= req.year || 0 %>"
                 data-in-m3u="<%= req.inM3u ? 'true' : 'false' %>"
+                data-tmdb-id="<%= req.tmdb_id || '' %>"
                 data-all-requests="<%= encodeURIComponent(JSON.stringify(allReqs)) %>">
 
                     <div class="poster-container">
@@ -1035,16 +1036,21 @@
                                                 </div>
 
                                                 <div class="card-actions">
-                                                    <div style="display: flex; gap: 5px; margin-bottom: 5px;">
-                                                         <button class="btn btn-tmdb"
-                                                             onclick="window.open('https://www.themoviedb.org/search?query=<%= encodeURIComponent(req.title).replace(/'/g, "%27") %>', '_blank')">
-                                                             <i class="fas fa-search"></i> TMDB
-                                                         </button>
-                                                         <button class="btn btn-justwatch"
-                                                             onclick="window.open('https://www.justwatch.com/br/busca?q=<%= encodeURIComponent(req.title).replace(/'/g, "%27") %>', '_blank')">
-                                                             <i class="fas fa-play"></i> JW
-                                                         </button>
-                                                    </div>
+                                                     <div style="display: flex; gap: 5px; margin-bottom: 5px;">
+                                                          <button class="btn btn-tmdb"
+                                                              onclick="window.open('https://www.themoviedb.org/search?query=<%= encodeURIComponent(req.title).replace(/'/g, "%27") %>', '_blank')">
+                                                              <i class="fas fa-search"></i> TMDB
+                                                          </button>
+                                                          <button class="btn btn-justwatch"
+                                                              onclick="window.open('https://www.justwatch.com/br/busca?q=<%= encodeURIComponent(req.title).replace(/'/g, "%27") %>', '_blank')">
+                                                              <i class="fas fa-play"></i> JW
+                                                          </button>
+                                                          <button class="btn btn-palantir"
+                                                              style="background: rgba(139, 92, 246, 0.2); border: 1px solid #8b5cf6; color: #a78bfa; <%= req.tmdb_id ? '' : 'display: none;' %>"
+                                                              onclick="searchPalantir(<%= req.id %>, '<%= req.tmdb_id %>', '<%= encodeURIComponent(req.title).replace(/'/g, "\\'") %>')">
+                                                              <i class="fas fa-satellite-dish"></i> Palantir
+                                                          </button>
+                                                     </div>
                                                     <button class="btn btn-chat-history"
                                                         style="background: rgba(37, 99, 235, 0.15); border: 1px solid #2563eb; color: #3b82f6; margin-bottom: 8px; width: 100%; align-items: center; justify-content: center; gap: 8px; <%= hasChatHistory ? 'display: flex;' : 'display: none;' %>"
                                                         onclick="openChatModal('<%= encodeURIComponent(req.title).replace(/'/g, "%27") %>', '<%= encodeURIComponent(chatDescription).replace(/'/g, "%27") %>')">
@@ -1262,6 +1268,48 @@
                 <button class="btn"
                     style="background: #2563eb; color: #fff; border: none; padding: 10px 20px; border-radius: 8px; font-weight: 600; cursor: pointer;"
                     id="m3uSyncConfirmBtn" onclick="runM3uSync()">SINCRONIZAR AGORA</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal Palantir -->
+    <div id="palantirModal" class="modal-overlay" style="z-index: 3500;">
+        <div class="modal-content" style="max-width: 650px; width: 90%;">
+            <div class="modal-header">
+                <h3 id="palantirModalTitle">🔍 Busca no Palantir</h3>
+                <button class="modal-close" onclick="closePalantirModal()">&times;</button>
+            </div>
+            <div id="palantirModalBody" style="padding: 20px; min-height: 120px;">
+                <div id="palantirLoading" style="text-align: center; padding: 30px;">
+                    <i class="fas fa-spinner fa-spin" style="font-size: 2rem; color: #8b5cf6;"></i>
+                    <p style="margin-top: 15px; color: var(--text-muted);">Consultando disponibilidade no Palantir...</p>
+                </div>
+                <div id="palantirResults" style="display: none;"></div>
+                <div id="palantirError" style="display: none; color: #ef4444; text-align: center; padding: 20px;"></div>
+            </div>
+            <div id="palantirModalFooter" style="padding: 15px 20px; border-top: 1px solid var(--border); display: none; justify-content: flex-end; gap: 10px;">
+                <button class="btn" style="background: #8b5cf6; color: #fff; border: none; padding: 10px 24px; border-radius: 8px; font-weight: 600; cursor: pointer;" id="btnPalantirDownload" onclick="startPalantirDownload()">
+                    <i class="fas fa-download"></i> Baixar Agora
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal Progresso Palantir -->
+    <div id="palantirProgressModal" class="modal-overlay" style="z-index: 3600;">
+        <div class="modal-content" style="max-width: 500px; width: 90%;">
+            <div class="modal-header">
+                <h3>⏳ Download em Andamento</h3>
+                <button class="modal-close" onclick="closePalantirProgressModal()">&times;</button>
+            </div>
+            <div style="padding: 20px; text-align: center;">
+                <div style="margin: 20px 0;">
+                    <div style="background: rgba(255,255,255,0.1); border-radius: 20px; height: 24px; overflow: hidden; position: relative;">
+                        <div id="palantirProgressBar" style="width: 0%; height: 100%; background: linear-gradient(90deg, #8b5cf6, #6d28d9); border-radius: 20px; transition: width 0.5s ease;"></div>
+                    </div>
+                    <p id="palantirProgressText" style="margin-top: 10px; font-size: 13px; color: var(--text-muted);">Iniciando...</p>
+                </div>
+                <div id="palantirProgressStatus" style="font-size: 12px; color: var(--text-muted);"></div>
             </div>
         </div>
     </div>
@@ -2169,6 +2217,163 @@
                 }
             }
         }
+
+        // --- PALANTIR INTEGRATION ---
+        let palantirSearchTitle = '';
+        let palantirSearchTmdbId = '';
+
+        async function searchPalantir(requestId, tmdbId, titleEncoded) {
+            const title = decodeURIComponent(titleEncoded);
+            palantirSearchTitle = title;
+            palantirSearchTmdbId = tmdbId;
+
+            document.getElementById('palantirModalTitle').innerText = `🔍 Buscar "${title}" no Palantir`;
+            document.getElementById('palantirLoading').style.display = 'block';
+            document.getElementById('palantirResults').style.display = 'none';
+            document.getElementById('palantirError').style.display = 'none';
+            document.getElementById('palantirModalFooter').style.display = 'none';
+            document.getElementById('palantirModal').style.display = 'flex';
+
+            try {
+                const params = new URLSearchParams({ title, tmdb_id: tmdbId });
+                const res = await fetch(`/api/palantir/search?${params}`);
+                const data = await res.json();
+
+                document.getElementById('palantirLoading').style.display = 'none';
+
+                if (!res.ok) {
+                    document.getElementById('palantirError').style.display = 'block';
+                    document.getElementById('palantirError').innerText = data.error || 'Erro ao consultar Palantir';
+                    return;
+                }
+
+                const resultsDiv = document.getElementById('palantirResults');
+                resultsDiv.style.display = 'block';
+
+                if (data.available) {
+                    let html = `<div style="background: rgba(34, 197, 94, 0.1); border: 1px solid #22c55e; border-radius: 10px; padding: 20px; text-align: center; margin-bottom: 15px;">
+                        <i class="fas fa-check-circle" style="font-size: 2.5rem; color: #22c55e;"></i>
+                        <h4 style="color: #22c55e; margin: 10px 0 5px;">Disponível no Palantir</h4>
+                        <p style="color: var(--text-muted); font-size: 13px;">Este conteúdo foi encontrado e pode ser baixado.</p>`;
+                    if (data.name) {
+                        html += `<p style="margin-top: 8px; font-size: 12px; color: var(--text-muted);"><strong>Título no banco:</strong> ${data.name}</p>`;
+                    }
+                    if (data.category) {
+                        html += `<p style="font-size: 12px; color: var(--text-muted);"><strong>Categoria:</strong> ${data.category}</p>`;
+                    }
+                    html += `</div>`;
+                    resultsDiv.innerHTML = html;
+                    document.getElementById('palantirModalFooter').style.display = 'flex';
+                } else {
+                    let html = `<div style="background: rgba(239, 68, 68, 0.1); border: 1px solid #ef4444; border-radius: 10px; padding: 20px; text-align: center;">
+                        <i class="fas fa-times-circle" style="font-size: 2.5rem; color: #ef4444;"></i>
+                        <h4 style="color: #ef4444; margin: 10px 0 5px;">Não Encontrado</h4>
+                        <p style="color: var(--text-muted); font-size: 13px;">O conteúdo "${title}" não foi encontrado no banco do Palantir.</p>`;
+                    if (data.message) {
+                        html += `<p style="margin-top: 8px; font-size: 12px; color: var(--text-muted);">${data.message}</p>`;
+                    }
+                    html += `</div>`;
+                    resultsDiv.innerHTML = html;
+                }
+            } catch (e) {
+                document.getElementById('palantirLoading').style.display = 'none';
+                document.getElementById('palantirError').style.display = 'block';
+                document.getElementById('palantirError').innerText = 'Erro de conexão: ' + e.message;
+            }
+        }
+
+        async function startPalantirDownload() {
+            const btn = document.getElementById('btnPalantirDownload');
+            btn.disabled = true;
+            btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Iniciando...';
+
+            document.getElementById('palantirModalFooter').style.display = 'none';
+            document.getElementById('palantirResults').innerHTML = '<div style="text-align: center; padding: 20px; color: var(--text-muted);"><i class="fas fa-spinner fa-spin" style="font-size: 1.5rem; color: #8b5cf6;"></i><p style="margin-top: 10px;">Solicitando download...</p></div>';
+
+            try {
+                const res = await fetch('/api/palantir/download', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ title: palantirSearchTitle, tmdb_id: palantirSearchTmdbId })
+                });
+                const data = await res.json();
+
+                if (!res.ok) {
+                    document.getElementById('palantirResults').innerHTML = `<div style="color: #ef4444; text-align: center; padding: 20px;">${data.error || 'Erro ao iniciar download'}</div>`;
+                    btn.disabled = false;
+                    btn.innerHTML = '<i class="fas fa-download"></i> Baixar Agora';
+                    return;
+                }
+
+                closePalantirModal();
+                openPalantirProgress();
+            } catch (e) {
+                document.getElementById('palantirResults').innerHTML = `<div style="color: #ef4444; text-align: center; padding: 20px;">Erro: ${e.message}</div>`;
+                btn.disabled = false;
+                btn.innerHTML = '<i class="fas fa-download"></i> Baixar Agora';
+            }
+        }
+
+        let palantirProgressInterval = null;
+
+        function openPalantirProgress() {
+            document.getElementById('palantirProgressBar').style.width = '0%';
+            document.getElementById('palantirProgressText').innerText = 'Iniciando...';
+            document.getElementById('palantirProgressStatus').innerText = '';
+            document.getElementById('palantirProgressModal').style.display = 'flex';
+
+            palantirProgressInterval = setInterval(pollPalantirProgress, 2000);
+            pollPalantirProgress();
+        }
+
+        function closePalantirProgressModal() {
+            document.getElementById('palantirProgressModal').style.display = 'none';
+            if (palantirProgressInterval) {
+                clearInterval(palantirProgressInterval);
+                palantirProgressInterval = null;
+            }
+        }
+
+        async function pollPalantirProgress() {
+            try {
+                const res = await fetch('/api/palantir/progress');
+                const data = await res.json();
+
+                if (data.is_downloading) {
+                    document.getElementById('palantirProgressText').innerText = data.current || 'Baixando...';
+                    document.getElementById('palantirProgressStatus').innerText = `Fila: ${(data.queue || []).length} pendentes`;
+                    if (data.progress !== undefined) {
+                        document.getElementById('palantirProgressBar').style.width = Math.min(data.progress, 100) + '%';
+                    } else {
+                        document.getElementById('palantirProgressBar').style.width = '50%';
+                    }
+                } else {
+                    const hasQueue = data.queue && data.queue.length > 0;
+                    if (hasQueue) {
+                        document.getElementById('palantirProgressText').innerText = 'Aguardando na fila...';
+                        document.getElementById('palantirProgressStatus').innerText = `${data.queue.length} item(ns) na fila`;
+                        document.getElementById('palantirProgressBar').style.width = '10%';
+                    } else {
+                        document.getElementById('palantirProgressText').innerText = '✅ Download concluído!';
+                        document.getElementById('palantirProgressBar').style.width = '100%';
+                        document.getElementById('palantirProgressBar').style.background = 'linear-gradient(90deg, #22c55e, #16a34a)';
+                        document.getElementById('palantirProgressStatus').innerText = '';
+                        if (palantirProgressInterval) {
+                            clearInterval(palantirProgressInterval);
+                            palantirProgressInterval = null;
+                        }
+                        setTimeout(closePalantirProgressModal, 3000);
+                    }
+                }
+            } catch (e) {
+                document.getElementById('palantirProgressStatus').innerText = 'Status indisponível: ' + e.message;
+            }
+        }
+
+        function closePalantirModal() {
+            document.getElementById('palantirModal').style.display = 'none';
+        }
+        // --- FIM PALANTIR ---
 
         // Aplica o filtro de status inicial (Pendentes) ao carregar a página
         document.addEventListener('DOMContentLoaded', () => {

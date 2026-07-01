@@ -764,6 +764,75 @@ app.post('/api/m3u/clear', checkAdminAuth, (req, res) => {
     }
 });
 
+// --- PALANTIR INTEGRATION PROXY ---
+
+function getPalantirConfig() {
+    const url = process.env.PALANTIR_API_URL;
+    const token = process.env.PALANTIR_API_TOKEN;
+    if (!url || !token) return null;
+    return { url: url.replace(/\/+$/, ''), token };
+}
+
+app.get('/api/palantir/search', checkAdminAuth, async (req, res) => {
+    const pc = getPalantirConfig();
+    if (!pc) return res.status(400).json({ error: 'Palantir não configurado. Verifique PALANTIR_API_URL e PALANTIR_API_TOKEN no .env' });
+    const { title, tmdb_id } = req.query;
+    if (!title && !tmdb_id) return res.status(400).json({ error: 'Parâmetro title ou tmdb_id é obrigatório' });
+    try {
+        const params = new URLSearchParams({ token: pc.token });
+        if (title) params.append('title', title);
+        if (tmdb_id) params.append('tmdb_id', tmdb_id);
+        const response = await fetch(`${pc.url}/api/external/availability?${params}`, { signal: AbortSignal.timeout(15000) });
+        if (!response.ok) {
+            const text = await response.text();
+            return res.status(response.status).json({ error: `Palantir retornou HTTP ${response.status}: ${text}` });
+        }
+        const data = await response.json();
+        res.json(data);
+    } catch (e) {
+        res.status(502).json({ error: 'Falha ao conectar com Palantir: ' + e.message });
+    }
+});
+
+app.post('/api/palantir/download', checkAdminAuth, async (req, res) => {
+    const pc = getPalantirConfig();
+    if (!pc) return res.status(400).json({ error: 'Palantir não configurado.' });
+    const { title, tmdb_id } = req.body;
+    if (!title && !tmdb_id) return res.status(400).json({ error: 'Parâmetro title ou tmdb_id é obrigatório' });
+    try {
+        const response = await fetch(`${pc.url}/api/external/download?token=${pc.token}`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ title, tmdb_id }),
+            signal: AbortSignal.timeout(15000)
+        });
+        if (!response.ok) {
+            const text = await response.text();
+            return res.status(response.status).json({ error: `Palantir retornou HTTP ${response.status}: ${text}` });
+        }
+        const data = await response.json();
+        res.json(data);
+    } catch (e) {
+        res.status(502).json({ error: 'Falha ao conectar com Palantir: ' + e.message });
+    }
+});
+
+app.get('/api/palantir/progress', checkAdminAuth, async (req, res) => {
+    const pc = getPalantirConfig();
+    if (!pc) return res.status(400).json({ error: 'Palantir não configurado.' });
+    try {
+        const response = await fetch(`${pc.url}/api/external/progress?token=${pc.token}`, { signal: AbortSignal.timeout(10000) });
+        if (!response.ok) {
+            const text = await response.text();
+            return res.status(response.status).json({ error: `Palantir retornou HTTP ${response.status}: ${text}` });
+        }
+        const data = await response.json();
+        res.json(data);
+    } catch (e) {
+        res.status(502).json({ error: 'Falha ao conectar com Palantir: ' + e.message });
+    }
+});
+
 // --- TRATAMENTO DE ENCERRAMENTO ---
 process.on('SIGINT', () => {
     console.log('🛑 Encerrando servidor e limpando conexões...');
