@@ -2431,7 +2431,8 @@
                     const opts = data.options.map((o, i) => {
                         let server = '???';
                         try { const u = new URL(o.url); server = u.hostname; } catch {}
-                        return { ...o, _server: server, _idx: i };
+                        const bannerHtml = o.banner ? `<img src="${o.banner.replace(/"/g, '&quot;')}" style="width: 28px; height: 40px; object-fit: cover; border-radius: 3px; flex-shrink: 0;" onerror="this.style.display='none'" loading="lazy">` : '';
+                        return { ...o, _server: server, _idx: i, _bannerHtml: bannerHtml };
                     });
                     // Agrupa por categoria
                     const groups = {};
@@ -2457,6 +2458,7 @@
                             html += `<label style="display: flex; align-items: center; gap: 8px; padding: 6px 8px; border-radius: 6px; cursor: pointer; transition: background 0.15s; font-size: 13px;"
                                 onmouseover="this.style.background='rgba(139,92,246,0.08)'" onmouseout="this.style.background='transparent'">
                                 <input type="checkbox" class="palantir-option-cb" data-idx="${o._idx}" data-name="${o.name.replace(/"/g, '&quot;')}" data-url="${o.url.replace(/"/g, '&quot;')}" data-category="${(o.category || '').replace(/"/g, '&quot;')}" onclick="palantirCheckboxClick(event, ${o._idx})">
+                                ${o._bannerHtml}
                                 <span style="flex: 1; display: flex; align-items: center; gap: 6px;"><span>${o.name}${typeBadge}</span><span style="font-size: 10px; color: var(--text-muted);">[${o._server}]</span></span>
                             </label>`;
                         });
