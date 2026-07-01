@@ -30,7 +30,31 @@ export class BotBotService {
         if (!creds.appKey || !creds.authKey) {
             return { status: 'disconnected', qr: null };
         }
-        return { status: 'ready', qr: null };
+
+        try {
+            const response = await fetch(`${this.BOTBOT_API}/sendText`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'appKey': creds.appKey,
+                    'authKey': creds.authKey
+                },
+                body: JSON.stringify({ to: '<TELEFONE>', message: 'ping', typingDelay: 1 })
+            });
+
+            const text = await response.text();
+            const data = JSON.parse(text);
+
+            // Se veio erro específico de "bot não conectado", está offline
+            if (data.error && data.error.includes('não está mais conectado')) {
+                return { status: 'disconnected', error: data.error };
+            }
+
+            // Qualquer outra resposta JSON indica que a API está respondendo e o bot ativo
+            return { status: 'ready', qr: null };
+        } catch (e) {
+            return { status: 'disconnected', error: 'Falha de conexão: ' + e.message };
+        }
     }
 
     static async sendStatusNotification(request) {
@@ -43,8 +67,16 @@ export class BotBotService {
         }
         
         let message = '';
-        if (status === 'approved') message = `✅ *PEDIDO APROVADO*\n\nOlá *${reseller}*, seu pedido *${title}* foi aprovado!`;
-        else if (status === 'rejected') message = `❌ *PEDIDO REJEITADO*\n\nOlá *${reseller}*, seu pedido *${title}* foi rejeitado.\nMotivo: ${rejectionReason || 'Não especificado'}`;
+        if (status === 'approved') {
+            message = `✅ *PEDIDO APROVADO*\n\nOlá *${reseller}*, seu pedido *${title}* foi aprovado!`;
+        } else if (status === 'rejected') {
+            const reason = (rejectionReason || '').toLowerCase();
+            if (reason.includes('já consta') || reason.includes('ja consta') || reason.includes('já está') || reason.includes('ja esta')) {
+                message = `*Já Consta no Servidor.*\n\nFavor pesquisar nas categorias *All* ou todas as categorias individuais antes de solicitar os conteúdos.\n\nOs pedidos seguem uma ordem que vai da fila de chegada a data de lançamento e disponibilidade, isso pode variar, então não podemos dar prazos para a inserção do conteúdo na grade.\n\nSempre que um Revendedor faz um pedido sem consultar a grade de conteúdos antes ele congestiona ainda mais a fila de pedidos com conteúdos que já estão na grade, atrasando ainda mais os pedidos.\n\nPor isso ressaltamos sempre:\n*Pesquisar nas categorias All ou todas as categorias individuais antes de solicitar os conteúdos.*`;
+            } else {
+                message = `❌ *PEDIDO REJEITADO*\n\nOlá *${reseller}*, seu pedido *${title}* foi rejeitado.\nMotivo: ${rejectionReason || 'Não especificado'}`;
+            }
+        }
 
         if (!message) return false;
 

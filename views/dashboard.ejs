@@ -1031,6 +1031,8 @@
                 data-title="<%= (req.title || '').toLowerCase() %>"
                 data-reseller="<%= (req.reseller || '').toLowerCase() %>" data-year="<%= req.year || 0 %>"
                 data-in-m3u="<%= req.inM3u ? 'true' : 'false' %>"
+                data-m3u-normalized="<%= req.m3uNormalized || '' %>"
+                data-m3u-type="<%= req.type %>"
                 data-tmdb-id="<%= req.tmdb_id || '' %>"
                 data-all-requests="<%= encodeURIComponent(JSON.stringify(allReqs)) %>">
 
@@ -1079,9 +1081,9 @@
                         <% if (req.requestType !=='error' && typeof hasM3uData !=='undefined' && hasM3uData) { %>
                             <div style="margin-bottom: 10px;">
                                 <% if (req.inM3u) { %>
-                                    <span
-                                        style="display: inline-flex; align-items: center; gap: 4px; background: rgba(16, 185, 129, 0.15); color: #10b981; border: 1px solid rgba(16, 185, 129, 0.3); padding: 4px 8px; border-radius: 6px; font-size: 11px; font-weight: 700;"
-                                        title="Na playlist M3U como: <%= req.m3uTitle %>">
+                                    <span onclick="showM3uDetails(this)"
+                                        style="display: inline-flex; align-items: center; gap: 4px; background: rgba(16, 185, 129, 0.15); color: #10b981; border: 1px solid rgba(16, 185, 129, 0.3); padding: 4px 8px; border-radius: 6px; font-size: 11px; font-weight: 700; cursor: pointer;"
+                                        title="Clique para ver detalhes na M3U">
                                         <i class="fas fa-check-circle"></i> Presentes na M3U <%= req.m3uTitle &&
                                             req.m3uTitle.toLowerCase() !==req.title.toLowerCase() ?
                                             `(como "${req.m3uTitle}" )` : '' %>
@@ -1359,6 +1361,30 @@
         </div>
     </div>
 
+    <!-- Modal de Detalhes M3U -->
+    <div id="m3uDetailsModal" class="modal-overlay" style="z-index: 3200; display: none;">
+        <div class="modal-content" style="max-width: 650px; width: 95%;">
+            <h3 class="modal-header"
+                style="color: #fff; margin-bottom: 8px; font-weight: 700; display: flex; align-items: center; gap: 10px; border-bottom: none; padding-bottom: 0;">
+                <i class="fas fa-list-ul" style="color: #10b981;"></i> <span id="m3uDetailsTitle">Dados da M3U</span>
+            </h3>
+
+            <div id="m3uDetailsBody" style="margin-top: 12px;">
+                <div id="m3uDetailsLoading" style="text-align: center; padding: 30px; color: #999;">
+                    <i class="fas fa-spinner fa-spin" style="font-size: 24px;"></i>
+                    <p style="margin-top: 10px;">Carregando...</p>
+                </div>
+                <div id="m3uDetailsContent" style="display: none;"></div>
+            </div>
+
+            <div style="display: flex; justify-content: flex-end; gap: 10px; margin-top: 16px;">
+                <button class="btn"
+                    style="background: #333; color: #fff; padding: 10px 20px; border-radius: 8px; font-weight: 600; cursor: pointer;"
+                    onclick="closeM3uDetailsModal()">FECHAR</button>
+            </div>
+        </div>
+    </div>
+
     <!-- Modal de Configuração Geral (Popup) -->
     <div id="settingsModal" class="modal-overlay glass-modal" style="z-index: 3600; display: none;">
         <div class="modal-content" style="max-width: 600px; width: 95%; border-radius: 16px; border: 1px solid rgba(255,255,255,0.08); background: rgba(13, 13, 17, 0.95); box-shadow: 0 20px 50px rgba(0,0,0,0.5);">
@@ -1603,6 +1629,98 @@
             }
         }
 
+        // Modal de detalhes M3U
+        function closeM3uDetailsModal() {
+            document.getElementById('m3uDetailsModal').style.display = 'none';
+        }
+
+        async function showM3uDetails(el) {
+            const card = el.closest('.request-card');
+            const normalized = card.dataset.m3uNormalized;
+            const type = card.dataset.m3uType;
+
+            if (!normalized) return;
+
+            const modal = document.getElementById('m3uDetailsModal');
+            const loading = document.getElementById('m3uDetailsLoading');
+            const content = document.getElementById('m3uDetailsContent');
+
+            modal.style.display = 'flex';
+            loading.style.display = 'block';
+            content.style.display = 'none';
+            document.getElementById('m3uDetailsTitle').innerText = 'Carregando...';
+
+            try {
+                // Buscar título na M3U
+                const titleRes = await fetch(`/api/m3u/title?normalized=${encodeURIComponent(normalized)}&type=${encodeURIComponent(type)}`);
+                const titleData = await titleRes.json();
+
+                let html = '';
+                if (titleData) {
+                    html += `<div style="background: #0d0d0d; border: 1px solid var(--border); padding: 12px; border-radius: 8px; margin-bottom: 12px;">
+                        <div style="font-size: 0.7rem; text-transform: uppercase; color: var(--text-muted); font-weight: 800; letter-spacing: 0.5px; margin-bottom: 4px;">TÍTULO NA PLAYLIST M3U</div>
+                        <div style="font-size: 1rem; color: #fff; font-weight: 600;">${titleData.title || 'N/A'}</div>
+                    </div>`;
+                }
+
+                if (type === 'series') {
+                    const epRes = await fetch(`/api/m3u/episodes?normalized=${encodeURIComponent(normalized)}`);
+                    const episodes = await epRes.json();
+
+                    if (episodes && episodes.length > 0) {
+                        // Agrupar por temporada
+                        const seasons = {};
+                        for (const ep of episodes) {
+                            const s = ep.season || 0;
+                            if (!seasons[s]) seasons[s] = [];
+                            seasons[s].push(ep);
+                        }
+
+                        const seasonKeys = Object.keys(seasons).sort((a, b) => parseInt(a) - parseInt(b));
+                        html += `<div style="font-size: 0.7rem; text-transform: uppercase; color: var(--text-muted); font-weight: 800; letter-spacing: 0.5px; margin-bottom: 8px;">EPISÓDIOS DISPONÍVEIS</div>`;
+
+                        for (const sk of seasonKeys) {
+                            const eps = seasons[sk];
+                            html += `<div style="background: #0d0d0d; border: 1px solid var(--border); border-radius: 8px; margin-bottom: 8px; overflow: hidden;">
+                                <div style="padding: 8px 12px; background: rgba(255,255,255,0.03); font-weight: 700; color: #10b981; font-size: 0.85rem;">
+                                    <i class="fas fa-film" style="margin-right: 6px;"></i> Temporada ${sk}
+                                    <span style="color: #888; font-weight: 400; margin-left: 6px;">(${eps.length} episódio${eps.length !== 1 ? 's' : ''})</span>
+                                </div>
+                                <div style="padding: 4px 12px 8px;">`;
+
+                            for (const ep of eps) {
+                                html += `<div style="padding: 4px 0; font-size: 0.8rem; color: #ccc; display: flex; align-items: center; gap: 8px;">
+                                    <span style="background: rgba(16, 185, 129, 0.1); color: #10b981; padding: 1px 6px; border-radius: 4px; font-weight: 700; font-size: 0.7rem; min-width: 48px; text-align: center;">S${String(ep.season).padStart(2, '0')}E${String(ep.episode).padStart(2, '0')}</span>
+                                    <span>${ep.episode_label}</span>
+                                </div>`;
+                            }
+
+                            html += `</div></div>`;
+                        }
+                    } else {
+                        html += `<div style="background: #0d0d0d; border: 1px solid var(--border); padding: 20px; border-radius: 8px; text-align: center; color: #888;">
+                            <i class="fas fa-info-circle" style="margin-right: 6px;"></i> Nenhum episódio detalhado disponível para esta série.
+                        </div>`;
+                    }
+                } else {
+                    html += `<div style="background: #0d0d0d; border: 1px solid var(--border); padding: 20px; border-radius: 8px; text-align: center; color: #888;">
+                        <i class="fas fa-film" style="margin-right: 6px;"></i> Filme disponível na playlist M3U.
+                    </div>`;
+                }
+
+                content.innerHTML = html;
+                loading.style.display = 'none';
+                content.style.display = 'block';
+                document.getElementById('m3uDetailsTitle').innerText = titleData ? titleData.title : 'Dados da M3U';
+            } catch (e) {
+                loading.innerHTML = `<div style="text-align: center; padding: 30px; color: #f87171;">
+                    <i class="fas fa-exclamation-triangle" style="font-size: 24px;"></i>
+                    <p style="margin-top: 10px;">Erro ao carregar dados: ${e.message}</p>
+                </div>`;
+                document.getElementById('m3uDetailsTitle').innerText = 'Erro';
+            }
+        }
+
         async function checkWaStatus() {
             try {
                 const res = await fetch('/api/whatsapp/status');
@@ -1617,8 +1735,14 @@
                 const dataBb = await resBb.json();
                 const bbBtn = document.getElementById('bbStatusBtn');
                 const bbBtnText = bbBtn.querySelector('span');
-                bbBtn.className = 'whatsapp-status-btn ' + (dataBb.status === 'ready' ? 'wa-on' : 'wa-off');
-                bbBtnText.innerText = 'BOTBOT ' + dataBb.status.toUpperCase();
+                const isReady = dataBb.status === 'ready';
+                bbBtn.className = 'whatsapp-status-btn ' + (isReady ? 'wa-on' : 'wa-off');
+                bbBtnText.innerText = 'BOTBOT ' + (isReady ? 'ONLINE' : 'OFFLINE');
+                if (dataBb.error) {
+                    bbBtn.title = dataBb.error;
+                } else {
+                    bbBtn.title = isReady ? 'BotBot conectado' : 'Status desconhecido';
+                }
             } catch (e) {
                 console.error("Erro ao verificar status das APIs:", e);
             }

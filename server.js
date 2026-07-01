@@ -181,8 +181,8 @@ app.get('/admin/dashboard', checkAdminAuth, (req, res) => {
 
         // 1. Tentar correspondência por Pôster/Banner do TMDB (100% de precisão, evita homônimos de tipos diferentes)
         if (reqLogoHash && m3uLogos.has(reqLogoHash)) {
-            const match = db.prepare('SELECT title FROM m3u_contents WHERE logo_hash = ? LIMIT 1').get(reqLogoHash);
-            return { inM3u: true, m3uTitle: match ? match.title : 'Por imagem' };
+            const match = db.prepare('SELECT title, normalized_title FROM m3u_contents WHERE logo_hash = ? LIMIT 1').get(reqLogoHash);
+            return { inM3u: true, m3uTitle: match ? match.title : 'Por imagem', m3uNormalized: match ? match.normalized_title : '' };
         }
 
         // 2. Tentar correspondência estrita por Título, Tipo e Ano
@@ -201,34 +201,22 @@ app.get('/admin/dashboard', checkAdminAuth, (req, res) => {
             
             if (m3uTitles.has(key)) {
                 const entries = m3uTitles.get(key) || [];
-                
-                // Se ambos (pedido e M3U) têm imagens de pôster válidas e elas são diferentes, desconsideramos o match
-                const validEntries = entries.filter(e => {
-                    if (reqLogoHash && e.logoHash) {
-                        const m3uLogoHash = e.logoHash.trim().toLowerCase();
-                        if (m3uLogoHash && !m3uLogoHash.includes('placeholder') && m3uLogoHash !== reqLogoHash) {
-                            return false; // Imagens diferentes -> conteúdos/remakes diferentes!
-                        }
-                    }
-                    return true;
-                });
-
                 let matchedEntry = null;
 
                 if (reqYear) {
                     // 1. Tenta correspondência exata de ano
-                    matchedEntry = validEntries.find(e => e.year === reqYear);
+                    matchedEntry = entries.find(e => e.year === reqYear);
                     // 2. Se não achou com ano exato, mas há entradas sem ano na M3U, aceita como fallback
                     if (!matchedEntry) {
-                        matchedEntry = validEntries.find(e => !e.year);
+                        matchedEntry = entries.find(e => !e.year);
                     }
                 } else {
                     // Sem ano informado no pedido, aceita a primeira ocorrência
-                    matchedEntry = validEntries[0];
+                    matchedEntry = entries[0];
                 }
 
                 if (matchedEntry) {
-                    return { inM3u: true, m3uTitle: matchedEntry.title };
+                    return { inM3u: true, m3uTitle: matchedEntry.title, m3uNormalized: matchedEntry.normalizedTitle };
                 }
             }
         }
@@ -242,6 +230,7 @@ app.get('/admin/dashboard', checkAdminAuth, (req, res) => {
         const m3uCheck = checkInM3u(req);
         req.inM3u = !!m3uCheck;
         req.m3uTitle = m3uCheck ? m3uCheck.m3uTitle : '';
+        req.m3uNormalized = m3uCheck ? m3uCheck.m3uNormalized : '';
         
         const key = req.tmdb_id ? `tmdb-${req.tmdb_id}` : `manual-${req.type}-${req.title.toLowerCase()}`;
 
@@ -680,6 +669,38 @@ app.post('/api/botbot/config', checkAdminAuth, (req, res) => {
     res.json({ success: true, message: 'Chaves salvas com sucesso!' });
 });
 
+// API - Testar BotBot enviando mensagem de teste
+app.post('/api/botbot/test', checkAdminAuth, async (req, res) => {
+    const { phone } = req.body;
+    if (!phone) return res.status(400).json({ success: false, error: 'Telefone obrigatório' });
+
+    const creds = BotBotService.getCredentials();
+    if (!creds.appKey || !creds.authKey) {
+        return res.json({ success: false, error: 'BotBot não configurado. Configure as chaves primeiro.' });
+    }
+
+    try {
+        const response = await fetch('https://botbot.chat/api/v2/sendText', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'appKey': creds.appKey,
+                'authKey': creds.authKey
+            },
+            body: JSON.stringify({ to: phone, message: 'teste botbot', typingDelay: 1 })
+        });
+
+        const data = await response.json();
+        if (response.ok) {
+            res.json({ success: true, data: data.message || JSON.stringify(data) });
+        } else {
+            res.json({ success: false, data: data.error || JSON.stringify(data) });
+        }
+    } catch (e) {
+        res.json({ success: false, error: 'Falha de conexão com BotBot: ' + e.message });
+    }
+});
+
 // API - Reenviar todas as notificações em massa
 app.post('/api/notifications/resend-all', checkAdminAuth, async (req, res) => {
     if (isResendingBackground) {
@@ -761,6 +782,38 @@ app.post('/api/m3u/clear', checkAdminAuth, (req, res) => {
         res.json({ success: true, message: 'Dados da M3U limpos com sucesso!' });
     } catch (e) {
         console.error("Erro ao limpar M3U:", e);
+        res.status(500).json({ error: e.message });
+    }
+});
+
+// API - Obter episódios de uma série na M3U
+app.get('/api/m3u/episodes', checkAdminAuth, (req, res) => {
+    try {
+        const { normalized } = req.query;
+        if (!normalized) return res.json([]);
+        const episodes = M3uModel.getEpisodes(normalized);
+        res.json(episodes);
+    } catch (e) {
+        console.error("Erro ao buscar episódios M3U:", e);
+        res.status(500).json({ error: e.message });
+    }
+});
+
+// API - Obter título da M3U para um normalized + type
+app.get('/api/m3u/title', checkAdminAuth, (req, res) => {
+    try {
+        const { normalized, type } = req.query;
+        if (!normalized) return res.json(null);
+        const { titleMap } = M3uModel.getM3uData();
+        const key = `${type}:${normalized}`;
+        const entries = titleMap.get(key);
+        if (entries && entries.length > 0) {
+            res.json({ title: entries[0].title, logoHash: entries[0].logoHash });
+        } else {
+            res.json(null);
+        }
+    } catch (e) {
+        console.error("Erro ao buscar título M3U:", e);
         res.status(500).json({ error: e.message });
     }
 });

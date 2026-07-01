@@ -66,10 +66,11 @@ export class M3uModel {
     return cleaned;
   }
 
-  // Realiza o parsing de uma playlist M3U e retorna lista de filmes e séries
+  // Realiza o parsing de uma playlist M3U e retorna lista de filmes/séries e episódios
   static parseM3u(content) {
     const lines = content.split(/\r?\n/);
     const results = [];
+    const episodes = [];
     let currentItem = null;
 
     for (let i = 0; i < lines.length; i++) {
@@ -133,6 +134,18 @@ export class M3uModel {
         // Identificar tipo pelo grupo ou URL
         if (groupLower.includes('series') || groupLower.includes('série') || urlLower.includes('/series/')) {
           type = 'series';
+          // Extrair info do episódio ANTES de limpar o nome
+          const epMatch = currentItem.name.match(/\bS(\d+)E(\d+)\b/i);
+          if (epMatch) {
+            episodes.push({
+              seriesNormalized: this.normalizeTitle(this.cleanSeriesName(currentItem.name)),
+              seriesTitle: this.cleanSeriesName(currentItem.name),
+              episodeLabel: currentItem.name,
+              season: parseInt(epMatch[1], 10),
+              episode: parseInt(epMatch[2], 10),
+              logoHash: currentItem.logoHash
+            });
+          }
           currentItem.name = this.cleanSeriesName(currentItem.name);
           currentItem.normalizedName = this.normalizeTitle(currentItem.name);
         } else if (groupLower.includes('filmes') || groupLower.includes('filme') || urlLower.includes('/movie/')) {
@@ -141,6 +154,17 @@ export class M3uModel {
           // Fallback por padrão de nome de arquivo
           if (/\bS\d+E\d+\b/i.test(currentItem.name) || /\b(temporada|temp|t)\s*\d+/i.test(currentItem.name)) {
             type = 'series';
+            const epMatch = currentItem.name.match(/\bS(\d+)E(\d+)\b/i);
+            if (epMatch) {
+              episodes.push({
+                seriesNormalized: this.normalizeTitle(this.cleanSeriesName(currentItem.name)),
+                seriesTitle: this.cleanSeriesName(currentItem.name),
+                episodeLabel: currentItem.name,
+                season: parseInt(epMatch[1], 10),
+                episode: parseInt(epMatch[2], 10),
+                logoHash: currentItem.logoHash
+              });
+            }
             currentItem.name = this.cleanSeriesName(currentItem.name);
             currentItem.normalizedName = this.normalizeTitle(currentItem.name);
           }
@@ -159,7 +183,7 @@ export class M3uModel {
       }
     }
 
-    return results;
+    return { items: results, episodes };
   }
 
   // Executa o sincronismo da playlist M3U e salva no banco de dados
@@ -189,8 +213,9 @@ export class M3uModel {
     }
 
     // Fazer parsing dos canais e VODs da playlist
-    const parsedItems = this.parseM3u(m3uContent);
+    const { items: parsedItems, episodes } = this.parseM3u(m3uContent);
     console.log(`🔍 Total de itens extraídos da M3U: ${parsedItems.length}`);
+    console.log(`📺 Total de episódios extraídos: ${episodes.length}`);
 
     // Remover duplicatas em JS antes de salvar no SQLite para manter performance excepcional
     // Chave única inclui o ano para permitir duplicatas de títulos homônimos/remakes (ex: Tudo é Possível 2012 vs 2022)
@@ -206,8 +231,9 @@ export class M3uModel {
 
     // Inserir no banco de dados usando uma transação para velocidade máxima
     const insertTransaction = db.transaction((items) => {
-      // Limpar tabela antiga
+      // Limpar tabelas antigas
       db.prepare('DELETE FROM m3u_contents').run();
+      db.prepare('DELETE FROM m3u_episodes').run();
 
       const insertStmt = db.prepare(`
         INSERT INTO m3u_contents (title, type, normalized_title, logo_hash, year)
@@ -216,6 +242,16 @@ export class M3uModel {
 
       for (const item of items) {
         insertStmt.run(item.title, item.type, item.normalizedTitle, item.logoHash, item.year);
+      }
+
+      // Inserir episódios
+      const insertEpStmt = db.prepare(`
+        INSERT INTO m3u_episodes (series_normalized, series_title, episode_label, season, episode, logo_hash)
+        VALUES (?, ?, ?, ?, ?, ?)
+      `);
+
+      for (const ep of episodes) {
+        insertEpStmt.run(ep.seriesNormalized, ep.seriesTitle, ep.episodeLabel, ep.season, ep.episode, ep.logoHash);
       }
     });
 
@@ -254,7 +290,8 @@ export class M3uModel {
         titleMap.get(key).push({
           title: row.title,
           year: row.year,
-          logoHash: row.logo_hash
+          logoHash: row.logo_hash,
+          normalizedTitle: row.normalized_title
         });
 
         if (row.logo_hash) {
@@ -264,6 +301,20 @@ export class M3uModel {
       return { titleMap, logoSet };
     } catch (e) {
       return { titleMap: new Map(), logoSet: new Set() };
+    }
+  }
+
+  // Busca episódios de uma série na M3U
+  static getEpisodes(normalizedTitle) {
+    try {
+      return db.prepare(`
+        SELECT episode_label, season, episode, logo_hash
+        FROM m3u_episodes
+        WHERE series_normalized = ?
+        ORDER BY season, episode
+      `).all(normalizedTitle);
+    } catch (e) {
+      return [];
     }
   }
 
@@ -295,6 +346,7 @@ export class M3uModel {
   static clearM3u() {
     const clearTransaction = db.transaction(() => {
       db.prepare('DELETE FROM m3u_contents').run();
+      db.prepare('DELETE FROM m3u_episodes').run();
       db.prepare('DELETE FROM settings WHERE key IN (?, ?, ?)').run('M3U_SOURCE', 'M3U_LAST_SYNC', 'M3U_STATS');
     });
     clearTransaction();

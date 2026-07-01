@@ -91,6 +91,18 @@ db.exec(`
   );
 
   CREATE INDEX IF NOT EXISTS idx_m3u_normalized ON m3u_contents(normalized_title);
+
+  CREATE TABLE IF NOT EXISTS m3u_episodes (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    series_normalized TEXT NOT NULL,
+    series_title TEXT NOT NULL,
+    episode_label TEXT NOT NULL,
+    season INTEGER,
+    episode INTEGER,
+    logo_hash TEXT
+  );
+
+  CREATE INDEX IF NOT EXISTS idx_m3u_episodes_norm ON m3u_episodes(series_normalized);
 `);
 
 // --- SISTEMA DE MIGRAÇÕES SEGURAS (WORLD CLASS) ---
