@@ -861,6 +861,20 @@
                 style="border: none; cursor: pointer; text-decoration: none;" onclick="openM3uModal()">
                 <i class="fas fa-list-ul"></i> <span>M3U PLAYLIST</span>
             </button>
+            <div class="config-dropdown-container" style="position: relative; display: inline-block;">
+                <button id="configMenuBtn" class="whatsapp-status-btn wa-config"
+                    style="border: none; cursor: pointer; text-decoration: none;" onclick="toggleConfigDropdown(event)">
+                    <i class="fas fa-cog"></i> <span>CONFIGURAÇÃO</span>
+                </button>
+                <div id="configDropdown" class="config-dropdown-menu">
+                    <a href="#" onclick="openPalantirConfigModal(event)">
+                        <i class="fas fa-sliders-h" style="width: 16px;"></i> Configurar Palantir
+                    </a>
+                    <a href="/admin/resellers">
+                        <i class="fas fa-users" style="width: 16px;"></i> Gestão de Revendas
+                    </a>
+                </div>
+            </div>
             <button id="themeToggleBtn"
                 style="background: transparent; border: none; color: var(--text-primary); font-size: 1.15rem; cursor: pointer; display: inline-flex; align-items: center; justify-content: center; width: 35px; height: 35px; border-radius: 50%; transition: background 0.3s; margin-left: 5px;"
                 onclick="toggleTheme()" title="Alternar Tema">
@@ -879,7 +893,6 @@
             <a onclick="filterCategory('series')" id="tab-series" class="tab">SÉRIES (<span id="count-series">0</span>)</a>
             <a onclick="filterCategory('movie')" id="tab-movie" class="tab">FILMES (<span id="count-movie">0</span>)</a>
             <a onclick="filterCategory('error')" id="tab-error" class="tab">ERROS (<span id="count-error">0</span>)</a>
-            <a href="/admin/resellers" class="tab">GESTÃO DE REVENDAS</a>
         </nav>
 
         <div class="stats-summary">
@@ -1268,6 +1281,46 @@
                 <button class="btn"
                     style="background: #2563eb; color: #fff; border: none; padding: 10px 20px; border-radius: 8px; font-weight: 600; cursor: pointer;"
                     id="m3uSyncConfirmBtn" onclick="runM3uSync()">SINCRONIZAR AGORA</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal de Configuração do Palantir -->
+    <div id="palantirConfigModal" class="modal-overlay" style="z-index: 3600;">
+        <div class="modal-content" style="max-width: 500px; width: 95%;">
+            <h3 class="modal-header"
+                style="color: #fff; margin-bottom: 15px; font-weight: 700; display: flex; align-items: center; gap: 10px; border-bottom: none; padding-bottom: 0;">
+                <i class="fas fa-cog" style="color: #ef4444;"></i> Configurar Palantir
+            </h3>
+
+            <div style="margin-bottom: 12px;">
+                <label for="palantirUrlInput"
+                    style="display: block; font-size: 0.9rem; color: #ccc; margin-bottom: 6px; font-weight: 600;">PALANTIR_API_URL:</label>
+                <input type="text" id="palantirUrlInput"
+                    style="width: 100%; background: #000; border: 1px solid #333; border-radius: 8px; color: #fff; padding: 12px; font-family: inherit; font-size: 0.9rem;"
+                    placeholder="Ex: http://127.0.0.1:8000">
+            </div>
+
+            <div style="margin-bottom: 20px;">
+                <label for="palantirTokenInput"
+                    style="display: block; font-size: 0.9rem; color: #ccc; margin-bottom: 6px; font-weight: 600;">PALANTIR_API_TOKEN:</label>
+                <input type="password" id="palantirTokenInput"
+                    style="width: 100%; background: #000; border: 1px solid #333; border-radius: 8px; color: #fff; padding: 12px; font-family: inherit; font-size: 0.9rem;"
+                    placeholder="Token de acesso da API">
+            </div>
+
+            <div id="palantirSaveMsg"
+                style="display: none; align-items: center; gap: 10px; font-size: 0.9rem; margin-bottom: 20px;">
+                <i class="fas fa-spinner fa-spin"></i> <span>Salvando configurações...</span>
+            </div>
+
+            <div style="display: flex; justify-content: flex-end; gap: 10px;">
+                <button class="btn"
+                    style="background: #333; color: #fff; border: none; padding: 10px 20px; border-radius: 8px; font-weight: 600; cursor: pointer; transition: background 0.2s;"
+                    onclick="closePalantirConfigModal()">CANCELAR</button>
+                <button class="btn"
+                    style="background: #ef4444; color: #fff; border: none; padding: 10px 20px; border-radius: 8px; font-weight: 600; cursor: pointer; transition: background 0.2s;"
+                    onclick="savePalantirConfig()">SALVAR</button>
             </div>
         </div>
     </div>
@@ -2372,6 +2425,81 @@
 
         function closePalantirModal() {
             document.getElementById('palantirModal').style.display = 'none';
+        }
+
+        // --- CONFIGURAÇÃO DROPDOWN E MODAL PALANTIR ---
+        function toggleConfigDropdown(event) {
+            if (event) event.stopPropagation();
+            const dropdown = document.getElementById('configDropdown');
+            dropdown.style.display = dropdown.style.display === 'none' ? 'block' : 'none';
+        }
+
+        // Fechar dropdown se clicar fora
+        document.addEventListener('click', function(event) {
+            const dropdown = document.getElementById('configDropdown');
+            if (dropdown && !dropdown.contains(event.target)) {
+                dropdown.style.display = 'none';
+            }
+        });
+
+        function openPalantirConfigModal(event) {
+            if (event) event.preventDefault();
+            document.getElementById('configDropdown').style.display = 'none';
+            
+            fetch('/api/config/palantir')
+                .then(res => res.json())
+                .then(data => {
+                    document.getElementById('palantirUrlInput').value = data.url || '';
+                    document.getElementById('palantirTokenInput').value = data.token || '';
+                    
+                    const modal = document.getElementById('palantirConfigModal');
+                    modal.style.display = 'flex';
+                })
+                .catch(err => {
+                    alert('Falha ao carregar configurações do Palantir: ' + err.message);
+                });
+        }
+
+        function closePalantirConfigModal() {
+            document.getElementById('palantirConfigModal').style.display = 'none';
+        }
+
+        function savePalantirConfig() {
+            const url = document.getElementById('palantirUrlInput').value.trim();
+            const token = document.getElementById('palantirTokenInput').value.trim();
+            
+            if (!url || !token) {
+                alert('Por favor, preencha todos os campos.');
+                return;
+            }
+            
+            const msgDiv = document.getElementById('palantirSaveMsg');
+            msgDiv.style.color = '#f59e0b';
+            msgDiv.style.display = 'flex';
+            msgDiv.innerHTML = '<i class="fas fa-spinner fa-spin"></i> <span>Salvando configurações...</span>';
+            
+            fetch('/api/config/palantir', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ url, token })
+            })
+            .then(async res => {
+                const data = await res.json();
+                if (!res.ok) throw new Error(data.error || 'Erro ao salvar.');
+                return data;
+            })
+            .then(data => {
+                msgDiv.style.color = '#10b981';
+                msgDiv.innerHTML = '<i class="fas fa-check-circle"></i> <span>Configuração salva com sucesso!</span>';
+                setTimeout(() => {
+                    msgDiv.style.display = 'none';
+                    closePalantirConfigModal();
+                }, 1500);
+            })
+            .catch(err => {
+                msgDiv.style.color = '#ef4444';
+                msgDiv.innerHTML = `<i class="fas fa-exclamation-triangle"></i> <span>Erro: ${err.message}</span>`;
+            });
         }
         // --- FIM PALANTIR ---
 

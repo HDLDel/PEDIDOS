@@ -1,5 +1,6 @@
 import 'dotenv/config';
 import express from 'express';
+import fs from 'fs';
 import path from 'path';
 import bcrypt from 'bcryptjs';
 import { fileURLToPath } from 'url';
@@ -844,6 +845,60 @@ app.post('/api/tmdb/fetch', checkAdminAuth, async (req, res) => {
     const result = await TmdbModel.fetchAndSave(requestId, title, type);
     if (!result) return res.status(500).json({ error: 'Erro ao buscar dados do TMDB' });
     res.json(result);
+});
+
+app.get('/api/config/palantir', checkAdminAuth, (req, res) => {
+    res.json({
+        url: process.env.PALANTIR_API_URL || '',
+        token: process.env.PALANTIR_API_TOKEN || ''
+    });
+});
+
+app.post('/api/config/palantir', checkAdminAuth, express.json(), async (req, res) => {
+    const { url, token } = req.body;
+    if (!url || !token) {
+        return res.status(400).json({ error: 'URL e Token são obrigatórios.' });
+    }
+    try {
+        const envPath = path.join(__dirname, '.env');
+        let envContent = '';
+        if (fs.existsSync(envPath)) {
+            envContent = fs.readFileSync(envPath, 'utf8');
+        }
+        
+        let lines = envContent.split('\n');
+        let hasUrl = false;
+        let hasToken = false;
+        
+        lines = lines.map(line => {
+            if (line.startsWith('PALANTIR_API_URL=')) {
+                hasUrl = true;
+                return `PALANTIR_API_URL=${url}`;
+            }
+            if (line.startsWith('PALANTIR_API_TOKEN=')) {
+                hasToken = true;
+                return `PALANTIR_API_TOKEN=${token}`;
+            }
+            return line;
+        });
+        
+        if (!hasUrl) {
+            lines.push(`PALANTIR_API_URL=${url}`);
+        }
+        if (!hasToken) {
+            lines.push(`PALANTIR_API_TOKEN=${token}`);
+        }
+        
+        fs.writeFileSync(envPath, lines.join('\n'), 'utf8');
+        
+        process.env.PALANTIR_API_URL = url;
+        process.env.PALANTIR_API_TOKEN = token;
+        
+        res.json({ success: true, message: 'Configurações do Palantir atualizadas com sucesso!' });
+    } catch (e) {
+        console.error("Erro ao salvar .env:", e);
+        res.status(500).json({ error: 'Falha ao salvar configurações: ' + e.message });
+    }
 });
 
 const PORT = 8080;
