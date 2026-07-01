@@ -36,7 +36,7 @@ export class WhatsAppService {
         const chatId = `${cleanNumber}@c.us`;
         
         let message = '';
-        if (status === 'approved') message = `✅ *PEDIDO APROVADO*\n\nOlá *${reseller}*, seu pedido *${title}* foi aprovado!`;
+        if (status === 'approved') message = `✅ *PEDIDO APROVADO*\n\nOlá *${reseller}*, seu pedido *${title}* foi aprovado!\n\nSeu conteúdo será inserido na grade em até 48 horas.`;
         else if (status === 'rejected') {
             message = `❌ *PEDIDO REJEITADO*\n\nOlá *${reseller}*, seu pedido *${title}* foi rejeitado.\nMotivo: ${rejectionReason || 'Não especificado'}`;
         }
