@@ -20,6 +20,20 @@ const __dirname = path.dirname(fileURLToPath(import.meta.url));
 // Trava global para reenvio em massa
 let isResendingBackground = false;
 
+// --- SISTEMA DE LOCK (MANUTENÇÃO) ---
+const getLock = () => {
+    const enabledRow = db.prepare("SELECT value FROM settings WHERE key = 'LOCK_ENABLED'").get();
+    const msgRow = db.prepare("SELECT value FROM settings WHERE key = 'LOCK_MESSAGE'").get();
+    return {
+        enabled: enabledRow ? enabledRow.value === 'true' : false,
+        message: msgRow ? msgRow.value : 'Sistema em manutenção. Tente novamente mais tarde.'
+    };
+};
+const setLock = (enabled, message) => {
+    db.prepare(`INSERT INTO settings (key, value) VALUES ('LOCK_ENABLED', ?) ON CONFLICT(key) DO UPDATE SET value = excluded.value`).run(enabled ? 'true' : 'false');
+    db.prepare(`INSERT INTO settings (key, value) VALUES ('LOCK_MESSAGE', ?) ON CONFLICT(key) DO UPDATE SET value = excluded.value`).run(message);
+};
+
 // --- PROTEÇÃO CONTRA QUEDAS (WORLD CLASS SAFETY) ---
 // Impede que erros de arquivos bloqueados (EBUSY) ou falhas em bibliotecas matem o servidor
 process.on('unhandledRejection', (reason, promise) => {
@@ -290,6 +304,11 @@ app.get('/admin/resellers', checkAdminAuth, (req, res) => {
 
 // --- ROTAS DO PORTAL DO REVENDE-DOR ---
 const checkResellerAuth = (req, res, next) => {
+    const lock = getLock();
+    if (lock.enabled) {
+        if (req.session.resellerId) req.session.destroy(() => {});
+        return res.redirect('/revenda/login?lock=1');
+    }
     if (req.session.resellerId) {
         return next();
     }
@@ -409,15 +428,23 @@ app.get('/revenda/solicitar/filme', checkResellerAuth, (req, res) => res.render(
 
 // Login e Registro
 app.get('/revenda/login', (req, res) => {
+    const lock = getLock();
     if (req.session.resellerId) return res.redirect('/revenda/dashboard');
+    if (lock.enabled) {
+        return res.render('revenda/login', { lock: lock.message });
+    }
     res.render('revenda/login');
 });
 
 app.post('/revenda/login', (req, res) => {
+    const lock = getLock();
+    if (lock.enabled) {
+        return res.render('revenda/login', { lock: lock.message, error: 'Sistema em manutenção. Login bloqueado.' });
+    }
     const { email, password } = req.body;
     const reseller = ResellerModel.authenticate(email, password);
-    if (reseller) { // Se a autenticação for bem-sucedida
-        req.session.resellerId = reseller.id; // Armazena o ID do revendedor na sessão
+    if (reseller) {
+        req.session.resellerId = reseller.id;
         res.redirect('/revenda/dashboard');
     } else {
         res.render('revenda/login', { error: 'E-mail ou senha incorretos.' });
@@ -699,6 +726,18 @@ app.post('/api/botbot/test', checkAdminAuth, async (req, res) => {
     } catch (e) {
         res.json({ success: false, error: 'Falha de conexão com BotBot: ' + e.message });
     }
+});
+
+// API - Lock (Manutenção)
+app.get('/api/lock', (req, res) => {
+    const lock = getLock();
+    res.json(lock);
+});
+
+app.post('/api/lock', checkAdminAuth, (req, res) => {
+    const { enabled, message } = req.body;
+    setLock(!!enabled, message || '');
+    res.json({ success: true });
 });
 
 // API - Reenviar todas as notificações em massa

@@ -1000,6 +1000,10 @@
                 style="border: 1px solid var(--border); background: var(--bg-card); cursor: pointer; text-decoration: none; color: var(--text-primary);" onclick="openSettingsModal()">
                 <i class="fas fa-cog"></i> <span>CONFIGURAÇÃO</span>
             </button>
+            <button id="lockMenuBtn" class="whatsapp-status-btn"
+                style="border: 1px solid var(--border); background: var(--bg-card); cursor: pointer; text-decoration: none; color: var(--text-primary);" onclick="openLockModal()">
+                <i class="fas fa-lock"></i> <span id="lockBtnLabel">LOCK</span>
+            </button>
             <button id="themeToggleBtn"
                 style="background: transparent; border: none; color: var(--text-primary); font-size: 1.15rem; cursor: pointer; display: inline-flex; align-items: center; justify-content: center; width: 35px; height: 35px; border-radius: 50%; transition: background 0.3s; margin-left: 5px;"
                 onclick="toggleTheme()" title="Alternar Tema">
@@ -1539,6 +1543,28 @@
                 <div id="palantirProgressQueue" style="max-height: 180px; overflow-y: auto; border-top: 1px solid var(--border); padding-top: 10px;">
                     <div style="font-size: 11px; color: var(--text-muted); font-weight: 600; margin-bottom: 6px;">Fila de Downloads</div>
                     <div id="palantirProgressQueueList" style="font-size: 12px;"></div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal Lock (Manutenção) -->
+    <div id="lockModal" class="modal-overlay" style="z-index: 3600;">
+        <div class="modal-content" style="max-width: 550px; width: 95%;">
+            <div class="modal-header">
+                <h3><i class="fas fa-lock"></i> LOCK DE MANUTENÇÃO</h3>
+                <button class="modal-close" onclick="closeLockModal()">&times;</button>
+            </div>
+            <div style="padding: 20px;">
+                <label style="display: flex; align-items: center; gap: 10px; cursor: pointer; margin-bottom: 20px;">
+                    <input type="checkbox" id="lockEnabled" style="width: 20px; height: 20px; cursor: pointer;">
+                    <span style="font-weight: 600; font-size: 14px;">Bloquear login de revendedores</span>
+                </label>
+                <label style="display: block; margin-bottom: 8px; font-size: 12px; font-weight: 600; color: var(--text-muted);">MENSAGEM EXIBIDA</label>
+                <textarea id="lockMessage" rows="3" style="width: 100%; padding: 10px 12px; border: 1px solid var(--border); border-radius: 8px; background: #111; color: var(--text); font-size: 13px; resize: vertical; box-sizing: border-box;"></textarea>
+                <div style="margin-top: 20px; display: flex; gap: 10px; justify-content: flex-end;">
+                    <button onclick="closeLockModal()" style="padding: 8px 20px; border: 1px solid var(--border); border-radius: 8px; background: transparent; color: var(--text-muted); cursor: pointer; font-size: 13px;">CANCELAR</button>
+                    <button onclick="saveLock()" style="padding: 8px 20px; border: none; border-radius: 8px; background: var(--accent-red); color: white; cursor: pointer; font-weight: 600; font-size: 13px;">SALVAR</button>
                 </div>
             </div>
         </div>
@@ -2931,6 +2957,50 @@
         }
         // --- FIM PALANTIR ---
 
+        // --- LOCK DE MANUTENÇÃO ---
+        function openLockModal() {
+            fetch('/api/lock')
+                .then(res => res.json())
+                .then(data => {
+                    document.getElementById('lockEnabled').checked = data.enabled;
+                    document.getElementById('lockMessage').value = data.message || '';
+                    document.getElementById('lockModal').style.display = 'flex';
+                })
+                .catch(err => alert('Falha ao carregar lock: ' + err.message));
+        }
+
+        function closeLockModal() {
+            document.getElementById('lockModal').style.display = 'none';
+        }
+
+        function saveLock() {
+            const enabled = document.getElementById('lockEnabled').checked;
+            const message = document.getElementById('lockMessage').value.trim();
+            const btn = document.querySelector('#lockModal button:last-child');
+            btn.disabled = true;
+            btn.textContent = 'SALVANDO...';
+            fetch('/api/lock', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ enabled, message })
+            })
+            .then(res => res.json())
+            .then(data => {
+                if (data.success) {
+                    document.getElementById('lockBtnLabel').textContent = enabled ? 'LOCK 🔒' : 'LOCK';
+                    closeLockModal();
+                } else {
+                    alert('Erro: ' + (data.error || 'Falha ao salvar'));
+                }
+            })
+            .catch(err => alert('Erro: ' + err.message))
+            .finally(() => {
+                btn.disabled = false;
+                btn.textContent = 'SALVAR';
+            });
+        }
+        // --- FIM LOCK ---
+
         // Aplica o filtro de status inicial (Pendentes) ao carregar a página
         document.addEventListener('DOMContentLoaded', () => {
             initRequestIdMap();
@@ -2938,6 +3008,10 @@
             sortCards();
             const isLight = document.documentElement.classList.contains('light-theme');
             updateThemeIcon(isLight);
+            // Atualiza label do lock
+            fetch('/api/lock').then(r => r.json()).then(d => {
+                document.getElementById('lockBtnLabel').textContent = d.enabled ? 'LOCK 🔒' : 'LOCK';
+            }).catch(() => {});
         });
     </script>
 </body>

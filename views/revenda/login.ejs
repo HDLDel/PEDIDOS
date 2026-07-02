@@ -30,6 +30,14 @@
       <div class="login-logo">PORTAL <span>VOD</span></div>
       <div class="login-subtitle">Acesse sua conta de revendedor</div>
 
+      <% if (locals.lock) { %>
+        <div style="background: rgba(234, 179, 8, 0.12); border: 1px solid #eab308; border-radius: 0.75rem; padding: 1rem; margin-bottom: 1.5rem; text-align: center;">
+          <i class="fas fa-exclamation-triangle" style="font-size: 2rem; color: #eab308; margin-bottom: 8px; display: block;"></i>
+          <div style="color: #eab308; font-weight: 700; font-size: 0.9rem; margin-bottom: 4px;">SISTEMA EM MANUTENÇÃO</div>
+          <div style="color: #fde68a; font-size: 0.8rem;"><%= lock %></div>
+        </div>
+      <% } %>
+
       <% if (locals.error) { %>
         <div class="error-msg"><%= error %></div>
       <% } %>
