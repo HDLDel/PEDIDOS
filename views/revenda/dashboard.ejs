@@ -659,6 +659,14 @@
                       title="Clique para ver detalhes na M3U">
                       <i class="fas fa-check-circle"></i> Presentes na M3U
                     </span>
+                    <% if (req.status === 'pending') { %>
+                      <div onclick="showM3uDetails(this)"
+                        style="margin-top: 6px; background: rgba(234, 179, 8, 0.12); border: 1px solid #eab308; border-radius: 8px; padding: 8px 10px; font-size: 0.75rem; color: #fde68a; line-height: 1.4; cursor: pointer;"
+                        title="Clique para ver detalhes na M3U">
+                        <i class="fas fa-info-circle" style="color: #eab308; margin-right: 4px;"></i>
+                        Seu Conteudo Ja se encontra presente no servidor — FAVOR PESQUISAR NO APLICATIVO em TODOS ou ALL. Se o pedido esta pendente voce pode <strong>Excluir</strong> para evitar sobrecarregar a fila de pedidos.
+                      </div>
+                    <% } %>
                   <% } else { %>
                     <span
                       style="display: inline-flex; align-items: center; gap: 4px; background: rgba(239, 68, 68, 0.1); color: #f87171; border: 1px solid rgba(239, 68, 68, 0.2); padding: 4px 8px; border-radius: 6px; font-size: 11px; font-weight: 700;">

@@ -744,6 +744,11 @@ body {
     border-color: var(--border) !important;
     color: var(--text-primary) !important;
 }
+
+.light-theme .toolbar select option {
+    background: #fff !important;
+    color: #0f172a !important;
+}
 .light-theme .modal-content { background: var(--bg-card) !important; border-color: var(--border) !important; }
 .light-theme .modal-content h3,
 .light-theme .modal-content p strong,
