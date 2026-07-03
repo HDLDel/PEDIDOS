@@ -23,3 +23,6 @@ database.sqlite*
 
 # Deploy script containing secrets
 deploy.py
+
+# Internal planning documents
+doc/planologuin.md
