@@ -178,7 +178,9 @@ app.get('/admin/dashboard', checkAdminAuth, (req, res) => {
     };
 
     const checkInM3u = (item) => {
-        if (item.requestType === 'error') return null; // Erros não devem ser checados na M3U
+        if (item.requestType === 'error') return []; // Erros não devem ser checados na M3U
+
+        const results = [];
 
         // Extrair o hash da imagem do pedido, se existir
         let reqLogoHash = null;
@@ -195,8 +197,10 @@ app.get('/admin/dashboard', checkAdminAuth, (req, res) => {
 
         // 1. Tentar correspondência por Pôster/Banner do TMDB (100% de precisão, evita homônimos de tipos diferentes)
         if (reqLogoHash && m3uLogos.has(reqLogoHash)) {
-            const match = db.prepare('SELECT title, normalized_title FROM m3u_contents WHERE logo_hash = ? LIMIT 1').get(reqLogoHash);
-            return { inM3u: true, m3uTitle: match ? match.title : 'Por imagem', m3uNormalized: match ? match.normalized_title : '' };
+            const matches = db.prepare('SELECT title, normalized_title, logo_url FROM m3u_contents WHERE logo_hash = ?').all(reqLogoHash);
+            for (const m of matches) {
+                results.push({ title: m.title, normalizedTitle: m.normalized_title, logoUrl: m.logo_url, logoHash: reqLogoHash });
+            }
         }
 
         // 2. Tentar correspondência estrita por Título, Tipo e Ano
@@ -215,26 +219,29 @@ app.get('/admin/dashboard', checkAdminAuth, (req, res) => {
             
             if (m3uTitles.has(key)) {
                 const entries = m3uTitles.get(key) || [];
-                let matchedEntry = null;
 
                 if (reqYear) {
                     // 1. Tenta correspondência exata de ano
-                    matchedEntry = entries.find(e => e.year === reqYear);
+                    const yearMatches = entries.filter(e => e.year === reqYear);
                     // 2. Se não achou com ano exato, mas há entradas sem ano na M3U, aceita como fallback
-                    if (!matchedEntry) {
-                        matchedEntry = entries.find(e => !e.year);
+                    const fallbackMatches = yearMatches.length > 0 ? yearMatches : entries.filter(e => !e.year);
+                    for (const e of fallbackMatches) {
+                        if (!results.some(r => r.normalizedTitle === e.normalizedTitle && r.title === e.title)) {
+                            results.push({ title: e.title, normalizedTitle: e.normalizedTitle, logoUrl: e.logoUrl, logoHash: e.logoHash });
+                        }
                     }
                 } else {
-                    // Sem ano informado no pedido, aceita a primeira ocorrência
-                    matchedEntry = entries[0];
-                }
-
-                if (matchedEntry) {
-                    return { inM3u: true, m3uTitle: matchedEntry.title, m3uNormalized: matchedEntry.normalizedTitle };
+                    // Sem ano informado no pedido, aceita todas
+                    for (const e of entries) {
+                        if (!results.some(r => r.normalizedTitle === e.normalizedTitle && r.title === e.title)) {
+                            results.push({ title: e.title, normalizedTitle: e.normalizedTitle, logoUrl: e.logoUrl, logoHash: e.logoHash });
+                        }
+                    }
                 }
             }
         }
-        return null;
+
+        return results;
     };
 
     // LÓGICA DE AGRUPAMENTO MESTRE: Todos do mesmo TMDB ID dividem 1 card
@@ -242,9 +249,10 @@ app.get('/admin/dashboard', checkAdminAuth, (req, res) => {
 
     requests.forEach(req => {
         const m3uCheck = checkInM3u(req);
-        req.inM3u = !!m3uCheck;
-        req.m3uTitle = m3uCheck ? m3uCheck.m3uTitle : '';
-        req.m3uNormalized = m3uCheck ? m3uCheck.m3uNormalized : '';
+        req.inM3u = m3uCheck.length > 0;
+        req.m3uTitle = m3uCheck.length > 0 ? m3uCheck[0].title : '';
+        req.m3uNormalized = m3uCheck.length > 0 ? m3uCheck[0].normalizedTitle : '';
+        req.m3uLogos = m3uCheck.filter(m => m.logoUrl).map(m => ({ logoUrl: m.logoUrl, title: m.title }));
         
         const key = req.tmdb_id ? `tmdb-${req.tmdb_id}` : `manual-${req.type}-${req.title.toLowerCase()}`;
 
@@ -847,13 +855,32 @@ app.get('/api/m3u/title', checkAdminAuth, (req, res) => {
         const key = `${type}:${normalized}`;
         const entries = titleMap.get(key);
         if (entries && entries.length > 0) {
-            res.json({ title: entries[0].title, logoHash: entries[0].logoHash });
+            const logos = entries.filter(e => e.logoUrl).map(e => ({ logoUrl: e.logoUrl, title: e.title }));
+            const titles = entries.map(e => ({ title: e.title, year: e.year }));
+            res.json({ title: entries[0].title, titles, logoHash: entries[0].logoHash, logoUrl: entries[0].logoUrl, logos });
         } else {
             res.json(null);
         }
     } catch (e) {
         console.error("Erro ao buscar título M3U:", e);
         res.status(500).json({ error: e.message });
+    }
+});
+
+// API - Proxy de imagens M3U (tvg-logo)
+app.get('/api/m3u/logo', async (req, res) => {
+    const { url } = req.query;
+    if (!url) return res.status(400).json({ error: 'URL obrigatória' });
+    try {
+        const response = await fetch(url, { signal: AbortSignal.timeout(10000) });
+        if (!response.ok) return res.status(response.status).end();
+        const contentType = response.headers.get('content-type') || 'image/jpeg';
+        res.set('Content-Type', contentType);
+        res.set('Cache-Control', 'public, max-age=86400');
+        const buffer = Buffer.from(await response.arrayBuffer());
+        res.send(buffer);
+    } catch (e) {
+        res.redirect(url);
     }
 });
 

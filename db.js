@@ -123,6 +123,8 @@ safeAddColumn('admins', 'email', 'TEXT');
 safeAddColumn('admins', 'phone', 'TEXT');
 safeAddColumn('m3u_contents', 'logo_hash', 'TEXT');
 safeAddColumn('m3u_contents', 'year', 'INTEGER');
+safeAddColumn('m3u_contents', 'logo_url', 'TEXT');
+safeAddColumn('m3u_episodes', 'logo_url', 'TEXT');
 
 // Garantir índice do logo_hash na tabela m3u_contents
 try {

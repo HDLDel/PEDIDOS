@@ -91,11 +91,12 @@ export class M3uModel {
         // Extrair tvg-logo para rastreamento de banner do TMDB
         const tvgLogoMatch = line.match(/tvg-logo="([^"]+)"/i);
         let logoHash = '';
+        let logoUrlFull = '';
         if (tvgLogoMatch) {
-          const logoUrl = tvgLogoMatch[1];
-          const slashIndex = logoUrl.lastIndexOf('/');
+          logoUrlFull = tvgLogoMatch[1];
+          const slashIndex = logoUrlFull.lastIndexOf('/');
           if (slashIndex !== -1) {
-            logoHash = logoUrl.substring(slashIndex + 1).trim().toLowerCase();
+            logoHash = logoUrlFull.substring(slashIndex + 1).trim().toLowerCase();
           }
         }
 
@@ -118,6 +119,7 @@ export class M3uModel {
             name,
             groupTitle,
             logoHash,
+            logoUrl: logoUrlFull,
             year: itemYear,
             normalizedName: this.normalizeTitle(name)
           };
@@ -143,7 +145,8 @@ export class M3uModel {
               episodeLabel: currentItem.name,
               season: parseInt(epMatch[1], 10),
               episode: parseInt(epMatch[2], 10),
-              logoHash: currentItem.logoHash
+              logoHash: currentItem.logoHash,
+              logoUrl: currentItem.logoUrl
             });
           }
           currentItem.name = this.cleanSeriesName(currentItem.name);
@@ -162,7 +165,8 @@ export class M3uModel {
                 episodeLabel: currentItem.name,
                 season: parseInt(epMatch[1], 10),
                 episode: parseInt(epMatch[2], 10),
-                logoHash: currentItem.logoHash
+                logoHash: currentItem.logoHash,
+                logoUrl: currentItem.logoUrl
               });
             }
             currentItem.name = this.cleanSeriesName(currentItem.name);
@@ -176,6 +180,7 @@ export class M3uModel {
             type,
             normalizedTitle: currentItem.normalizedName,
             logoHash: currentItem.logoHash,
+            logoUrl: currentItem.logoUrl,
             year: currentItem.year
           });
         }
@@ -236,22 +241,22 @@ export class M3uModel {
       db.prepare('DELETE FROM m3u_episodes').run();
 
       const insertStmt = db.prepare(`
-        INSERT INTO m3u_contents (title, type, normalized_title, logo_hash, year)
-        VALUES (?, ?, ?, ?, ?)
+        INSERT INTO m3u_contents (title, type, normalized_title, logo_hash, logo_url, year)
+        VALUES (?, ?, ?, ?, ?, ?)
       `);
 
       for (const item of items) {
-        insertStmt.run(item.title, item.type, item.normalizedTitle, item.logoHash, item.year);
+        insertStmt.run(item.title, item.type, item.normalizedTitle, item.logoHash, item.logoUrl, item.year);
       }
 
       // Inserir episódios
       const insertEpStmt = db.prepare(`
-        INSERT INTO m3u_episodes (series_normalized, series_title, episode_label, season, episode, logo_hash)
-        VALUES (?, ?, ?, ?, ?, ?)
+        INSERT INTO m3u_episodes (series_normalized, series_title, episode_label, season, episode, logo_hash, logo_url)
+        VALUES (?, ?, ?, ?, ?, ?, ?)
       `);
 
       for (const ep of episodes) {
-        insertEpStmt.run(ep.seriesNormalized, ep.seriesTitle, ep.episodeLabel, ep.season, ep.episode, ep.logoHash);
+        insertEpStmt.run(ep.seriesNormalized, ep.seriesTitle, ep.episodeLabel, ep.season, ep.episode, ep.logoHash, ep.logoUrl);
       }
     });
 
@@ -279,7 +284,7 @@ export class M3uModel {
   // Busca todos os dados da M3U em Sets para comparação eficiente
   static getM3uData() {
     try {
-      const rows = db.prepare('SELECT title, normalized_title, type, logo_hash, year FROM m3u_contents').all();
+      const rows = db.prepare('SELECT title, normalized_title, type, logo_hash, logo_url, year FROM m3u_contents').all();
       const titleMap = new Map();
       const logoSet = new Set();
       for (const row of rows) {
@@ -291,6 +296,7 @@ export class M3uModel {
           title: row.title,
           year: row.year,
           logoHash: row.logo_hash,
+          logoUrl: row.logo_url,
           normalizedTitle: row.normalized_title
         });
 
@@ -308,7 +314,7 @@ export class M3uModel {
   static getEpisodes(normalizedTitle) {
     try {
       return db.prepare(`
-        SELECT episode_label, season, episode, logo_hash
+        SELECT episode_label, season, episode, logo_hash, logo_url
         FROM m3u_episodes
         WHERE series_normalized = ?
         ORDER BY season, episode
