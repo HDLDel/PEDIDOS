@@ -337,7 +337,87 @@ app.get('/revenda/dashboard', checkResellerAuth, (req, res) => {
         approved: requests.filter(r => r.status === 'approved').length,
         rejected: requests.filter(r => r.status === 'rejected').length
     };
-    res.render('revenda/dashboard', { reseller, requests, stats, error: req.query.error });
+
+    // M3U data for Presentes na M3U badge
+    const { titleMap: m3uTitles, logoSet: m3uLogos } = M3uModel.getM3uData();
+    const hasM3uData = m3uTitles.size > 0 || m3uLogos.size > 0;
+
+    const get4DigitYear = (yearVal) => {
+        if (!yearVal) return null;
+        const match = yearVal.toString().match(/\b(19\d{2}|20\d{2})\b/);
+        return match ? parseInt(match[1], 10) : null;
+    };
+
+    const checkInM3u = (item) => {
+        if (item.requestType === 'error') return [];
+
+        const results = [];
+
+        let reqLogoHash = null;
+        if (item.poster) {
+            const posterUrl = item.poster;
+            const slashIndex = posterUrl.lastIndexOf('/');
+            if (slashIndex !== -1) {
+                const hash = posterUrl.substring(slashIndex + 1).trim().toLowerCase();
+                if (hash && !hash.includes('placeholder')) {
+                    reqLogoHash = hash;
+                }
+            }
+        }
+
+        if (reqLogoHash && m3uLogos.has(reqLogoHash)) {
+            const matches = db.prepare('SELECT title, normalized_title, logo_url FROM m3u_contents WHERE logo_hash = ?').all(reqLogoHash);
+            for (const m of matches) {
+                results.push({ title: m.title, normalizedTitle: m.normalized_title, logoUrl: m.logo_url, logoHash: reqLogoHash });
+            }
+        }
+
+        const matchTitles = [
+            item.title,
+            item.tmdbTitle,
+            item.tmdbOriginalTitle
+        ].filter(Boolean);
+
+        const reqYear = get4DigitYear(item.year);
+
+        for (const title of matchTitles) {
+            const cleanTitle = M3uModel.cleanSeriesName(title);
+            const norm = M3uModel.normalizeTitle(cleanTitle);
+            const key = `${item.type}:${norm}`;
+
+            if (m3uTitles.has(key)) {
+                const entries = m3uTitles.get(key) || [];
+
+                if (reqYear) {
+                    const yearMatches = entries.filter(e => e.year === reqYear);
+                    const fallbackMatches = yearMatches.length > 0 ? yearMatches : entries.filter(e => !e.year);
+                    for (const e of fallbackMatches) {
+                        if (!results.some(r => r.normalizedTitle === e.normalizedTitle && r.title === e.title)) {
+                            results.push({ title: e.title, normalizedTitle: e.normalizedTitle, logoUrl: e.logoUrl, logoHash: e.logoHash });
+                        }
+                    }
+                } else {
+                    for (const e of entries) {
+                        if (!results.some(r => r.normalizedTitle === e.normalizedTitle && r.title === e.title)) {
+                            results.push({ title: e.title, normalizedTitle: e.normalizedTitle, logoUrl: e.logoUrl, logoHash: e.logoHash });
+                        }
+                    }
+                }
+            }
+        }
+
+        return results;
+    };
+
+    requests.forEach(req => {
+        const m3uCheck = checkInM3u(req);
+        req.inM3u = m3uCheck.length > 0;
+        req.m3uTitle = m3uCheck.length > 0 ? m3uCheck[0].title : '';
+        req.m3uNormalized = m3uCheck.length > 0 ? m3uCheck[0].normalizedTitle : '';
+        req.m3uLogos = m3uCheck.filter(m => m.logoUrl).map(m => ({ logoUrl: m.logoUrl, title: m.title }));
+    });
+
+    res.render('revenda/dashboard', { reseller, requests, stats, hasM3uData, error: req.query.error });
 });
 
 // API para o revendedor responder/explicar um pedido rejeitado ou pendente com histórico de auditoria
@@ -833,8 +913,13 @@ app.post('/api/m3u/clear', checkAdminAuth, (req, res) => {
     }
 });
 
+function checkAdminOrReseller(req, res, next) {
+    if (req.session.adminId || req.session.resellerId) return next();
+    res.status(401).json({ error: 'Não autorizado' });
+}
+
 // API - Obter episódios de uma série na M3U
-app.get('/api/m3u/episodes', checkAdminAuth, (req, res) => {
+app.get('/api/m3u/episodes', checkAdminOrReseller, (req, res) => {
     try {
         const { normalized } = req.query;
         if (!normalized) return res.json([]);
@@ -847,7 +932,7 @@ app.get('/api/m3u/episodes', checkAdminAuth, (req, res) => {
 });
 
 // API - Obter título da M3U para um normalized + type
-app.get('/api/m3u/title', checkAdminAuth, (req, res) => {
+app.get('/api/m3u/title', checkAdminOrReseller, (req, res) => {
     try {
         const { normalized, type } = req.query;
         if (!normalized) return res.json(null);

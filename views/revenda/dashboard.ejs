@@ -619,7 +619,10 @@
     <% } else { %>
       <div class="requests-list">
         <% requests.forEach(req => { %>
-          <article class="request-card">
+          <article class="request-card"
+            data-in-m3u="<%= req.inM3u ? 'true' : 'false' %>"
+            data-m3u-normalized="<%= req.m3uNormalized || '' %>"
+            data-m3u-type="<%= req.type %>">
             <div class="poster-container">
               <img src="<%= req.poster %>" alt="<%= req.title %>" class="poster">
               <span class="badge-status status-<%= req.status %>">
@@ -647,6 +650,23 @@
               
               <div class="info-item"><i class="far fa-calendar-alt"></i> <%= req.date %> às <%= req.time %></div>
               <div class="info-item"><i class="fas fa-tag"></i> <%= req.action %></div>
+              
+              <% if (typeof hasM3uData !== 'undefined' && hasM3uData) { %>
+                <div style="margin-top: 4px;">
+                  <% if (req.inM3u) { %>
+                    <span onclick="showM3uDetails(this)"
+                      style="display: inline-flex; align-items: center; gap: 4px; background: rgba(16, 185, 129, 0.15); color: #10b981; border: 1px solid rgba(16, 185, 129, 0.3); padding: 4px 8px; border-radius: 6px; font-size: 11px; font-weight: 700; cursor: pointer;"
+                      title="Clique para ver detalhes na M3U">
+                      <i class="fas fa-check-circle"></i> Presentes na M3U
+                    </span>
+                  <% } else { %>
+                    <span
+                      style="display: inline-flex; align-items: center; gap: 4px; background: rgba(239, 68, 68, 0.1); color: #f87171; border: 1px solid rgba(239, 68, 68, 0.2); padding: 4px 8px; border-radius: 6px; font-size: 11px; font-weight: 700;">
+                      <i class="fas fa-times-circle"></i> Ausentes na M3U
+                    </span>
+                  <% } %>
+                </div>
+              <% } %>
               
               <% 
                 let hasChatHistory = !!(req.rejectionReason || req.description); 
@@ -724,6 +744,32 @@
       
       <div class="modal-footer">
         <button onclick="closeChatModal()" style="background: #333; color: #fff; border: none; padding: 10px 20px; border-radius: 8px; font-weight: 600; cursor: pointer;">FECHAR</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Modal de detalhes M3U -->
+  <div id="m3uDetailsModal" class="modal-overlay" style="z-index: 3200; display: none;">
+    <div class="modal-content" style="max-width: 650px; width: 95%;">
+      <div class="modal-header" style="display: flex; align-items: center; justify-content: space-between; border-bottom: none; padding-bottom: 0;">
+        <h3 style="color: #fff; font-weight: 700; display: flex; align-items: center; gap: 10px; margin: 0;">
+          <i class="fas fa-list-ul" style="color: #10b981;"></i> <span id="m3uDetailsTitle">Dados da M3U</span>
+        </h3>
+        <button class="modal-close" onclick="closeM3uDetailsModal()" style="background: none; border: none; color: #999; font-size: 24px; cursor: pointer; padding: 0; line-height: 1;">&times;</button>
+      </div>
+
+      <div id="m3uDetailsBody" style="margin-top: 12px;">
+        <div id="m3uDetailsLoading" style="text-align: center; padding: 30px; color: #999;">
+          <i class="fas fa-spinner fa-spin" style="font-size: 24px;"></i>
+          <p style="margin-top: 10px;">Carregando...</p>
+        </div>
+        <div id="m3uDetailsContent" style="display: none;"></div>
+      </div>
+
+      <div style="display: flex; justify-content: flex-end; gap: 10px; margin-top: 16px;">
+        <button class="btn"
+          style="background: #333; color: #fff; padding: 10px 20px; border-radius: 8px; font-weight: 600; cursor: pointer;"
+          onclick="closeM3uDetailsModal()">FECHAR</button>
       </div>
     </div>
   </div>
@@ -876,6 +922,148 @@
         console.error('Erro:', error);
         alert('Falha na comunicação com o servidor.');
       }
+    }
+
+    // Modal de detalhes M3U
+    function closeM3uDetailsModal() {
+      document.getElementById('m3uDetailsModal').style.display = 'none';
+    }
+
+    async function showM3uDetails(el) {
+      const card = el.closest('.request-card');
+      const normalized = card.dataset.m3uNormalized;
+      const type = card.dataset.m3uType;
+
+      if (!normalized) return;
+
+      const modal = document.getElementById('m3uDetailsModal');
+      const loading = document.getElementById('m3uDetailsLoading');
+      const content = document.getElementById('m3uDetailsContent');
+
+      modal.style.display = 'flex';
+      loading.style.display = 'block';
+      content.style.display = 'none';
+      document.getElementById('m3uDetailsTitle').innerText = 'Carregando...';
+
+      let titleData = null;
+      let titleErr = null;
+
+      try {
+        const controller = new AbortController();
+        const timeoutId = setTimeout(() => controller.abort(), 10000);
+        const titleRes = await fetch(`/api/m3u/title?normalized=${encodeURIComponent(normalized)}&type=${encodeURIComponent(type)}`, { signal: controller.signal });
+        clearTimeout(timeoutId);
+
+        if (!titleRes.ok) {
+          const text = await titleRes.text();
+          throw new Error(`Resposta ${titleRes.status} do servidor`);
+        }
+        const ct = titleRes.headers.get('content-type') || '';
+        if (!ct.includes('json')) {
+          const text = await titleRes.text();
+          console.error('M3U title: resposta não-JSON', titleRes.status, text.substring(0, 300));
+          throw new Error(`Resposta não-JSON (${titleRes.status})`);
+        }
+        titleData = await titleRes.json();
+      } catch (e) {
+        titleErr = e;
+        console.error('Erro ao buscar título M3U:', e);
+      }
+
+      let html = '';
+
+      // Banners M3U (centralizados no topo)
+      if (titleData && titleData.logos && titleData.logos.length > 0) {
+        html += `<div style="text-align:center;margin-bottom:14px;display:flex;justify-content:center;gap:8px;">`;
+        for (const logo of titleData.logos) {
+          html += `<img src="/api/m3u/logo?url=${encodeURIComponent(logo.logoUrl)}" style="width:80px;height:80px;border-radius:6px;border:1px solid rgba(255,255,255,0.12);object-fit:cover;box-shadow:0 2px 10px rgba(0,0,0,0.5);" title="${logo.title}" onerror="this.style.display='none'">`;
+        }
+        html += `</div>`;
+      }
+
+      // Título
+      if (titleData) {
+        let titleHtml = `<div style="font-size: 0.7rem; text-transform: uppercase; color: var(--text-muted); font-weight: 800; letter-spacing: 0.5px; margin-bottom: 4px;">TÍTULO NA PLAYLIST M3U</div>`;
+        if (titleData.titles && titleData.titles.length > 0) {
+          for (const t of titleData.titles) {
+            titleHtml += `<div style="padding:5px 0;${t !== titleData.titles[titleData.titles.length - 1] ? 'border-bottom:1px solid rgba(255,255,255,0.05);' : ''}font-size:0.9rem;color:#fff;font-weight:500;">🎬 ${t.title}${t.year ? ` (${t.year})` : ''}</div>`;
+          }
+        } else {
+          titleHtml += `<div style="font-size:1rem;color:#fff;font-weight:600;">${titleData.title || 'N/A'}</div>`;
+        }
+        html += `<div style="background: #0d0d0d; border: 1px solid var(--border); padding: 12px; border-radius: 8px; margin-bottom: 12px;">${titleHtml}</div>`;
+      }
+
+      // Episódios
+      if (type === 'series') {
+        try {
+          const controller = new AbortController();
+          const timeoutId = setTimeout(() => controller.abort(), 10000);
+          const epRes = await fetch(`/api/m3u/episodes?normalized=${encodeURIComponent(normalized)}`, { signal: controller.signal });
+          clearTimeout(timeoutId);
+
+          if (!epRes.ok) {
+            const text = await epRes.text();
+            throw new Error(`Resposta ${epRes.status} do servidor`);
+          }
+          const ct = epRes.headers.get('content-type') || '';
+          if (!ct.includes('json')) {
+            const text = await epRes.text();
+            console.error('M3U episodes: resposta não-JSON', epRes.status, text.substring(0, 300));
+            throw new Error(`Resposta não-JSON (${epRes.status})`);
+          }
+          const episodes = await epRes.json();
+
+          if (episodes && episodes.length > 0) {
+            const seasons = {};
+            for (const ep of episodes) {
+              const s = ep.season || 0;
+              if (!seasons[s]) seasons[s] = [];
+              seasons[s].push(ep);
+            }
+
+            const seasonKeys = Object.keys(seasons).sort((a, b) => parseInt(a) - parseInt(b));
+            html += `<div style="font-size: 0.7rem; text-transform: uppercase; color: var(--text-muted); font-weight: 800; letter-spacing: 0.5px; margin-bottom: 8px;">EPISÓDIOS DISPONÍVEIS</div>`;
+
+            for (const sk of seasonKeys) {
+              const eps = seasons[sk];
+              html += `<div style="background: #0d0d0d; border: 1px solid var(--border); border-radius: 8px; margin-bottom: 8px; overflow: hidden;">
+                <div style="padding: 8px 12px; background: rgba(255,255,255,0.03); font-weight: 700; color: #10b981; font-size: 0.85rem;">
+                  <i class="fas fa-film" style="margin-right: 6px;"></i> Temporada ${sk}
+                  <span style="color: #888; font-weight: 400; margin-left: 6px;">(${eps.length} episódio${eps.length !== 1 ? 's' : ''})</span>
+                </div>
+                <div style="padding: 4px 12px 8px;">`;
+
+              for (const ep of eps) {
+                html += `<div style="padding: 4px 0; font-size: 0.8rem; color: #ccc; display: flex; align-items: center; gap: 8px;">
+                  <span style="background: rgba(16, 185, 129, 0.1); color: #10b981; padding: 1px 6px; border-radius: 4px; font-weight: 700; font-size: 0.7rem; min-width: 48px; text-align: center;">S${String(ep.season).padStart(2, '0')}E${String(ep.episode).padStart(2, '0')}</span>
+                  <span>${ep.episode_label}</span>
+                </div>`;
+              }
+
+              html += `</div></div>`;
+            }
+          } else {
+            html += `<div style="background: #0d0d0d; border: 1px solid var(--border); padding: 20px; border-radius: 8px; text-align: center; color: #888;">
+              <i class="fas fa-info-circle" style="margin-right: 6px;"></i> Nenhum episódio detalhado disponível para esta série.
+            </div>`;
+          }
+        } catch (e) {
+          console.error('Erro ao buscar episódios M3U:', e);
+          html += `<div style="background: #0d0d0d; border: 1px solid var(--border); padding: 20px; border-radius: 8px; text-align: center; color: #f87171;">
+            <i class="fas fa-exclamation-triangle" style="margin-right: 6px;"></i> Erro ao carregar episódios: ${e.message}
+          </div>`;
+        }
+      } else {
+        html += `<div style="background: #0d0d0d; border: 1px solid var(--border); padding: 20px; border-radius: 8px; text-align: center; color: #888;">
+          <i class="fas fa-film" style="margin-right: 6px;"></i> Filme disponível na playlist M3U.
+        </div>`;
+      }
+
+      content.innerHTML = html;
+      loading.style.display = 'none';
+      content.style.display = 'block';
+      document.getElementById('m3uDetailsTitle').innerText = titleData ? titleData.title : (titleErr ? 'Erro parcial' : 'Dados da M3U');
     }
 
     function toggleTheme() {
