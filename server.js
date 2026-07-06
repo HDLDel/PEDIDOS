@@ -1108,7 +1108,7 @@ app.post('/api/config/palantir', checkAdminAuth, express.json(), async (req, res
     }
 });
 
-const PORT = 8080;
+const PORT = 8901;
 app.listen(PORT, '127.0.0.1', () => {
     console.log(`🚀 Painel rodando em http://127.0.0.1:${PORT}`);
     console.log(`📊 ${RequestModel.getStats().pending} pendentes, ${RequestModel.getStats().approved} aprovados, ${RequestModel.getStats().rejected} rejeitados`);

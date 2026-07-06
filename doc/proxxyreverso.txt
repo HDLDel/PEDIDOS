@@ -1,92 +1,102 @@
-Guia: Configuração de Proxy Reverso com Nginx (Ocultar Porta 8080)
-Objetivo: Receber tráfego web padrão (porta 80) e redirecionar internamente para uma aplicação Node.js rodando na porta 8080, ocultando a porta da URL final.
+Guia: Proxy Reverso com Terceiro Nginx (porta 8900)
+Objetivo: Usar um nginx separado (fora do nginx do sistema) escutando na porta 8900,
+fazendo proxy reverso para o Node.js na porta 8901. O Cloudflare (com proxy ligado)
+recebe na porta 80/443 e encaminha para a 8900 do servidor.
 
-Passo 1: Verificações Preliminares (Leitura)
-Antes de instalar qualquer coisa, confirmamos a versão do sistema e garantimos que as portas 80 e 443 não estavam em uso por outro serviço.
+Passo 1: Verificar portas
+Antes de iniciar, confirme que as portas desejadas estão livres.
 
-Bash
-cat /etc/os-release
-ss -tlnp | grep -E ':(80|443)'
-Passo 2: Atualização e Instalação
-ALERTA: O COMANDO ABAIXO IRÁ ATUALIZAR O ÍNDICE DE PACOTES DO SEU SISTEMA (MODIFICAÇÃO DO SISTEMA).
+Bash:
+ss -tlnp | grep -E ':(8900|8901|8902)'
 
-Bash
-apt update
-ALERTA: O COMANDO ABAIXO IRÁ INSTALAR UM NOVO SOFTWARE NO SEU SISTEMA (NGINX).
+Passo 2: Estrutura de diretórios
+Bash:
+mkdir -p /root/PEDIDOS/nginx/{sbin,conf,logs,run}
 
-Bash
-apt install nginx -y
-Passo 3: Criação do Arquivo de Configuração
-ALERTA: O COMANDO ABAIXO IRÁ CRIAR UM NOVO ARQUIVO DE CONFIGURAÇÃO NO SEU SISTEMA (MODIFICAÇÃO DE ARQUIVO DE CONFIGURAÇÃO).
-Nota: Substitua gestorpedidos.click pelo seu domínio real, caso replique para outro projeto.
+Passo 3: Copiar binário do nginx
+Use o binário do nginx já existente no sistema (ex: /home/xui/bin/nginx/sbin/nginx).
 
-Bash
-cat << 'EOF' > /etc/nginx/sites-available/gestorpedidos.click
+Bash:
+cp /home/xui/bin/nginx/sbin/nginx /root/PEDIDOS/nginx/sbin/
+cp nginx/mime.types /root/PEDIDOS/nginx/conf/
+
+Passo 4: Configuração do nginx
+O arquivo de configuração está em nginx/terceiro-nginx.conf no repositório.
+Deploy para o servidor em: /root/PEDIDOS/nginx/conf/nginx.conf
+
+Configuração resumida:
+
 server {
-    listen 80;
+    listen 8900;
     server_name gestorpedidos.click www.gestorpedidos.click;
 
     location / {
-        proxy_pass http://127.0.0.1:8080;
+        proxy_pass http://127.0.0.1:8901;
         proxy_set_header Host $host;
         proxy_set_header X-Real-IP $remote_addr;
         proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
         proxy_set_header X-Forwarded-Proto $scheme;
     }
+
+    # Rate limit nas rotas de login
+    location = /admin/login {
+        limit_req zone=login burst=5 nodelay;
+        proxy_pass http://127.0.0.1:8901;
+        ...
+    }
+    location = /revenda/login { ... }
+    location = /revenda/register { ... }
 }
-EOF
-Passo 4: Ativação do Site e Limpeza do Padrão
-ALERTA: O COMANDO ABAIXO IRÁ MODIFICAR A CONFIGURAÇÃO DO SISTEMA (CRIAR UM LINK SIMBÓLICO PARA ATIVAR O SITE).
 
-Bash
-ln -s /etc/nginx/sites-available/gestorpedidos.click /etc/nginx/sites-enabled/
-ALERTA: O COMANDO ABAIXO IRÁ APAGAR UM ARQUIVO DE ATALHO (COMANDO DESTRUTIVO 'RM' EM ARQUIVO DE CONFIGURAÇÃO PARA DESATIVAR O SITE PADRÃO).
+Passo 5: Iniciar o nginx
+Bash:
+# Iniciar
+/root/PEDIDOS/nginx/sbin/nginx \
+  -c /root/PEDIDOS/nginx/conf/nginx.conf \
+  -p /root/PEDIDOS/nginx
 
-Bash
-rm /etc/nginx/sites-enabled/default
-Passo 5: Teste de Sintaxe e Reinicialização
-Validamos se o arquivo foi escrito corretamente antes de reiniciar o serviço.
+# Ou usar o helper:
+bash nginx/control.sh start
 
-Bash
-nginx -t
-ALERTA: O COMANDO ABAIXO IRÁ REINICIAR UM SERVIÇO DO SISTEMA (NGINX PARA APLICAR AS MUDANÇAS).
+# Recarregar config após alteração:
+bash nginx/control.sh reload
 
-Bash
-systemctl restart nginx
-Passo 6: Teste de Validação Local (Leitura)
-Testamos internamente se o Nginx estava respondendo pelo domínio e encaminhando para a aplicação Node.js (esperando um retorno indicando o Express).
+# Parar:
+bash nginx/control.sh stop
 
-Bash
-curl -H "Host: gestorpedidos.click" -I http://localhost
-O seu proxy reverso está configurado e funcionando. Lembre-se de que o nosso fluxo de trabalho ainda tem uma última etapa pendente: a configuração do firewall para bloquear o acesso externo direto à porta 8080. Basta me avisar quando estiver pronto para prosseguirmos com esse passo final de segurança.
+Passo 6: Cloudflare
+No painel da Cloudflare, configure o registro DNS:
+- Tipo: A
+- Nome: @ (ou www)
+- Conteúdo: IP do servidor
+- Proxy: Ligado (laranja)
+- Origin Port: 8900
 
-esconder barras com worker cloudflare
+Com proxy ligado, o usuário acessa normalmente http://gestorpedidos.click
+(Cloudflare recebe na porta 80/443 deles e encaminha para a 8900 do servidor).
 
-Escondendo o /revenda/login (URL Masking com Workers)
-Mesmo que o seu servidor redirecione internamente o / para /revenda/login, o navegador do usuário mostrará o caminho completo. Para "mascarar" isso e fazer com que a tela de login apareça diretamente em gestorpedidos.click/ sem mudar a URL, use um Cloudflare Worker:
+Passo 7: Firewall
+Libere apenas a porta do nginx (8900) no UFW:
 
-Vá em Workers & Pages > Create application > Create Worker.
-Dê um nome (ex: mask-login) e clique em Deploy.
-Clique em Edit Code e cole este script:
-javascript
+Bash:
+sudo ufw allow 8900/tcp comment 'Nginx PEDIDOS (Cloudflare proxy)'
+
+As portas 8901 (Node) e 8902 (WhatsApp) escutam apenas em 127.0.0.1,
+não precisam ser abertas no firewall.
+
+Cloudflare Worker (URL Masking - opcional):
+Se quiser que a raiz "/" mostre o login do revendedor sem mostrar "/revenda/login"
+na URL, use um Worker Cloudflare:
+
 export default {
   async fetch(request, env, ctx) {
     const url = new URL(request.url);
-
-    // Se o usuário acessar a raiz "/"
     if (url.pathname === "/") {
-      // O Worker busca o conteúdo do login, mas mantém a URL como "/"
       const loginUrl = `${url.origin}/revenda/login`;
       return fetch(loginUrl, request);
     }
-
-    // Para todas as outras rotas, segue o fluxo normal
     return fetch(request);
   },
 };
-Configurar a Rota:
-Volte para as configurações do Worker.
-Vá em Triggers > Routes > Add Route.
-Coloque: gestorpedidos.click/*
-Selecione a Zona: gestorpedidos.click.
 
+Configure a rota: gestorpedidos.click/*

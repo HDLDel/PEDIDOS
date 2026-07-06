@@ -71,10 +71,13 @@ PEDIDOS/
   │   └── vod.sqlite         → Banco SQLite (criado automaticamente)
   │
   └── nginx/
+      ├── terceiro-nginx.conf    → Config nginx separado (porta 8900)
+      ├── control.sh             → Helper start/stop/reload
       ├── nginx.conf
-      ├── sites-available/   → Config vhost (gestorpedidos.click)
+      ├── sites-available/   → Legado
       ├── sites-enabled/
-      └── snippets/          → fastcgi, snakeoil
+      ├── snippets/
+      └── mime.types
 ```
 
 ## Funcionalidades Principais
@@ -136,8 +139,11 @@ pm2 save
 pm2 startup
 
 # Acesso
-http://localhost:8080/admin/login   — Admin
-http://localhost:8080/revenda/login  — Revenda
+http://localhost:8901/admin/login   — Admin (proxy via 8900)
+http://localhost:8901/revenda/login  — Revenda (proxy via 8900)
+
+# Terceiro Nginx (porta 8900)
+bash nginx/control.sh start
 ```
 
 ## Convencoes

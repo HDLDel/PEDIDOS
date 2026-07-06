@@ -4,7 +4,7 @@ limit_req_zone $binary_remote_addr zone=global:10m rate=30r/m;
 limit_req_zone $binary_remote_addr zone=login:10m rate=10r/m;
 
 server {
-    listen 80;
+    listen 8900;
     server_name gestorpedidos.click www.gestorpedidos.click;
 
     # Esconde versão do nginx
@@ -19,7 +19,7 @@ server {
 
     location / {
         limit_req zone=global burst=10 nodelay;
-        proxy_pass http://127.0.0.1:8080;
+        proxy_pass http://127.0.0.1:8901;
         proxy_set_header Host $host;
         proxy_set_header X-Real-IP $remote_addr;
         proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
@@ -29,7 +29,7 @@ server {
     # Rate limiting nas rotas de login
     location = /admin/login {
         limit_req zone=login burst=5 nodelay;
-        proxy_pass http://127.0.0.1:8080;
+        proxy_pass http://127.0.0.1:8901;
         proxy_set_header Host $host;
         proxy_set_header X-Real-IP $remote_addr;
         proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
@@ -38,7 +38,7 @@ server {
 
     location = /revenda/login {
         limit_req zone=login burst=5 nodelay;
-        proxy_pass http://127.0.0.1:8080;
+        proxy_pass http://127.0.0.1:8901;
         proxy_set_header Host $host;
         proxy_set_header X-Real-IP $remote_addr;
         proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
@@ -47,7 +47,7 @@ server {
 
     location = /revenda/register {
         limit_req zone=login burst=3 nodelay;
-        proxy_pass http://127.0.0.1:8080;
+        proxy_pass http://127.0.0.1:8901;
         proxy_set_header Host $host;
         proxy_set_header X-Real-IP $remote_addr;
         proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;

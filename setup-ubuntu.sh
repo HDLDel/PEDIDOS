@@ -1,31 +1,46 @@
 #!/bin/bash
 set -euo pipefail
 
-echo "🚀 Iniciando preparação segura do ambiente Ubuntu 24.04 para VOD Premium..."
+echo "🚀 Iniciando preparação do ambiente para PEDIDOS VOD..."
 
 # ──────────────────────────────────────────────
-# 1. FIREWALL (configurar ANTES de abrir portas)
+# 1. DETECTAR VERSÃO DO UBUNTU
 # ──────────────────────────────────────────────
-echo "🔒 Configurando firewall (UFW)..."
-sudo ufw --force reset
-sudo ufw default deny incoming
-sudo ufw default allow outgoing
-sudo ufw allow 22/tcp comment 'SSH'
-sudo ufw allow 80/tcp comment 'HTTP'
-sudo ufw allow 443/tcp comment 'HTTPS'
-sudo ufw --force enable
-sudo ufw status verbose
+UBUNTU_VERSION=$(lsb_release -rs 2>/dev/null || echo "20.04")
+echo "📋 Ubuntu detectado: $UBUNTU_VERSION"
 
-# ──────────────────────────────────────────────
-# 2. CRIAR USUÁRIO DEDICADO (não-root)
-# ──────────────────────────────────────────────
-if id "vodapp" &>/dev/null; then
-    echo "👤 Usuário 'vodapp' já existe."
+# Pacotes compatíveis com a versão do Ubuntu
+if echo "$UBUNTU_VERSION" | grep -qE '^24\.'; then
+    CUPS_PKG="libcups2t64"
+    ATK_PKG="libatk1.0-0t64"
+    ATK_BRIDGE_PKG="libatk-bridge2.0-0t64"
+    ASOUND_PKG="libasound2t64"
+    GTK_PKG="libgtk-3-0t64"
 else
-    echo "👤 Criando usuário 'vodapp' para rodar a aplicação..."
-    sudo useradd -m -s /bin/bash vodapp
-    sudo passwd -l vodapp  # bloqueia login por senha (só SSH key)
-    echo "✅ Usuário 'vodapp' criado e login por senha desabilitado."
+    CUPS_PKG="libcups2"
+    ATK_PKG="libatk1.0-0"
+    ATK_BRIDGE_PKG="libatk-bridge2.0-0"
+    ASOUND_PKG="libasound2"
+    GTK_PKG="libgtk-3-0"
+fi
+
+# ──────────────────────────────────────────────
+# 2. FIREWALL — NÃO MEXE NO UFW (XUI usa portas próprias)
+# ──────────────────────────────────────────────
+if command -v ufw &>/dev/null && ufw status 2>/dev/null | grep -qi active; then
+    echo "🔒 UFW está ativo. Garantindo que as portas do PEDIDOS estão liberadas..."
+    sudo ufw allow 8900/tcp comment 'Nginx PEDIDOS'
+    sudo ufw status verbose | grep -E '8900|22'
+else
+    echo "🔒 UFW não está ativo. Pulando configuração de firewall."
+    echo "   ⚠️  Se quiser ativar o firewall manualmente, libere as portas:"
+    echo "       sudo ufw allow 22/tcp"
+    echo "       sudo ufw allow 80/tcp"
+    echo "       sudo ufw allow 443/tcp"
+    echo "       sudo ufw allow 8880/tcp"
+    echo "       sudo ufw allow 31210/tcp"
+    echo "       sudo ufw allow 8900/tcp"
+    echo "       sudo ufw --force enable"
 fi
 
 # ──────────────────────────────────────────────
@@ -33,40 +48,51 @@ fi
 # ──────────────────────────────────────────────
 echo "📦 Instalando dependências do sistema..."
 
-# Remover repositórios problemáticos (Ookla/Speedtest que não suporta Noble)
-sudo rm -f /etc/apt/sources.list.d/ookla_speedtest-cli.list
-
 # Atualizar repositórios
 sudo apt-get update || true
 
-# Instalar Node.js (versão 20) — método seguro via repositório oficial
-curl -fsSL https://deb.nodesource.com/setup_20.x | sudo bash -
-sudo apt-get install -y nodejs
+# Instalar Node.js (versão 20)
+if ! command -v node &>/dev/null; then
+    echo "   Instalando Node.js 20..."
+    curl -fsSL https://deb.nodesource.com/setup_20.x | sudo bash -
+    sudo apt-get install -y nodejs
+else
+    echo "   Node.js já instalado: $(node -v)"
+fi
 
-# Instalar Google Chrome Oficial
-wget -q -O - https://dl-ssl.google.com/linux/linux_signing_key.pub | sudo gpg --dearmor -o /usr/share/keyrings/google-chrome.gpg
-echo "deb [arch=amd64 signed-by=/usr/share/keyrings/google-chrome.gpg] http://dl.google.com/linux/chrome/deb/ stable main" | sudo tee /etc/apt/sources.list.d/google-chrome.list
-sudo apt-get update
+# Instalar Google Chrome (necessário para o WhatsApp)
+if ! command -v google-chrome-stable &>/dev/null; then
+    echo "   Instalando Google Chrome..."
+    wget -q -O - https://dl-ssl.google.com/linux/linux_signing_key.pub | sudo gpg --dearmor -o /usr/share/keyrings/google-chrome.gpg
+    echo "deb [arch=amd64 signed-by=/usr/share/keyrings/google-chrome.gpg] http://dl.google.com/linux/chrome/deb/ stable main" | sudo tee /etc/apt/sources.list.d/google-chrome.list
+    sudo apt-get update
+    sudo apt-get install -y google-chrome-stable
+else
+    echo "   Google Chrome já instalado."
+fi
 
-# Instalar ferramentas de compilação e Google Chrome
-sudo apt-get install -y build-essential python3 google-chrome-stable \
+# Instalar bibliotecas auxiliares
+echo "   Instalando bibliotecas do sistema..."
+sudo apt-get install -y build-essential python3 \
     ca-certificates \
-    fonts-liberation \
-    lsb-release \
-    xdg-utils \
     libgbm1 \
     libnss3 \
-    libatk1.0-0t64 \
-    libatk-bridge2.0-0t64 \
-    libcups2t64 \
-    libgtk-3-0t64 \
-    libasound2t64 \
+    "$ATK_PKG" \
+    "$ATK_BRIDGE_PKG" \
+    "$CUPS_PKG" \
+    "$GTK_PKG" \
+    "$ASOUND_PKG" \
     libxcomposite1 \
     libxdamage1 \
-    libxrandr2
+    libxrandr2 || echo "   ⚠️  Alguns pacotes podem não estar disponíveis nesta versão do Ubuntu."
 
 # Instalar PM2 globalmente
-sudo npm install -g pm2
+if ! command -v pm2 &>/dev/null; then
+    echo "   Instalando PM2..."
+    sudo npm install -g pm2
+else
+    echo "   PM2 já instalado: $(pm2 -v)"
+fi
 
 # ──────────────────────────────────────────────
 # 4. INSTALAR DEPENDÊNCIAS DO PROJETO
@@ -75,16 +101,7 @@ echo "📁 Instalando dependências do Node.js..."
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 cd "$SCRIPT_DIR"
 
-# Instalar como root para as dependências do sistema, mas o dono dos arquivos é vodapp
-sudo npm install
-
-# Ajustar permissões do projeto para o usuário vodapp
-sudo chown -R vodapp:vodapp "$SCRIPT_DIR"
-sudo chmod -R 750 "$SCRIPT_DIR"
-# Dar permissão de escrita apenas nas pastas necessárias
-sudo chmod -R 770 "$SCRIPT_DIR/data"     # Banco de dados
-sudo chmod -R 770 "$SCRIPT_DIR/.wwebjs_auth"  # Sessão WhatsApp
-sudo chmod -R 770 "$SCRIPT_DIR/.wwebjs_cache" # Cache WhatsApp
+npm install
 
 # ──────────────────────────────────────────────
 # 5. CRIAR .env EXEMPLO (se não existir)
@@ -93,7 +110,6 @@ if [ ! -f "$SCRIPT_DIR/.env" ]; then
     echo "⚠️  Arquivo .env não encontrado."
     echo "📝 Criando arquivo .env de exemplo — EDITE COM SUAS CREDENCIAIS!"
     
-    # Gera segredos aleatórios fortes
     SESSION_SECRET=$(openssl rand -base64 48)
     WHATSAPP_API_TOKEN=$(openssl rand -hex 32)
     
@@ -101,9 +117,7 @@ if [ ! -f "$SCRIPT_DIR/.env" ]; then
 # Segredo para criptografia dos cookies de sessão
 SESSION_SECRET=${SESSION_SECRET}
 
-# Credenciais do Administrador (usadas apenas no primeiro boot/seed)
-# ADMIN_PASSWORD aceita tanto texto puro quanto hash bcrypt (começa com $2a$...)
-# Para gerar um hash: node hash-password.js 'minha_senha'
+# Credenciais do Administrador
 ADMIN_USERNAME=seu_usuario_admin
 ADMIN_PASSWORD=sua_senha_forte_aqui
 ADMIN_NAME="<ADMIN_NAME>"
@@ -119,41 +133,44 @@ WHATSAPP_ENABLED=true
 WHATSAPP_API_TOKEN=${WHATSAPP_API_TOKEN}
 ENVEOF
     
-    # Restringir permissão: só o dono (vodapp) pode ler
-    sudo chown vodapp:vodapp "$SCRIPT_DIR/.env"
     sudo chmod 600 "$SCRIPT_DIR/.env"
     echo ""
     echo "═══════════════════════════════════════════════"
     echo "🔴 ATENÇÃO: Edite o arquivo .env com suas credenciais reais!"
     echo "═══════════════════════════════════════════════"
     echo "📄 Caminho: $SCRIPT_DIR/.env"
-    echo "🔑 SESSION_SECRET já foi gerado automaticamente."
-    echo "🔒 Permissão do arquivo: chmod 600 (só o usuário vodapp lê)"
     echo ""
 fi
 
-# Garantir permissão 600 mesmo se o arquivo já existir
 if [ -f "$SCRIPT_DIR/.env" ]; then
     sudo chmod 600 "$SCRIPT_DIR/.env"
 fi
 
 # ──────────────────────────────────────────────
-# 6. CONFIGURAR NGNIX (se instalado)
+# 6. CONFIGURAR TERCEIRO NGINX
 # ──────────────────────────────────────────────
-if command -v nginx &>/dev/null; then
-    echo "🌐 Nginx detectado. Aplicando configuração de segurança..."
-    if [ -f /etc/nginx/nginx.conf ]; then
-        sudo sed -i 's/# server_tokens off;/server_tokens off;/' /etc/nginx/nginx.conf
-    fi
+NGINX_DEST="/root/PEDIDOS/nginx"
+echo "🌐 Configurando nginx do PEDIDOS em $NGINX_DEST..."
+sudo mkdir -p "$NGINX_DEST"/{sbin,conf,logs,run}
+
+if [ -f "/home/xui/bin/nginx/sbin/nginx" ]; then
+    echo "   Copiando binário do nginx existente (XUI)..."
+    sudo cp /home/xui/bin/nginx/sbin/nginx "$NGINX_DEST/sbin/"
+    echo "✓ Binário copiado"
+else
+    echo "⚠️  Nginx do XUI não encontrado em /home/xui/bin/nginx/sbin/nginx"
+    echo "   Copie manualmente um binário do nginx para $NGINX_DEST/sbin/"
 fi
+
+echo "✓ Diretórios criados em $NGINX_DEST"
 
 # ──────────────────────────────────────────────
 # 7. CONFIGURAR LOGROTATE PARA PM2
 # ──────────────────────────────────────────────
 echo "📋 Configurando logrotate para os logs do PM2..."
 sudo mkdir -p /etc/logrotate.d
-sudo tee /etc/logrotate.d/vodapp-pm2 > /dev/null << 'LOGEOF'
-/home/vodapp/.pm2/pm2.log /home/vodapp/.pm2/logs/*.log {
+sudo tee /etc/logrotate.d/pedidos-pm2 > /dev/null << 'LOGEOF'
+/root/.pm2/pm2.log /root/.pm2/logs/*.log {
     rotate 7
     daily
     compress
@@ -166,37 +183,24 @@ LOGEOF
 
 echo ""
 echo "═══════════════════════════════════════════════"
-echo "✅ AMBIENTE CONFIGURADO COM SEGURANÇA!"
+echo "✅ AMBIENTE CONFIGURADO!"
 echo "═══════════════════════════════════════════════"
 echo ""
-echo "📌 Para rodar o sistema (como usuário vodapp):"
-echo "   sudo -u vodapp pm2 start server.js --name 'dashboard'"
-echo "   sudo -u vodapp pm2 start whatsapp-server.js --name 'whatsapp-motor'"
+echo "📌 Para rodar o sistema (como root):"
+echo "   pm2 start server.js --name 'dashboard'"
+echo "   pm2 start whatsapp-server.js --name 'whatsapp-motor'"
 echo ""
 echo "📌 Para salvar a configuração do PM2:"
-echo "   sudo -u vodapp pm2 save"
-echo "   sudo env PATH=\$PATH:/usr/bin pm2 startup systemd -u vodapp --hp /home/vodapp"
+echo "   pm2 save"
+echo "   pm2 startup"
+echo ""
+echo "📌 Terceiro nginx (proxy reverso porta 8900):"
+echo "   Iniciar:  bash $SCRIPT_DIR/nginx/control.sh start"
+echo "   Parar:    bash $SCRIPT_DIR/nginx/control.sh stop"
+echo "   Recarreg: bash $SCRIPT_DIR/nginx/control.sh reload"
 echo ""
 echo "📌 Para ver os logs:"
-echo "   sudo -u vodapp pm2 logs"
-echo ""
-echo "═══════════════════════════════════════════════"
-echo "🔐 SEGURANÇA DO .env"
-echo "═══════════════════════════════════════════════"
-echo "✅ .env está com chmod 600 (só o usuário vodapp lê)"
-echo "✅ .env está no .gitignore (não vai pro Git)"
-echo "✅ SESSION_SECRET foi gerado aleatoriamente"
+echo "   pm2 logs"
 echo ""
 echo "📌 Para gerar hash da senha do admin para o .env:"
 echo "   node hash-password.js 'minha_senha_aqui'"
-echo "   Copie o hash gerado (algo como \$2a\$10...) e coloque no .env"
-echo ""
-echo "   Exemplo no .env:"
-echo "   ADMIN_PASSWORD=\$2a\$10\$N9qo8uLOickgx2ZMRZoMyeIjZAgcfl7p92ldGxad68LJZdL17lhWy"
-echo ""
-echo "⚠️  Se for EDITAR o .env manualmente, depois faça:"
-echo "   sudo chmod 600 /home/PEDIDOS/.env"
-echo "   sudo chown vodapp:vodapp /home/PEDIDOS/.env"
-echo ""
-echo "⚠️  Configure HTTPS com Let's Encrypt:"
-echo "   sudo certbot --nginx -d seu-dominio.com"

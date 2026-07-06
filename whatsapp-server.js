@@ -154,7 +154,7 @@ app.post('/send', requireToken, async (req, res) => {
     }
 });
 
-const PORT = 8880;
+const PORT = 8902;
 app.listen(PORT, '127.0.0.1', () => {
     console.log(`📡 MOTOR WHATSAPP INDEPENDENTE: Rodando em 127.0.0.1:${PORT}`);
 });

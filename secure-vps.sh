@@ -12,7 +12,7 @@ echo ""
 # ────────────────────────────────────────────
 if [ ! -f .env ]; then
     echo "❌ Arquivo .env não encontrado no diretório atual."
-    echo "   Execute este script DENTRO da pasta do projeto (ex: /home/PEDIDOS)"
+    echo "   Execute este script DENTRO da pasta do projeto (ex: /root/PEDIDOS)"
     exit 1
 fi
 
@@ -129,7 +129,8 @@ echo "  📌 NOVA SENHA DO ADMIN:       ${NOVA_SENHA}"
 echo "  📌 NOVO WHATSAPP_API_TOKEN:   ${NOVO_WA_TOKEN}"
 echo ""
 echo "  ⚠️  GUARDE ESTAS INFORMAÇÕES EM LOCAL SEGURO!"
-echo "  ⚠️  Faça login no painel com a nova senha:"
-echo "       http://SEU_DOMINIO/admin/login"
+echo "  ⚠️  Faça login no painel com a nova senha (se Cloudflare proxy ativo, use o domínio):"
+echo "       https://SEU_DOMINIO/admin/login"
+echo "       Ou diretamente: http://IP:8901/admin/login"
 echo ""
 echo "═══════════════════════════════════════════════"

@@ -94,7 +94,7 @@ curl -X POST https://botbot.chat/api/v2/sendText \
 | Arquivo | Função |
 |---------|--------|
 | `WhatsAppService.js` | Classe principal (whatsapp-web.js) |
-| `whatsapp-server.js` | Servidor standalone na porta 8880 |
+| `whatsapp-server.js` | Servidor standalone na porta 8902 |
 | `whatsapp-worker.js` | Worker para processamento em background |
 
 ### Fluxo
@@ -104,7 +104,7 @@ curl -X POST https://botbot.chat/api/v2/sendText \
 pm2 start whatsapp-server.js --name "whatsapp-motor"
 
 # Verificar status
-curl http://localhost:8880/status
+curl http://localhost:8902/status
 ```
 
 ### API do WhatsApp Server

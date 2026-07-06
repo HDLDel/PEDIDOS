@@ -1,7 +1,7 @@
 import 'dotenv/config';
 
 export class WhatsAppService {
-    static WA_API = 'http://localhost:8880';
+    static WA_API = 'http://localhost:8902';
     static headers = {
         'Content-Type': 'application/json',
         'x-api-token': process.env.WHATSAPP_API_TOKEN || ''
@@ -11,7 +11,7 @@ export class WhatsAppService {
         try {
             await fetch(`${this.WA_API}/start`, { method: 'POST', headers: this.headers });
         } catch (e) {
-            console.error('❌ Não foi possível conectar ao Servidor Independente do WhatsApp na porta 8880.');
+            console.error('❌ Não foi possível conectar ao Servidor Independente do WhatsApp na porta 8902.');
         }
     }
 

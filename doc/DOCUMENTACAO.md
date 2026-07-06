@@ -69,10 +69,13 @@ PEDIDOS/
   │   └── vod.sqlite         → Banco SQLite (criado automaticamente)
   │
   ├── nginx/
-  │   ├── nginx.conf
-  │   ├── sites-available/   → Config vhost (gestorpedidos.click)
+  │   ├── nginx.conf             → Template genérico (não usado em prod)
+  │   ├── terceiro-nginx.conf    → Config do nginx separado (porta 8900)
+  │   ├── control.sh             → Helper start/stop/reload
+  │   ├── sites-available/       → Legado (config para nginx do sistema)
   │   ├── sites-enabled/
-  │   └── snippets/          → fastcgi, snakeoil
+  │   ├── snippets/
+  │   └── mime.types
   │
   ├── doc/
   │   └── DOCUMENTACAO.md    → Este arquivo
@@ -178,14 +181,11 @@ pm2 save
 pm2 startup
 
 # Acesso
-http://localhost:8080/admin/login    — Admin
-http://localhost:8080/revenda/login  — Revenda
+http://localhost:8901/admin/login    — Admin
+http://localhost:8901/revenda/login  — Revenda
 
-# Nginx Proxy Reverso
-cp nginx/sites-available/gestorpedidos.click /etc/nginx/sites-available/
-ln -s /etc/nginx/sites-available/gestorpedidos.click /etc/nginx/sites-enabled/
-rm /etc/nginx/sites-enabled/default
-nginx -t && systemctl restart nginx
+# Terceiro Nginx (proxy reverso, porta 8900)
+bash nginx/control.sh start
 ```
 
 ---
