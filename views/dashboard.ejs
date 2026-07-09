@@ -191,6 +191,44 @@
             color: #f59e0b;
         }
 
+        /* Toggle switch */
+        .switch {
+            position: relative;
+            display: inline-block;
+            width: 40px;
+            height: 20px;
+        }
+        .switch input {
+            opacity: 0;
+            width: 0;
+            height: 0;
+        }
+        .slider {
+            position: absolute;
+            cursor: pointer;
+            top: 0; left: 0; right: 0; bottom: 0;
+            background-color: #333;
+            transition: .3s;
+            border-radius: 20px;
+        }
+        .slider:before {
+            position: absolute;
+            content: "";
+            height: 14px;
+            width: 14px;
+            left: 3px;
+            bottom: 3px;
+            background-color: white;
+            transition: .3s;
+            border-radius: 50%;
+        }
+        .switch input:checked + .slider {
+            background-color: var(--accent-red);
+        }
+        .switch input:checked + .slider:before {
+            transform: translateX(20px);
+        }
+
         .settings-section-container {
             max-height: 0;
             overflow: hidden;
@@ -1224,11 +1262,13 @@
                                                               onclick="window.open('https://www.justwatch.com/br/busca?q=<%= encodeURIComponent(req.title).replace(/'/g, "%27") %>', '_blank')">
                                                               <i class="fas fa-play"></i> JW
                                                           </button>
-                                                          <button class="btn btn-palantir"
-                                                              style="<%= req.tmdb_id ? '' : 'display: none;' %>"
-                                                              onclick="searchPalantir(<%= req.id %>, '<%= req.tmdb_id %>', '<%= encodeURIComponent(req.title).replace(/'/g, "\\'") %>', '<%= req.type || 'movie' %>')">
-                                                              <i class="fas fa-satellite-dish"></i> Palantir
-                                                          </button>
+                                                          <% if (typeof palantirEnabled === 'undefined' || palantirEnabled) { %>
+                                                           <button class="btn btn-palantir"
+                                                               style="<%= req.tmdb_id ? '' : 'display: none;' %>"
+                                                               onclick="searchPalantir(<%= req.id %>, '<%= req.tmdb_id %>', '<%= encodeURIComponent(req.title).replace(/'/g, "\\'") %>', '<%= req.type || 'movie' %>')">
+                                                               <i class="fas fa-satellite-dish"></i> Palantir
+                                                           </button>
+                                                           <% } %>
                                                      </div>
                                                     <button class="btn btn-chat-history"
                                                         style="<%= hasChatHistory ? 'display: flex;' : 'display: none;' %>"
@@ -1481,6 +1521,14 @@
                 <h4 style="color: #fff; font-size: 0.95rem; margin-bottom: 15px; font-weight: 600; display: flex; align-items: center; gap: 8px;">
                     <i class="fas fa-key" style="color: #f59e0b; font-size: 1rem;"></i> Credenciais da API Palantir
                 </h4>
+                
+                <div style="margin-bottom: 15px; display: flex; align-items: center; justify-content: space-between; background: rgba(255,255,255,0.02); padding: 10px 12px; border-radius: 8px; border: 1px solid rgba(255,255,255,0.05);">
+                    <span style="font-size: 0.85rem; color: #fff; font-weight: 600;">Ativar Integração Palantir nos cards:</span>
+                    <label class="switch">
+                        <input type="checkbox" id="palantirEnabledToggle">
+                        <span class="slider"></span>
+                    </label>
+                </div>
                 
                 <div style="margin-bottom: 12px;">
                     <label for="palantirUrlInput"
@@ -3075,6 +3123,7 @@
                 .then(data => {
                     document.getElementById('palantirUrlInput').value = data.url || '';
                     document.getElementById('palantirTokenInput').value = data.token || '';
+                    document.getElementById('palantirEnabledToggle').checked = data.enabled !== false;
                     
                     const modal = document.getElementById('settingsModal');
                     modal.style.display = 'flex';
@@ -3196,6 +3245,7 @@
         function savePalantirConfig() {
             const url = document.getElementById('palantirUrlInput').value.trim();
             const token = document.getElementById('palantirTokenInput').value.trim();
+            const enabled = document.getElementById('palantirEnabledToggle').checked;
             
             if (!url || !token) {
                 alert('Por favor, preencha todos os campos.');
@@ -3210,7 +3260,7 @@
             fetch('/api/config/palantir', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ url, token })
+                body: JSON.stringify({ url, token, enabled })
             })
             .then(async res => {
                 const data = await res.json();
@@ -3222,7 +3272,7 @@
                 msgDiv.innerHTML = '<i class="fas fa-check-circle"></i> <span>Configuração salva com sucesso!</span>';
                 setTimeout(() => {
                     msgDiv.style.display = 'none';
-                    document.getElementById('palantirConfigSection').classList.remove('open');
+                    location.reload();
                 }, 1500);
             })
             .catch(err => {

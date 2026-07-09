@@ -26,3 +26,6 @@ deploy.py
 
 # Internal planning documents
 doc/planologuin.md
+
+# Build output (obfuscated code)
+dist/

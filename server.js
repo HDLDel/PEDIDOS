@@ -276,7 +276,7 @@ app.get('/admin/dashboard', checkAdminAuth, (req, res) => {
     const groupedRequests = [...groupedMap.values()];
     groupedRequests.sort((a, b) => a.id - b.id);
 
-    res.render('dashboard', { requests: groupedRequests, stats, hasM3uData });
+    res.render('dashboard', { requests: groupedRequests, stats, hasM3uData, palantirEnabled: process.env.PALANTIR_ENABLED !== 'false' });
 });
 
 // Rota para Conexão do WhatsApp (Página Dedicada)
@@ -1074,12 +1074,13 @@ app.post('/api/tmdb/fetch', checkAdminAuth, async (req, res) => {
 app.get('/api/config/palantir', checkAdminAuth, (req, res) => {
     res.json({
         url: process.env.PALANTIR_API_URL || '',
-        token: process.env.PALANTIR_API_TOKEN || ''
+        token: process.env.PALANTIR_API_TOKEN || '',
+        enabled: process.env.PALANTIR_ENABLED !== 'false'
     });
 });
 
 app.post('/api/config/palantir', checkAdminAuth, express.json(), async (req, res) => {
-    const { url, token } = req.body;
+    const { url, token, enabled } = req.body;
     if (!url || !token) {
         return res.status(400).json({ error: 'URL e Token são obrigatórios.' });
     }
@@ -1093,6 +1094,7 @@ app.post('/api/config/palantir', checkAdminAuth, express.json(), async (req, res
         let lines = envContent.split('\n');
         let hasUrl = false;
         let hasToken = false;
+        let hasEnabled = false;
         
         lines = lines.map(line => {
             if (line.startsWith('PALANTIR_API_URL=')) {
@@ -1103,6 +1105,10 @@ app.post('/api/config/palantir', checkAdminAuth, express.json(), async (req, res
                 hasToken = true;
                 return `PALANTIR_API_TOKEN=${token}`;
             }
+            if (line.startsWith('PALANTIR_ENABLED=')) {
+                hasEnabled = true;
+                return `PALANTIR_ENABLED=${enabled}`;
+            }
             return line;
         });
         
@@ -1112,11 +1118,15 @@ app.post('/api/config/palantir', checkAdminAuth, express.json(), async (req, res
         if (!hasToken) {
             lines.push(`PALANTIR_API_TOKEN=${token}`);
         }
+        if (!hasEnabled) {
+            lines.push(`PALANTIR_ENABLED=${enabled}`);
+        }
         
         fs.writeFileSync(envPath, lines.join('\n'), 'utf8');
         
         process.env.PALANTIR_API_URL = url;
         process.env.PALANTIR_API_TOKEN = token;
+        process.env.PALANTIR_ENABLED = String(enabled);
         
         res.json({ success: true, message: 'Configurações do Palantir atualizadas com sucesso!' });
     } catch (e) {

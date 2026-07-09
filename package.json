@@ -2,11 +2,11 @@
   "name": "pedidos-vod-mvc",
   "version": "1.0.0",
   "description": "Painel VOD Premium - MVC",
-  "main": "server.js",
   "type": "module",
   "scripts": {
     "start": "node server.js",
-    "dev": "node --watch server.js"
+    "dev": "node --watch server.js",
+    "obfuscate": "node build-obfuscated.js"
   },
   "dependencies": {
     "bcryptjs": "^2.4.3",
