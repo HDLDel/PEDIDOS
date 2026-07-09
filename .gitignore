@@ -28,4 +28,4 @@ deploy.py
 doc/planologuin.md
 
 # Build output (obfuscated code)
-dist/
+PEDIDOS/

@@ -6,7 +6,7 @@ import { fileURLToPath } from 'url';
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 
 const ROOT = __dirname;
-const DIST = path.join(ROOT, 'dist');
+const DIST = path.join(ROOT, 'PEDIDOS');
 const OBFUSCATOR = 'javascript-obfuscator';
 
 const JS_FILES = [
@@ -131,5 +131,5 @@ for (const file of MODEL_FILES) {
   execSync(`${OBFUSCATOR} ${src} --output ${dst} ${modelOpts.join(' ')}`, { stdio: 'inherit' });
 }
 
-console.log('\nDone! Obfuscated files in dist/');
-console.log('To deploy: copy dist/ to client, run: cd dist && npm install && node server.js');
+console.log('\nDone! Obfuscated files in PEDIDOS/');
+console.log('Copy the PEDIDOS/ folder to the client and run: cd PEDIDOS && npm start');

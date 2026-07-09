@@ -6,7 +6,7 @@
   "scripts": {
     "start": "node server.js",
     "dev": "node --watch server.js",
-    "obfuscate": "node build-obfuscated.js"
+    "obfuscate": "python3 build-obfuscated.py"
   },
   "dependencies": {
     "bcryptjs": "^2.4.3",
