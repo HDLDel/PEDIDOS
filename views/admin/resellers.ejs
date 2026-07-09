@@ -77,6 +77,9 @@
         <header>
             <h1><i class="fas fa-users-cog"></i> Gestão de Revendedores</h1>
             <div style="display: flex; align-items: center; gap: 15px;">
+                <button class="btn-back" style="background: var(--accent-red); border: none; cursor: pointer; display: flex; align-items: center; gap: 5px;" onclick="clearAllRequests()">
+                    <i class="fas fa-trash-alt"></i> Limpar Todos os Pedidos
+                </button>
                 <button id="themeToggleBtn" style="background: transparent; border: none; color: var(--text-primary); font-size: 1.15rem; cursor: pointer; display: inline-flex; align-items: center; justify-content: center; width: 35px; height: 35px; border-radius: 50%; transition: background 0.3s;" onclick="toggleTheme()" title="Alternar Tema">
                     <i class="fas fa-sun" id="themeIcon" style="color: #f59e0b;"></i>
                 </button>
@@ -188,6 +191,22 @@
                 const res = await fetch(`/api/resellers/${id}/requests`, { method: 'DELETE' });
                 if (res.ok) { location.reload(); } else { alert('Erro ao limpar pedidos.'); }
             } catch (e) { alert('Erro na comunicação.'); }
+        }
+
+        async function clearAllRequests() {
+            if (!confirm("ATENÇÃO: Deseja apagar TODOS os pedidos de TODOS os revendedores?\nEsta ação é irreversível!")) return;
+            if (!confirm("Tem certeza absoluta? Isso limpará toda a base de pedidos.")) return;
+            
+            try {
+                const res = await fetch('/api/requests/all', { method: 'DELETE' });
+                if (res.ok) {
+                    location.reload();
+                } else {
+                    alert('Erro ao limpar todos os pedidos.');
+                }
+            } catch (e) {
+                alert('Erro na comunicação com o servidor.');
+            }
         }
 
         async function deleteReseller(id, name) {

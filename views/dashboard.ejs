@@ -187,6 +187,10 @@
             color: #3b82f6;
         }
 
+        .settings-card.m3u-card i {
+            color: #f59e0b;
+        }
+
         .settings-section-container {
             max-height: 0;
             overflow: hidden;
@@ -1035,8 +1039,8 @@
                 <i class="fas fa-robot"></i> <span>OFFLINE</span>
             </div>
             <button id="m3uSyncBtn" class="whatsapp-status-btn wa-m3u"
-                style="border: none; cursor: pointer; text-decoration: none;" onclick="openM3uModal()">
-                <i class="fas fa-list-ul"></i> <span>M3U PLAYLIST</span>
+                style="border: none; cursor: pointer; text-decoration: none;" onclick="startM3uSyncHeader()">
+                <i class="fas fa-list-ul"></i> <span>M3U</span>
             </button>
             <button id="configMenuBtn" class="whatsapp-status-btn"
                 style="border: 1px solid var(--border); background: var(--bg-card); cursor: pointer; text-decoration: none; color: var(--text-primary);" onclick="openSettingsModal()">
@@ -1402,50 +1406,7 @@
         </div>
     </div>
 
-    <!-- Modal de Playlist M3U -->
-    <div id="m3uModal" class="modal-overlay" style="z-index: 3150;">
-        <div class="modal-content" style="max-width: 700px; width: 95%;">
-            <h3 class="modal-header"
-                style="color: #fff; margin-bottom: 8px; font-weight: 700; display: flex; align-items: center; gap: 10px; border-bottom: none; padding-bottom: 0;">
-                <i class="fas fa-list-ul" style="color: #3b82f6;"></i> Sincronizar Playlist M3U
-            </h3>
 
-            <div
-                style="background: #0d0d0d; border: 1px solid var(--border); padding: 12px; border-radius: 8px; margin-bottom: 0.6rem; font-size: 0.9rem;">
-                <p style="margin-bottom: 4px; color: #aaa;"><strong>Última Sincronização:</strong> <span
-                        id="m3uLastSync" style="color: #fff;">Carregando...</span></p>
-                <p style="margin-bottom: 4px; color: #aaa;"><strong>Estatísticas:</strong> <span id="m3uStats"
-                        style="color: #fff;">Carregando...</span></p>
-            </div>
-
-            <div style="margin-bottom: 8px;">
-                <label for="m3uSourceInput"
-                    style="display: block; font-size: 0.9rem; color: #ccc; margin-bottom: 6px; font-weight: 600;">Link
-                    da Playlist M3U ou Caminho do Arquivo:</label>
-                <input type="text" id="m3uSourceInput"
-                    style="width: 100%; background: #000; border: 1px solid #333; border-radius: 8px; color: #fff; padding: 12px; font-family: inherit; font-size: 0.9rem;"
-                    placeholder="http://exemplo.com/lista.m3u ou exemplo.m3u">
-            </div>
-
-            <div id="m3uLoadingMsg"
-                style="display: none; align-items: center; gap: 10px; color: #f59e0b; font-size: 0.9rem; margin-bottom: 20px;">
-                <i class="fas fa-spinner fa-spin"></i> <span>Processando playlist M3U... Isso pode demorar alguns
-                    segundos.</span>
-            </div>
-
-            <div style="display: flex; justify-content: flex-end; gap: 10px;">
-                <button class="btn"
-                    style="background: #333; color: #fff; padding: 10px 20px; border-radius: 8px; font-weight: 600; cursor: pointer;"
-                    onclick="closeM3uModal()">FECHAR</button>
-                <button class="btn"
-                    style="background: #dc2626; color: #fff; border: none; padding: 10px 20px; border-radius: 8px; font-weight: 600; cursor: pointer;"
-                    id="m3uClearBtn" onclick="runM3uClear()">LIMPAR LISTA</button>
-                <button class="btn"
-                    style="background: #2563eb; color: #fff; border: none; padding: 10px 20px; border-radius: 8px; font-weight: 600; cursor: pointer;"
-                    id="m3uSyncConfirmBtn" onclick="runM3uSync()">SINCRONIZAR AGORA</button>
-            </div>
-        </div>
-    </div>
 
     <!-- Modal de Detalhes M3U -->
     <div id="m3uDetailsModal" class="modal-overlay" style="z-index: 3200; display: none;">
@@ -1500,6 +1461,12 @@
                     <i class="fas fa-robot"></i>
                     <h4>BotBot API</h4>
                     <p>Configure as credenciais e envie notificações via BotBot.</p>
+                </div>
+                <!-- Card Playlist M3U -->
+                <div class="settings-card m3u-card" onclick="toggleSettingsSection('m3uConfigSection')">
+                    <i class="fas fa-list-ul"></i>
+                    <h4>Playlist M3U</h4>
+                    <p>Sincronize ou limpe os dados da playlist M3U importada.</p>
                 </div>
                 <!-- Card Revendas -->
                 <a href="/admin/resellers" class="settings-card reseller-card" style="text-decoration: none;">
@@ -1606,6 +1573,32 @@
                         <button class="btn" id="bbConfigTestBtn" style="background: #10b981; color: #fff; border: none; padding: 8px 16px; border-radius: 8px; font-weight: 600; cursor: pointer; font-size: 0.85rem; display: flex; align-items: center; gap: 5px;" onclick="testBbConnection()"><i class="fas fa-vial"></i> Testar</button>
                     </div>
                     <div id="bbConfigTestResult" style="display: none; padding: 10px; border-radius: 8px; font-size: 0.8rem; text-align: left; word-break: break-all;"></div>
+                </div>
+            </div>
+
+            <!-- Seção Expansível para Configuração da Playlist M3U -->
+            <div id="m3uConfigSection" class="settings-section-container">
+                <h4 style="color: #fff; font-size: 0.95rem; margin-bottom: 15px; font-weight: 600; display: flex; align-items: center; gap: 8px;">
+                    <i class="fas fa-list-ul" style="color: #f59e0b; font-size: 1.15rem;"></i> Playlist M3U
+                </h4>
+                
+                <div style="background: #0d0d0d; border: 1px solid var(--border); padding: 12px; border-radius: 8px; margin-bottom: 15px; font-size: 0.85rem;">
+                    <p style="margin-bottom: 6px; color: #aaa;"><strong>Última Sincronização:</strong> <span id="m3uLastSyncConfig" style="color: #fff;">Carregando...</span></p>
+                    <p style="margin-bottom: 0; color: #aaa;"><strong>Estatísticas:</strong> <span id="m3uStatsConfig" style="color: #fff;">Carregando...</span></p>
+                </div>
+
+                <div style="margin-bottom: 15px;">
+                    <label for="m3uSourceInputConfig" style="display: block; font-size: 0.85rem; color: #aaa; margin-bottom: 6px; font-weight: 600;">Link da Playlist M3U ou Caminho do Arquivo:</label>
+                    <input type="text" id="m3uSourceInputConfig" style="width: 100%; background: #000; border: 1px solid #333; border-radius: 8px; color: #fff; padding: 10px 12px; font-family: inherit; font-size: 0.9rem;" placeholder="http://exemplo.com/lista.m3u ou exemplo.m3u">
+                </div>
+
+                <div id="m3uLoadingMsgConfig" style="display: none; align-items: center; gap: 10px; color: #f59e0b; font-size: 0.85rem; margin-bottom: 15px;">
+                    <i class="fas fa-spinner fa-spin"></i> <span>Processando playlist M3U... Isso pode demorar alguns segundos.</span>
+                </div>
+
+                <div style="display: flex; justify-content: flex-end; gap: 10px; margin-bottom: 10px;">
+                    <button class="btn" style="background: #ef4444; color: #fff; border: none; padding: 8px 16px; border-radius: 8px; font-weight: 600; cursor: pointer; transition: background 0.2s;" id="m3uClearBtnConfig" onclick="runM3uClearConfig()">LIMPAR LISTA</button>
+                    <button class="btn" style="background: #2563eb; color: #fff; border: none; padding: 8px 16px; border-radius: 8px; font-weight: 600; cursor: pointer; transition: background 0.2s;" id="m3uSyncConfirmBtnConfig" onclick="runM3uSyncConfig()">SINCRONIZAR AGORA</button>
                 </div>
             </div>
 
@@ -1727,93 +1720,54 @@
         let activeStatus = 'pending';
         let checkStatusInterval = null;
 
-        async function openM3uModal() {
-            document.getElementById('m3uModal').style.display = 'flex';
-            document.getElementById('m3uLoadingMsg').style.display = 'none';
-            document.getElementById('m3uSyncConfirmBtn').disabled = false;
-
-            // Buscar status atual do servidor
+        async function startM3uSyncHeader() {
+            const btn = document.getElementById('m3uSyncBtn');
+            const btnText = btn.querySelector('span');
+            const btnIcon = btn.querySelector('i');
+            
+            if (btn.disabled) return;
+            
+            if (!confirm('Deseja iniciar a sincronização da Playlist M3U agora?')) return;
+            
+            btn.disabled = true;
+            btnText.innerText = 'SINCRONIZANDO...';
+            btnIcon.className = 'fas fa-spinner fa-spin';
+            
             try {
-                const res = await fetch('/api/m3u/status');
-                const data = await res.json();
-                if (data.success) {
-                    document.getElementById('m3uSourceInput').value = data.source || 'exemplo.m3u';
-                    document.getElementById('m3uLastSync').innerText = data.lastSync || 'Nunca sincronizado';
-                    if (data.stats && typeof data.stats.movies !== 'undefined') {
-                        document.getElementById('m3uStats').innerText = `${data.stats.movies} filmes, ${data.stats.series} séries`;
-                    } else {
-                        document.getElementById('m3uStats').innerText = 'Sem dados de estatísticas';
-                    }
+                const resStatus = await fetch('/api/m3u/status');
+                const dataStatus = await resStatus.json();
+                
+                if (!dataStatus.success || !dataStatus.source) {
+                    alert('Nenhuma URL de Playlist M3U configurada! Por favor, configure primeiro no menu de Configurações.');
+                    btn.disabled = false;
+                    btnText.innerText = 'M3U';
+                    btnIcon.className = 'fas fa-list-ul';
+                    return;
                 }
-            } catch (e) {
-                console.error("Erro ao obter status M3U:", e);
-            }
-        }
-
-        function closeM3uModal() {
-            document.getElementById('m3uModal').style.display = 'none';
-        }
-
-        async function runM3uSync() {
-            const source = document.getElementById('m3uSourceInput').value.trim();
-            if (!source) {
-                alert('Por favor, informe a URL ou caminho da playlist.');
-                return;
-            }
-
-            const confirmBtn = document.getElementById('m3uSyncConfirmBtn');
-            const loadingMsg = document.getElementById('m3uLoadingMsg');
-
-            confirmBtn.disabled = true;
-            loadingMsg.style.display = 'flex';
-
-            try {
-                const res = await fetch('/api/m3u/sync', {
+                
+                const source = dataStatus.source;
+                
+                const resSync = await fetch('/api/m3u/sync', {
                     method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json'
-                    },
+                    headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({ source })
                 });
-                const data = await res.json();
-                if (data.success) {
+                
+                const dataSync = await resSync.json();
+                if (dataSync.success) {
                     alert('Sincronização M3U concluída com sucesso! A página será recarregada.');
-                    window.location.reload();
+                    location.reload();
                 } else {
-                    alert('Erro na sincronização: ' + (data.error || 'Erro desconhecido'));
-                    confirmBtn.disabled = true;
-                    confirmBtn.disabled = false;
-                    loadingMsg.style.display = 'none';
+                    alert('Erro na sincronização: ' + (dataSync.error || 'Erro desconhecido'));
+                    btn.disabled = false;
+                    btnText.innerText = 'M3U';
+                    btnIcon.className = 'fas fa-list-ul';
                 }
-            } catch (e) {
-                alert('Falha crítica na sincronização: ' + e.message);
-                confirmBtn.disabled = false;
-                loadingMsg.style.display = 'none';
-            }
-        }
-
-        async function runM3uClear() {
-            if (!confirm('Deseja realmente limpar todos os dados importados da M3U? Isso removerá o indicador de presença dos pedidos.')) return;
-            const clearBtn = document.getElementById('m3uClearBtn');
-            clearBtn.disabled = true;
-            try {
-                const res = await fetch('/api/m3u/clear', {
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json'
-                    }
-                });
-                const data = await res.json();
-                if (data.success) {
-                    alert('Dados da M3U limpos com sucesso! A página será recarregada.');
-                    window.location.reload();
-                } else {
-                    alert('Erro ao limpar dados: ' + (data.error || 'Erro desconhecido'));
-                    clearBtn.disabled = false;
-                }
-            } catch (e) {
-                alert('Falha crítica ao limpar dados: ' + e.message);
-                clearBtn.disabled = false;
+            } catch (err) {
+                alert('Falha na comunicação com o servidor: ' + err.message);
+                btn.disabled = false;
+                btnText.innerText = 'M3U';
+                btnIcon.className = 'fas fa-list-ul';
             }
         }
 
@@ -3110,7 +3064,7 @@
         // --- CONFIGURAÇÃO GERAL MODAL (POPUP) ---
         function openSettingsModal() {
             // Fechar todas as seções por padrão
-            const sections = ['palantirConfigSection', 'whatsappConfigSection', 'botbotConfigSection'];
+            const sections = ['palantirConfigSection', 'whatsappConfigSection', 'botbotConfigSection', 'm3uConfigSection'];
             sections.forEach(id => {
                 const el = document.getElementById(id);
                 if (el) el.classList.remove('open');
@@ -3138,7 +3092,7 @@
         }
 
         function toggleSettingsSection(sectionId) {
-            const sections = ['palantirConfigSection', 'whatsappConfigSection', 'botbotConfigSection'];
+            const sections = ['palantirConfigSection', 'whatsappConfigSection', 'botbotConfigSection', 'm3uConfigSection'];
             sections.forEach(id => {
                 const el = document.getElementById(id);
                 if (!el) return;
@@ -3153,10 +3107,90 @@
                     if (id === 'botbotConfigSection' && el.classList.contains('open')) {
                         loadBotBotConfig();
                     }
+                    if (id === 'm3uConfigSection' && el.classList.contains('open')) {
+                        loadM3uConfig();
+                    }
                 } else {
                     el.classList.remove('open');
                 }
             });
+        }
+
+        // --- FUNÇÕES M3U PLAYLIST ---
+        async function loadM3uConfig() {
+            try {
+                const res = await fetch('/api/m3u/status');
+                const data = await res.json();
+                if (data.success) {
+                    document.getElementById('m3uSourceInputConfig').value = data.source || 'exemplo.m3u';
+                    document.getElementById('m3uLastSyncConfig').innerText = data.lastSync || 'Nunca sincronizado';
+                    if (data.stats && typeof data.stats.movies !== 'undefined') {
+                        document.getElementById('m3uStatsConfig').innerText = `${data.stats.movies} filmes, ${data.stats.series} séries`;
+                    } else {
+                        document.getElementById('m3uStatsConfig').innerText = 'Sem dados de estatísticas';
+                    }
+                }
+            } catch (e) {
+                console.error("Erro ao obter status M3U:", e);
+            }
+        }
+
+        async function runM3uSyncConfig() {
+            const source = document.getElementById('m3uSourceInputConfig').value.trim();
+            if (!source) {
+                alert('Por favor, informe a URL ou caminho da playlist.');
+                return;
+            }
+
+            const confirmBtn = document.getElementById('m3uSyncConfirmBtnConfig');
+            const loadingMsg = document.getElementById('m3uLoadingMsgConfig');
+
+            confirmBtn.disabled = true;
+            loadingMsg.style.display = 'flex';
+
+            try {
+                const res = await fetch('/api/m3u/sync', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ source })
+                });
+                const data = await res.json();
+                if (data.success) {
+                    alert('Sincronização M3U concluída com sucesso! A página será recarregada.');
+                    window.location.reload();
+                } else {
+                    alert('Erro na sincronização: ' + (data.error || 'Erro desconhecido'));
+                    confirmBtn.disabled = false;
+                    loadingMsg.style.display = 'none';
+                }
+            } catch (e) {
+                alert('Falha crítica na sincronização: ' + e.message);
+                confirmBtn.disabled = false;
+                loadingMsg.style.display = 'none';
+            }
+        }
+
+        async function runM3uClearConfig() {
+            if (!confirm('Deseja realmente limpar todos os dados importados da M3U? Isso removerá o indicador de presença dos pedidos.')) return;
+            const clearBtn = document.getElementById('m3uClearBtnConfig');
+            clearBtn.disabled = true;
+            try {
+                const res = await fetch('/api/m3u/clear', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' }
+                });
+                const data = await res.json();
+                if (data.success) {
+                    alert('Dados da M3U limpos com sucesso! A página será recarregada.');
+                    window.location.reload();
+                } else {
+                    alert('Erro ao limpar dados: ' + (data.error || 'Erro desconhecido'));
+                    clearBtn.disabled = false;
+                }
+            } catch (e) {
+                alert('Falha crítica ao limpar dados: ' + e.message);
+                clearBtn.disabled = false;
+            }
         }
 
         function savePalantirConfig() {
