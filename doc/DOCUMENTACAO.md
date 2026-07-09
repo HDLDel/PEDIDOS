@@ -77,17 +77,22 @@ PEDIDOS/
   │   ├── snippets/
   │   └── mime.types
   │
+  ├── INSTALL.md             → Guia de instalação passo a passo
+  ├── README.md              → README principal
+  │
   ├── doc/
-  │   └── DOCUMENTACAO.md    → Este arquivo
+  │   ├── DOCUMENTACAO.md    → Este arquivo
+  │   ├── inicio.md          → Mapa do projeto
+  │   ├── API.md             → Endpoints REST
+  │   ├── ARQUITETURA.md     → Estrutura do código
+  │   ├── M3U.md             → Guia playlist M3U
+  │   ├── BOTBOT_SETUP.md    → API BotBot.chat
+  │   ├── NOTIFICACAO.md     → Sistema de notificações
+  │   ├── INDEX.md           → Índice da documentação
+  │   ├── REGRAS_SKILLS.md   → Regras para IAs
+  │   └── proxxyreverso.txt  → Guia proxy reverso Nginx
   │
-  ├── skills/                → Skills para IA (opencode, universal, etc)
-  │
-  ├── inicio.md              → Mapa do projeto
-  ├── readme.md              → README principal
-  ├── M3U.md                 → Doc playlist M3U
-  ├── BOTBOT_SETUP.md        → Doc integração BotBot
-  ├── proxxyreverso.txt      → Guia proxy reverso Nginx
-  └── session-ses_108b.md    → Log de sessão anterior
+  └── skills/                → Skills para IA (opencode, universal, etc)
 ```
 
 ---
@@ -194,12 +199,15 @@ bash nginx/control.sh start
 
 | Arquivo | Conteúdo |
 |---------|----------|
-| `inicio.md` | Mapa do projeto (stack, estrutura, API, comandos) |
-| `readme.md` | Instalação Windows/Linux, stack, tecnologias |
-| `M3U.md` | Guia de parsing, normalização e cruzamento de M3U |
-| `BOTBOT_SETUP.md` | API v2 BotBot.chat (endpoints, payloads, credenciais) |
-| `proxxyreverso.txt` | Configuração Nginx proxy reverso + Cloudflare Worker |
-| `package.json` | Dependências: express, better-sqlite3, bcryptjs, ejs, whatsapp-web.js |
+| `INSTALL.md` | Guia de instalação passo a passo |
+| `README.md` | README principal |
+| `doc/inicio.md` | Mapa do projeto (stack, estrutura, API, comandos) |
+| `doc/API.md` | Endpoints REST |
+| `doc/ARQUITETURA.md` | Estrutura do código e fluxo de dados |
+| `doc/M3U.md` | Guia de parsing, normalização e cruzamento de M3U |
+| `doc/BOTBOT_SETUP.md` | API v2 BotBot.chat (endpoints, payloads, credenciais) |
+| `doc/NOTIFICACAO.md` | Sistema de notificação (BotBot + WhatsApp) |
+| `doc/proxxyreverso.txt` | Configuração Nginx proxy reverso + Cloudflare Worker |
 
 ---
 

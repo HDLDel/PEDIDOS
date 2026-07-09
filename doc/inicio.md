@@ -32,11 +32,9 @@ PEDIDOS/
   ├── whatsapp-server.js     → Servidor WhatsApp standalone
   ├── whatsapp-worker.js     → Worker WhatsApp
   ├── test_render.js         → Teste renderizacao
+  ├── INSTALL.md             → Guia de instalacao passo a passo
   ├── setup-ubuntu.sh        → Instalacao dependencias Ubuntu
   ├── secure-vps.sh          → Seguranca VPS
-  ├── salvar.bat             → Backup Windows
-  ├── M3U.md                 → Doc playlist M3U
-  ├── BOTBOT_SETUP.md        → Doc integracao BotBot
   │
   ├── models/
   │   ├── RequestModel.js    → CRUD pedidos + stats + busca
@@ -70,14 +68,26 @@ PEDIDOS/
   ├── data/
   │   └── vod.sqlite         → Banco SQLite (criado automaticamente)
   │
-  └── nginx/
-      ├── terceiro-nginx.conf    → Config nginx separado (porta 8900)
-      ├── control.sh             → Helper start/stop/reload
-      ├── nginx.conf
-      ├── sites-available/   → Legado
-      ├── sites-enabled/
-      ├── snippets/
-      └── mime.types
+  ├── nginx/
+  │   ├── terceiro-nginx.conf    → Config nginx separado (porta 8900)
+  │   ├── control.sh             → Helper start/stop/reload
+  │   ├── nginx.conf
+  │   ├── sites-available/   → Legado
+  │   ├── sites-enabled/
+  │   ├── snippets/
+  │   └── mime.types
+  │
+  └── doc/
+      ├── API.md             → Endpoints REST
+      ├── ARQUITETURA.md     → Estrutura do codigo
+      ├── BOTBOT_SETUP.md    → API BotBot.chat
+      ├── DOCUMENTACAO.md    → Documentacao completa
+      ├── INDEX.md           → Indice da documentacao
+      ├── inicio.md          → Este arquivo
+      ├── M3U.md             → Guia playlist M3U
+      ├── NOTIFICACAO.md     → Sistema de notificacoes
+      ├── REGRAS_SKILLS.md   → Regras para IAs
+      └── proxxyreverso.txt  → Guia proxy reverso Nginx
 ```
 
 ## Funcionalidades Principais

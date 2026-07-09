@@ -777,6 +777,12 @@ app.get('/api/botbot/status', checkAdminAuth, async (req, res) => {
     res.json(status);
 });
 
+// API - Obter Configurações do BotBot
+app.get('/api/botbot/config', checkAdminAuth, (req, res) => {
+    const creds = BotBotService.getCredentials();
+    res.json(creds);
+});
+
 // API - Configurar BotBot
 app.post('/api/botbot/config', checkAdminAuth, (req, res) => {
     const { appKey, authKey } = req.body;

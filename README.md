@@ -45,42 +45,16 @@ Você precisará de **duas janelas** do terminal abertas:
 
 ---
 
-## 🐧 3. Como instalar no Linux (VPS Ubuntu Server)
+## 🐧 3. Instalação no Linux (VPS Ubuntu Server)
 
-O sistema roda totalmente via linha de comando (**sem necessidade de interface gráfica/desktop**). 
-1. **Prepare o sistema**: O Ubuntu Server precisa de algumas bibliotecas básicas para que o navegador interno funcione em modo "oculto" (headless). Use o script que preparamos:
-   ```bash
-   chmod +x setup-ubuntu.sh
-   ./setup-ubuntu.sh
-   ```
-2. **Instale as dependências do Node**:
-   ```bash
-   npm install
-   ```
-
-### Como Rodar no Linux (com PM2):
-Para que o sistema não desligue quando você fechar o terminal, usamos o **PM2**:
-
-1. **Iniciar o Site:**
-   ```bash
-   pm2 start server.js --name "dashboard"
-   ```
-2. **Iniciar o Motor do WhatsApp:**
-   ```bash
-   pm2 start whatsapp-server.js --name "whatsapp-motor"
-   ```
-3. **Salvar para ligar junto com o PC:**
-   ```bash
-   pm2 save
-   pm2 startup
-   ```
+Consulte o guia completo em [`INSTALL.md`](INSTALL.md) na raiz do projeto.
 
 ---
 
 ## 🚀 4. Como acessar
 
-*   **Painel Administrativo:** `http://IP_DA_SUA_VPS:8080/admin/login`
-*   **Portal do Revendedor:** `http://IP_DA_SUA_VPS:8080/revenda/login`
+*   **Painel Administrativo:** `http://IP_DA_SUA_VPS:8901/admin/login`
+*   **Portal do Revendedor:** `http://IP_DA_SUA_VPS:8901/revenda/login`
 *   **Conexão do WhatsApp:** Após logar no Admin, clique no ícone do WhatsApp no topo para escanear o QR Code.
 
 ---
@@ -92,7 +66,7 @@ Para que o sistema não desligue quando você fechar o terminal, usamos o **PM2*
 *   No **Linux**: Rode `pm2 restart whatsapp-motor`.
 
 **O WhatsApp não conecta:**
-*   Verifique se o seu servidor do WhatsApp (Porta 8880) está ligado.
+*   Verifique se o seu servidor do WhatsApp (Porta 8902) está ligado.
 *   Certifique-se de que a pasta `.wwebjs_auth` tem permissão de escrita.
 
 ---
@@ -136,19 +110,4 @@ O sistema foi construído utilizando tecnologias modernas de back-end e front-en
 
 ```
 
-### O que este README faz:
-1.  **Simplifica a Instalação**: Traduz termos técnicos para ações simples como "Abra o terminal" ou "Baixe do site oficial".
-2.  **Explica a Arquitetura**: Deixa claro que existem dois serviços que precisam rodar juntos.
-3.  **Dá autonomia na VPS**: Inclui os comandos do PM2, que são essenciais para quem vai hospedar o sistema de verdade.
-4.  **Resolve Erros Comuns**: Já traz a solução para o erro de "Navegador travado" que estávamos discutindo.
-
-Basta salvar esse conteúdo em um arquivo chamado `README.md` na raiz do seu projeto!
-
-<!--
-[PROMPT_SUGGESTION]Crie um arquivo start_all.bat para Windows que abre as duas janelas automaticamente com um clique[/PROMPT_SUGGESTION]
-[PROMPT_SUGGESTION]Adicione uma seção no README explicando como configurar o Nginx para usar um domínio (ex: painel.meusite.com)[/PROMPT_SUGGESTION]
-->
-
-
-
-> Consulte `proxxyreverso.txt` para configuracao de proxy reverso Nginx e Cloudflare Worker.
+> Consulte [`INSTALL.md`](INSTALL.md) para instalação completa.

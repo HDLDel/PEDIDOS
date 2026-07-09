@@ -31,6 +31,10 @@ Se o comando modificar arquivos de configuração, instalar software, alterar pe
 4. **APLIQUE E DOCUMENTE:** Após a autorização, aplique a mudança.
 5. **MENSAGEM DE COMMIT:** Após aplicar a alteração, forneça sempre um resumo conciso das mudanças (pronto para ser usado como mensagem de commit no Git).
 
+## 🚫 POLUIÇÃO DE CHAT
+
+**PROIBIDO** exibir blocos de código (```) no chat. Use as ferramentas de edição (`write`/`edit`) para alterar arquivos e as ferramentas de leitura (`Read`/`Grep`/`Glob`) para exibir conteúdo. Chat é apenas para explicações, diagnósticos e comandos curtos.
+
 ---
 
 # SKILLS DISPONIVEIS

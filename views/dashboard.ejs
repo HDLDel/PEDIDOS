@@ -179,6 +179,14 @@
             line-height: 1.3;
         }
 
+        .settings-card.whatsapp-card i {
+            color: #10b981;
+        }
+
+        .settings-card.botbot-card i {
+            color: #3b82f6;
+        }
+
         .settings-section-container {
             max-height: 0;
             overflow: hidden;
@@ -187,11 +195,41 @@
         }
 
         .settings-section-container.open {
-            max-height: 400px;
+            max-height: 1200px;
             opacity: 1;
             margin-top: 15px;
             border-top: 1px solid var(--border);
             padding-top: 15px;
+        }
+
+        .status-badge {
+            display: inline-block;
+            padding: 4px 12px;
+            border-radius: 50px;
+            font-weight: 800;
+            font-size: 0.75rem;
+            text-transform: uppercase;
+            border: 1px solid transparent;
+        }
+        .status-badge.status-disconnected, .status-badge.status-off {
+            background: rgba(239, 68, 68, 0.1);
+            color: #ef4444;
+            border-color: #ef4444;
+        }
+        .status-badge.status-qr {
+            background: rgba(245, 158, 11, 0.1);
+            color: #f59e0b;
+            border-color: #f59e0b;
+        }
+        .status-badge.status-ready, .status-badge.status-on, .status-badge.status-connected {
+            background: rgba(16, 185, 129, 0.1);
+            color: #10b981;
+            border-color: #10b981;
+        }
+        .status-badge.status-loading, .status-badge.status-authenticated {
+            background: rgba(59, 130, 246, 0.1);
+            color: #3b82f6;
+            border-color: #3b82f6;
         }
 
         /* Glassmorphism generic overlays */
@@ -990,13 +1028,12 @@
             <h2 style="color: var(--accent-red);">IMPERIO <span style="color: white;">APPS</span></h2>
         </div>
         <div class="user-info" style="display: flex; align-items: center; gap: 20px;">
-            <a href="/admin/whatsapp" id="waStatusBtn" class="whatsapp-status-btn wa-off"
-                style="text-decoration: none;">
+            <div id="waStatusBtn" class="whatsapp-status-btn wa-off" style="cursor: default;">
                 <i class="fab fa-whatsapp"></i> <span>OFFLINE</span>
-            </a>
-            <a href="/admin/botbot" id="bbStatusBtn" class="whatsapp-status-btn wa-off" style="text-decoration: none;">
-                <i class="fas fa-robot"></i> <span>BOTBOT</span>
-            </a>
+            </div>
+            <div id="bbStatusBtn" class="whatsapp-status-btn wa-off" style="cursor: default;">
+                <i class="fas fa-robot"></i> <span>OFFLINE</span>
+            </div>
             <button id="m3uSyncBtn" class="whatsapp-status-btn wa-m3u"
                 style="border: none; cursor: pointer; text-decoration: none;" onclick="openM3uModal()">
                 <i class="fas fa-list-ul"></i> <span>M3U PLAYLIST</span>
@@ -1447,10 +1484,22 @@
             <!-- Grid de Opções Principais -->
             <div class="settings-grid">
                 <!-- Card Palantir -->
-                <div class="settings-card" onclick="togglePalantirSection()">
+                <div class="settings-card" onclick="toggleSettingsSection('palantirConfigSection')">
                     <i class="fas fa-server"></i>
                     <h4>Integração Palantir</h4>
                     <p>Configure a URL e o token de acesso à API do Palantir VOD.</p>
+                </div>
+                <!-- Card WhatsApp Local -->
+                <div class="settings-card whatsapp-card" onclick="toggleSettingsSection('whatsappConfigSection')">
+                    <i class="fab fa-whatsapp"></i>
+                    <h4>WhatsApp Local</h4>
+                    <p>Gerencie a conexão e escaneie o QR Code do WhatsApp local.</p>
+                </div>
+                <!-- Card BotBot -->
+                <div class="settings-card botbot-card" onclick="toggleSettingsSection('botbotConfigSection')">
+                    <i class="fas fa-robot"></i>
+                    <h4>BotBot API</h4>
+                    <p>Configure as credenciais e envie notificações via BotBot.</p>
                 </div>
                 <!-- Card Revendas -->
                 <a href="/admin/resellers" class="settings-card reseller-card" style="text-decoration: none;">
@@ -1463,7 +1512,7 @@
             <!-- Seção Expansível para Configuração do Palantir -->
             <div id="palantirConfigSection" class="settings-section-container">
                 <h4 style="color: #fff; font-size: 0.95rem; margin-bottom: 15px; font-weight: 600; display: flex; align-items: center; gap: 8px;">
-                    <i class="fas fa-key" style="color: #f59e0b; font-size: 1rem;"></i> Credenciais da API
+                    <i class="fas fa-key" style="color: #f59e0b; font-size: 1rem;"></i> Credenciais da API Palantir
                 </h4>
                 
                 <div style="margin-bottom: 12px;">
@@ -1491,6 +1540,72 @@
                     <button class="btn"
                         style="background: #ef4444; color: #fff; border: none; padding: 8px 16px; border-radius: 8px; font-weight: 600; cursor: pointer; transition: background 0.2s;"
                         onclick="savePalantirConfig()">SALVAR CONFIGURAÇÃO</button>
+                </div>
+            </div>
+
+            <!-- Seção Expansível para Configuração do WhatsApp Local -->
+            <div id="whatsappConfigSection" class="settings-section-container">
+                <h4 style="color: #fff; font-size: 0.95rem; margin-bottom: 15px; font-weight: 600; display: flex; align-items: center; justify-content: space-between; gap: 8px;">
+                    <span style="display: flex; align-items: center; gap: 8px;">
+                        <i class="fab fa-whatsapp" style="color: #10b981; font-size: 1.15rem;"></i> Conexão WhatsApp Local
+                    </span>
+                    <span id="waConfigStatusBadge" class="status-badge status-disconnected" style="margin-bottom: 0;">Aguardando...</span>
+                </h4>
+                
+                <p id="waConfigStatusDesc" style="color: var(--text-muted); font-size: 0.85rem; margin-bottom: 15px; line-height: 1.4;">Iniciando serviço...</p>
+                
+                <div style="text-align: center; margin: 15px 0;">
+                    <div id="waConfigQrContainer" style="background: white; padding: 15px; border-radius: 12px; display: inline-flex; align-items: center; justify-content: center; min-width: 200px; min-height: 200px; box-shadow: 0 4px 12px rgba(0,0,0,0.15);">
+                        <div style="color: #000; font-weight: 600; font-size: 0.9rem;"><i class="fas fa-spinner fa-spin"></i> Preparando navegador...</div>
+                    </div>
+                </div>
+
+                <div style="display: flex; gap: 10px; justify-content: center; flex-wrap: wrap; margin-bottom: 10px;">
+                    <button class="btn" style="background: #333; color: #fff; border: none; padding: 8px 16px; border-radius: 8px; font-weight: 600; cursor: pointer; display: flex; align-items: center; gap: 5px; font-size: 0.85rem;" onclick="resetWaConnection()"><i class="fas fa-sync-alt"></i> Reiniciar</button>
+                    <button class="btn" style="background: #ef4444; color: #fff; border: none; padding: 8px 16px; border-radius: 8px; font-weight: 600; cursor: pointer; display: flex; align-items: center; gap: 5px; font-size: 0.85rem;" onclick="logoutWaConnection()"><i class="fas fa-power-off"></i> Desconectar</button>
+                    <button class="btn" style="background: #3b82f6; color: #fff; border: none; padding: 8px 16px; border-radius: 8px; font-weight: 600; cursor: pointer; display: flex; align-items: center; gap: 5px; font-size: 0.85rem;" onclick="resendAllWaNotifications()"><i class="fas fa-paper-plane"></i> Reenviar Tudo</button>
+                </div>
+            </div>
+
+            <!-- Seção Expansível para Configuração do BotBot -->
+            <div id="botbotConfigSection" class="settings-section-container">
+                <h4 style="color: #fff; font-size: 0.95rem; margin-bottom: 15px; font-weight: 600; display: flex; align-items: center; justify-content: space-between; gap: 8px;">
+                    <span style="display: flex; align-items: center; gap: 8px;">
+                        <i class="fas fa-robot" style="color: #3b82f6; font-size: 1.15rem;"></i> Configurações BotBot API
+                    </span>
+                    <span id="bbConfigStatusBadge" class="status-badge status-disconnected" style="margin-bottom: 0;">AGUARDANDO CHAVES</span>
+                </h4>
+                
+                <p style="color: var(--text-muted); font-size: 0.85rem; margin-bottom: 15px; line-height: 1.4;">Insira suas credenciais do BotBot.chat para ativar os disparos automáticos.</p>
+                
+                <div style="margin-bottom: 12px;">
+                    <label style="display: block; font-size: 0.85rem; color: #aaa; margin-bottom: 6px; font-weight: 600;">App Key (Identificador do Bot):</label>
+                    <input type="text" id="bbConfigAppKey" style="width: 100%; background: #000; border: 1px solid #333; border-radius: 8px; color: #fff; padding: 10px 12px; font-family: inherit; font-size: 0.9rem;" placeholder="Ex: <BOTBOT_APP_KEY>">
+                </div>
+
+                <div style="margin-bottom: 15px;">
+                    <label style="display: block; font-size: 0.85rem; color: #aaa; margin-bottom: 6px; font-weight: 600;">Auth Key (Token de Autorização):</label>
+                    <input type="password" id="bbConfigAuthKey" style="width: 100%; background: #000; border: 1px solid #333; border-radius: 8px; color: #fff; padding: 10px 12px; font-family: inherit; font-size: 0.9rem;" placeholder="Token de acesso do BotBot">
+                </div>
+
+                <div style="display: flex; justify-content: flex-end; gap: 10px; margin-bottom: 20px;">
+                    <button class="btn" id="bbConfigSaveBtn" style="background: var(--accent-red); color: #fff; border: none; padding: 8px 16px; border-radius: 8px; font-weight: 600; cursor: pointer; transition: background 0.2s;" onclick="saveBbConfig()">SALVAR CREDENCIAIS</button>
+                </div>
+
+                <div style="border-top: 1px solid rgba(255,255,255,0.05); padding-top: 15px; margin-bottom: 20px;">
+                    <h5 style="color: #fff; font-size: 0.9rem; margin: 0 0 5px 0; font-weight: 600;">Ações em Lote</h5>
+                    <p style="color: var(--text-muted); font-size: 0.8rem; margin: 0 0 10px 0; line-height: 1.3;">Reenviar aos revendedores o status dos últimos 50 pedidos avaliados.</p>
+                    <button class="btn" id="bbConfigResendAllBtn" style="background: #3b82f6; color: #fff; border: none; padding: 8px 16px; border-radius: 8px; font-weight: 600; cursor: pointer; font-size: 0.85rem;" onclick="resendAllBbNotifications()"><i class="fas fa-paper-plane"></i> Reenviar Todas as Notificações</button>
+                </div>
+
+                <div style="border-top: 1px solid rgba(255,255,255,0.05); padding-top: 15px; margin-bottom: 10px;">
+                    <h5 style="color: #fff; font-size: 0.9rem; margin: 0 0 5px 0; font-weight: 600;">Testar Conexão BotBot</h5>
+                    <p style="color: var(--text-muted); font-size: 0.8rem; margin: 0 0 10px 0; line-height: 1.3;">Envia uma mensagem de teste "teste botbot".</p>
+                    <div style="display: flex; gap: 8px; margin-bottom: 10px;">
+                        <input type="text" id="bbConfigTestPhone" value="<TELEFONE>" style="flex: 1; padding: 8px 12px; border-radius: 8px; border: 1px solid #333; background: #000; color: #fff; font-size: 0.9rem;">
+                        <button class="btn" id="bbConfigTestBtn" style="background: #10b981; color: #fff; border: none; padding: 8px 16px; border-radius: 8px; font-weight: 600; cursor: pointer; font-size: 0.85rem; display: flex; align-items: center; gap: 5px;" onclick="testBbConnection()"><i class="fas fa-vial"></i> Testar</button>
+                    </div>
+                    <div id="bbConfigTestResult" style="display: none; padding: 10px; border-radius: 8px; font-size: 0.8rem; text-align: left; word-break: break-all;"></div>
                 </div>
             </div>
 
@@ -1854,7 +1969,36 @@
                 const btnText = btn.querySelector('span');
 
                 btn.className = 'whatsapp-status-btn ' + (data.status === 'ready' ? 'wa-on' : (data.status === 'qr' ? 'wa-qr' : 'wa-off'));
-                btnText.innerText = 'WA LOCAL ' + data.status.toUpperCase();
+                btnText.innerText = data.status.toUpperCase();
+
+                // Atualiza a tela de configuração interna do WhatsApp se a seção estiver aberta
+                const waConfigSection = document.getElementById('whatsappConfigSection');
+                if (waConfigSection && waConfigSection.classList.contains('open')) {
+                    const configBadge = document.getElementById('waConfigStatusBadge');
+                    const configDesc = document.getElementById('waConfigStatusDesc');
+                    const configQrBox = document.getElementById('waConfigQrContainer');
+
+                    if (configBadge) {
+                        configBadge.className = 'status-badge status-' + data.status;
+                        configBadge.innerText = data.status.replace('_', ' ').toUpperCase();
+                    }
+
+                    if (configDesc && configQrBox) {
+                        if (data.status === 'qr' && data.qr) {
+                            configQrBox.innerHTML = `<img src="${data.qr}" alt="QR Code" style="width: 170px; height: 170px; display: block; margin: 0 auto;">`;
+                            configDesc.innerText = "Abra o WhatsApp > Configurações > Dispositivos Conectados e aponte a câmera.";
+                        } else if (data.status === 'ready') {
+                            configQrBox.innerHTML = `<i class="fas fa-check-circle" style="font-size: 5rem; color: #10b981;"></i>`;
+                            configDesc.innerText = "Seu sistema está pronto para enviar as notificações automáticas.";
+                        } else if (data.status === 'loading' || data.status === 'authenticated') {
+                            configQrBox.innerHTML = `<i class="fas fa-spinner fa-spin" style="font-size: 3.5rem; color: #3b82f6;"></i>`;
+                            configDesc.innerText = "Validando sessão e carregando mensagens. Por favor, aguarde.";
+                        } else {
+                            configQrBox.innerHTML = `<i class="fas fa-robot" style="font-size: 3.5rem; color: #444;"></i>`;
+                            configDesc.innerText = "O servidor está iniciando uma nova instância do navegador.";
+                        }
+                    }
+                }
 
                 const resBb = await fetch('/api/botbot/status');
                 const dataBb = await resBb.json();
@@ -1862,11 +2006,25 @@
                 const bbBtnText = bbBtn.querySelector('span');
                 const isReady = dataBb.status === 'ready';
                 bbBtn.className = 'whatsapp-status-btn ' + (isReady ? 'wa-on' : 'wa-off');
-                bbBtnText.innerText = 'BOTBOT ' + (isReady ? 'ONLINE' : 'OFFLINE');
+                bbBtnText.innerText = isReady ? 'ONLINE' : 'OFFLINE';
                 if (dataBb.error) {
                     bbBtn.title = dataBb.error;
                 } else {
                     bbBtn.title = isReady ? 'BotBot conectado' : 'Status desconhecido';
+                }
+
+                // Atualiza a tela de configuração interna do BotBot
+                const bbConfigBadge = document.getElementById('bbConfigStatusBadge');
+                if (bbConfigBadge) {
+                    if (isReady) {
+                        bbConfigBadge.className = 'status-badge status-ready';
+                        bbConfigBadge.innerText = 'CONECTADO';
+                        bbConfigBadge.title = '';
+                    } else {
+                        bbConfigBadge.className = 'status-badge status-disconnected';
+                        bbConfigBadge.innerText = dataBb.status === 'disconnected' && (!dataBb.error || dataBb.error.includes('Aguardando chaves')) ? 'AGUARDANDO CHAVES' : 'DESCONECTADO';
+                        bbConfigBadge.title = dataBb.error || '';
+                    }
                 }
             } catch (e) {
                 console.error("Erro ao verificar status das APIs:", e);
@@ -2951,8 +3109,12 @@
 
         // --- CONFIGURAÇÃO GERAL MODAL (POPUP) ---
         function openSettingsModal() {
-            const section = document.getElementById('palantirConfigSection');
-            section.classList.remove('open');
+            // Fechar todas as seções por padrão
+            const sections = ['palantirConfigSection', 'whatsappConfigSection', 'botbotConfigSection'];
+            sections.forEach(id => {
+                const el = document.getElementById(id);
+                if (el) el.classList.remove('open');
+            });
             
             fetch('/api/config/palantir')
                 .then(res => res.json())
@@ -2970,11 +3132,31 @@
 
         function closeSettingsModal() {
             document.getElementById('settingsModal').style.display = 'none';
+            // Garantir que a rotina do navegador/start de sessão para WhatsApp do painel pare se o modal fechar
+            const waConfigSection = document.getElementById('whatsappConfigSection');
+            if (waConfigSection) waConfigSection.classList.remove('open');
         }
 
-        function togglePalantirSection() {
-            const section = document.getElementById('palantirConfigSection');
-            section.classList.toggle('open');
+        function toggleSettingsSection(sectionId) {
+            const sections = ['palantirConfigSection', 'whatsappConfigSection', 'botbotConfigSection'];
+            sections.forEach(id => {
+                const el = document.getElementById(id);
+                if (!el) return;
+                if (id === sectionId) {
+                    el.classList.toggle('open');
+                    
+                    // Ações específicas ao abrir seção
+                    if (id === 'whatsappConfigSection' && el.classList.contains('open')) {
+                        // Força inicialização/conexão se o whatsapp não estiver iniciado
+                        fetch('/api/whatsapp/start', { method: 'POST' }).catch(err => console.error(err));
+                    }
+                    if (id === 'botbotConfigSection' && el.classList.contains('open')) {
+                        loadBotBotConfig();
+                    }
+                } else {
+                    el.classList.remove('open');
+                }
+            });
         }
 
         function savePalantirConfig() {
@@ -3014,7 +3196,135 @@
                 msgDiv.innerHTML = `<i class="fas fa-exclamation-triangle"></i> <span>Erro: ${err.message}</span>`;
             });
         }
-        // --- FIM PALANTIR ---
+
+        // --- FUNÇÕES WHATSAPP LOCAL ---
+        async function resetWaConnection() {
+            if (!confirm("Deseja forçar o encerramento da sessão atual?")) return;
+            document.getElementById('waConfigQrContainer').innerHTML = '<div style="color: #000; font-weight: 600;"><i class="fas fa-spinner fa-spin"></i> Reiniciando...</div>';
+            await fetch('/api/whatsapp/reset', { method: 'POST' });
+        }
+
+        async function logoutWaConnection() {
+            if (!confirm("Deseja encerrar a sua sessão atual do WhatsApp?\n\nIsso removerá a conexão e você precisará ler o QR Code novamente.")) return;
+            document.getElementById('waConfigQrContainer').innerHTML = '<div style="color: #000; font-weight: 600;"><i class="fas fa-spinner fa-spin"></i> Desconectando...</div>';
+            await fetch('/api/whatsapp/reset', { method: 'POST' });
+        }
+
+        async function resendAllWaNotifications() {
+            if (!confirm("Deseja reenviar a notificação dos ÚLTIMOS 50 pedidos processados? \n\nIsso rodará em segundo plano.")) return;
+            try {
+                const res = await fetch('/api/notifications/resend-all', { method: 'POST' });
+                const data = await res.json();
+                alert(data.message || 'Processo iniciado com sucesso!');
+            } catch (e) {
+                alert('Erro ao iniciar reenvio.');
+            }
+        }
+
+        // --- FUNÇÕES BOTBOT ---
+        async function loadBotBotConfig() {
+            try {
+                const res = await fetch('/api/botbot/config');
+                const data = await res.json();
+                document.getElementById('bbConfigAppKey').value = data.appKey || '';
+                document.getElementById('bbConfigAuthKey').value = data.authKey || '';
+            } catch (err) {
+                console.error('Erro ao buscar configuração do BotBot:', err);
+            }
+        }
+
+        async function saveBbConfig() {
+            const btn = document.getElementById('bbConfigSaveBtn');
+            const originalText = btn.innerHTML;
+            btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Salvando...';
+            btn.disabled = true;
+
+            const appKey = document.getElementById('bbConfigAppKey').value.trim();
+            const authKey = document.getElementById('bbConfigAuthKey').value.trim();
+
+            try {
+                const res = await fetch('/api/botbot/config', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ appKey, authKey })
+                });
+
+                const data = await res.json();
+                if (res.ok) {
+                    alert(data.message);
+                } else {
+                    alert(data.error || 'Erro ao salvar.');
+                }
+            } catch (err) {
+                alert('Erro de conexão ao salvar.');
+            } finally {
+                btn.innerHTML = originalText;
+                btn.disabled = false;
+            }
+        }
+
+        async function resendAllBbNotifications() {
+            if (!confirm("Deseja reenviar a notificação dos ÚLTIMOS 50 pedidos processados? \n\nIsso pode demorar alguns minutos em segundo plano.")) return;
+            
+            const btn = document.getElementById('bbConfigResendAllBtn');
+            const originalText = btn.innerHTML;
+            btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Iniciando...';
+            btn.disabled = true;
+
+            try {
+                const res = await fetch('/api/notifications/resend-all', { method: 'POST' });
+                const data = await res.json();
+                alert(data.message || 'Processo iniciado com sucesso!');
+            } catch (err) {
+                alert('Erro ao iniciar reenvio.');
+            } finally {
+                btn.innerHTML = originalText;
+                btn.disabled = false;
+            }
+        }
+
+        async function testBbConnection() {
+            const phone = document.getElementById('bbConfigTestPhone').value.trim();
+            if (!phone) { alert('Informe o telefone para teste.'); return; }
+
+            const btn = document.getElementById('bbConfigTestBtn');
+            const result = document.getElementById('bbConfigTestResult');
+            const originalText = btn.innerHTML;
+            btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Testando...';
+            btn.disabled = true;
+            result.style.display = 'none';
+
+            try {
+                const res = await fetch('/api/botbot/test', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ phone })
+                });
+                const data = await res.json();
+                result.style.display = 'block';
+                if (res.ok && data.success) {
+                    result.style.background = 'rgba(16, 185, 129, 0.1)';
+                    result.style.color = '#10b981';
+                    result.style.border = '1px solid rgba(16, 185, 129, 0.3)';
+                    result.innerHTML = '<strong style="display:block;margin-bottom:4px;">✅ Sucesso</strong>' + (data.data || 'Mensagem enviada com sucesso!');
+                } else {
+                    result.style.background = 'rgba(239, 68, 68, 0.1)';
+                    result.style.color = '#f87171';
+                    result.style.border = '1px solid rgba(239, 68, 68, 0.3)';
+                    result.innerHTML = '<strong style="display:block;margin-bottom:4px;">❌ Erro</strong>' + (data.error || data.data || 'Falha ao enviar');
+                }
+            } catch (err) {
+                result.style.display = 'block';
+                result.style.background = 'rgba(239, 68, 68, 0.1)';
+                result.style.color = '#f87171';
+                result.style.border = '1px solid rgba(239, 68, 68, 0.3)';
+                result.innerHTML = '<strong style="display:block;margin-bottom:4px;">❌ Erro de Conexão</strong>' + err.message;
+            } finally {
+                btn.innerHTML = originalText;
+                btn.disabled = false;
+            }
+        }
+        // --- FIM CONFIGURAÇÕES WHATSAPP / BOTBOT ---
 
         // --- LOCK DE MANUTENÇÃO ---
         function openLockModal() {
