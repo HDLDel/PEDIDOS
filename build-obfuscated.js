@@ -8,7 +8,7 @@ const __dirname = path.dirname(fileURLToPath(import.meta.url));
 
 const ROOT = __dirname;
 const DIST = path.join(ROOT, 'PEDIDOS');
-const OBFUSCATOR = 'javascript-obfuscator';
+const OBFUSCATOR = 'npx javascript-obfuscator';
 
 const JS_FILES = [
   'server.js',

@@ -183,6 +183,14 @@ fi
 # Copiar config do terceiro nginx (conf/nginx.conf vem do terceiro-nginx.conf)
 echo "   Copiando arquivos de configuração..."
 sudo cp "$SCRIPT_DIR/nginx/terceiro-nginx.conf" "$NGINX_DEST/conf/nginx.conf" || true
+if [ ! -f "$NGINX_DEST/conf/mime.types" ]; then
+    for m in /etc/nginx/mime.types /usr/local/nginx/conf/mime.types /home/xui/bin/nginx/conf/mime.types; do
+        if [ -f "$m" ]; then
+            sudo cp "$m" "$NGINX_DEST/conf/mime.types"
+            break
+        fi
+    done
+fi
 sudo chmod +x "$NGINX_DEST/control.sh" 2>/dev/null || true
 echo "✓ Configuração copiada para $NGINX_DEST/"
 
@@ -232,13 +240,14 @@ for i in $(seq 1 10); do
 done
 
 pm2 save || true
+sudo env PATH=$PATH:/usr/bin pm2 startup systemd -u root --hp /root 2>/dev/null || true
 echo "   ✅ PM2 salvo. Serviços serão restaurados após reboot."
 
 # Testar configuração do nginx antes de iniciar
 echo "🌐 Testando configuração do nginx..."
 if "$NGINX_DEST/sbin/nginx" -c "$NGINX_DEST/conf/nginx.conf" -p "$NGINX_DEST" -t 2>&1; then
     echo "   ✅ Configuração do nginx válida"
-    bash "$NGINX_DEST/control.sh" start 2>&1
+    sudo systemctl restart pedidos-nginx.service 2>/dev/null || bash "$NGINX_DEST/control.sh" start 2>&1
 
     # Aguardar nginx subir
     for i in $(seq 1 10); do
