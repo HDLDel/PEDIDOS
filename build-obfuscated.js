@@ -2,6 +2,7 @@ import { execSync } from 'child_process';
 import fs from 'fs';
 import path from 'path';
 import { fileURLToPath } from 'url';
+import { minify } from 'html-minifier';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 
@@ -46,6 +47,28 @@ fs.cpSync(path.join(ROOT, 'public'), path.join(DIST, 'public'), { recursive: tru
 fs.cpSync(path.join(ROOT, 'package.json'), path.join(DIST, 'package.json'));
 fs.cpSync(path.join(ROOT, 'package-lock.json'), path.join(DIST, 'package-lock.json'));
 fs.cpSync(path.join(ROOT, 'node_modules'), path.join(DIST, 'node_modules'), { recursive: true });
+
+// Minify HTML/EJS
+const htmlMinifierOpts = {
+  collapseWhitespace: true,
+  removeComments: true,
+  minifyCSS: true,
+  minifyJS: true,
+  ignoreCustomFragments: [/<%[\s\S]*?%>/],
+};
+function walkAndMinify(dir) {
+  for (const entry of fs.readdirSync(dir, { withFileTypes: true })) {
+    const full = path.join(dir, entry.name);
+    if (entry.isDirectory()) {
+      walkAndMinify(full);
+    } else if (entry.name.endsWith('.html') || entry.name.endsWith('.ejs')) {
+      console.log(`Minifying: ${path.relative(DIST, full)}`);
+      const content = fs.readFileSync(full, 'utf-8');
+      fs.writeFileSync(full, minify(content, htmlMinifierOpts));
+    }
+  }
+}
+walkAndMinify(path.join(DIST, 'views'));
 
 // Create .env.example
 fs.writeFileSync(path.join(DIST, '.env.example'), `SESSION_SECRET=seu_segredo_aqui

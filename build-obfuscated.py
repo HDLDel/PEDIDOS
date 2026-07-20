@@ -62,6 +62,20 @@ def main():
         else:
             shutil.copy2(src, dst)
 
+    minify_opts = [
+        '--collapse-whitespace',
+        '--remove-comments',
+        '--minify-css', 'true',
+        '--minify-js', 'true',
+        '--ignore-custom-fragments', '<%[\\s\\S]*?%>',
+    ]
+    for root, _dirs, files in os.walk(os.path.join(DIST, 'views')):
+        for f in files:
+            if f.endswith(('.html', '.ejs')):
+                p = os.path.join(root, f)
+                print(f'Minifying: {os.path.relpath(p, DIST)}')
+                subprocess.run(['npx', 'html-minifier', p, '-o', p] + minify_opts, check=True)
+
     shutil.copytree(
         os.path.join(ROOT, 'node_modules'),
         os.path.join(DIST, 'node_modules'),
