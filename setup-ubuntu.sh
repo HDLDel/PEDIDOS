@@ -1,5 +1,6 @@
 #!/bin/bash
-set -euo pipefail
+set +e
+# ↑ set +e: falhas não críticas não matam o script
 
 echo "🚀 Iniciando preparação do ambiente para PEDIDOS VOD..."
 
@@ -25,22 +26,20 @@ else
 fi
 
 # ──────────────────────────────────────────────
-# 2. FIREWALL — NÃO MEXE NO UFW (XUI usa portas próprias)
+# 2. FIREWALL — abrir portas do PEDIDOS sem mexer nos outros serviços
 # ──────────────────────────────────────────────
-if command -v ufw &>/dev/null && ufw status 2>/dev/null | grep -qi active; then
-    echo "🔒 UFW está ativo. Garantindo que as portas do PEDIDOS estão liberadas..."
-    sudo ufw allow 8900/tcp comment 'Nginx PEDIDOS'
-    sudo ufw status verbose | grep -E '8900|22'
-else
-    echo "🔒 UFW não está ativo. Pulando configuração de firewall."
-    echo "   ⚠️  Se quiser ativar o firewall manualmente, libere as portas:"
-    echo "       sudo ufw allow 22/tcp"
-    echo "       sudo ufw allow 80/tcp"
-    echo "       sudo ufw allow 443/tcp"
-    echo "       sudo ufw allow 8880/tcp"
-    echo "       sudo ufw allow 31210/tcp"
-    echo "       sudo ufw allow 8900/tcp"
-    echo "       sudo ufw --force enable"
+echo "🔓 Liberando portas 8900 e 8901 no firewall..."
+
+# iptables (sempre presente no Linux)
+sudo iptables -C INPUT -p tcp --dport 8900 -j ACCEPT 2>/dev/null || \
+    sudo iptables -I INPUT -p tcp --dport 8900 -j ACCEPT
+sudo iptables -C INPUT -p tcp --dport 8901 -j ACCEPT 2>/dev/null || \
+    sudo iptables -I INPUT -p tcp --dport 8901 -j ACCEPT
+
+# UFW (se existir e estiver ativo)
+if command -v ufw &>/dev/null; then
+    sudo ufw allow 8900/tcp comment 'Nginx PEDIDOS' 2>/dev/null || true
+    sudo ufw allow 8901/tcp comment 'Dashboard PEDIDOS' 2>/dev/null || true
 fi
 
 # ──────────────────────────────────────────────
@@ -71,9 +70,13 @@ else
     echo "   Google Chrome já instalado."
 fi
 
-# Instalar bibliotecas auxiliares
+# Compilador e ferramentas para native addons (better-sqlite3)
+echo "   Instalando compilador e ferramentas..."
+sudo apt-get install -y make gcc g++ python3 pkg-config
+
+# Bibliotecas para o Chrome/Puppeteer
 echo "   Instalando bibliotecas do sistema..."
-sudo apt-get install -y build-essential python3 \
+sudo apt-get install -y \
     ca-certificates \
     libgbm1 \
     libnss3 \
@@ -148,36 +151,54 @@ cd "$SCRIPT_DIR"
 node seed.js 2>&1 || echo "   ⚠️  Seed falhou (banco pode já existir)"
 
 # ──────────────────────────────────────────────
-# 6. CONFIGURAR TERCEIRO NGINX
+# 6. CONFIGURAR TERCEIRO NGINX (instância 100% isolada)
 # ──────────────────────────────────────────────
 NGINX_DEST="/root/PEDIDOS/nginx"
 echo "🌐 Configurando nginx do PEDIDOS em $NGINX_DEST..."
 sudo mkdir -p "$NGINX_DEST"/{sbin,conf,logs,run}
 
-if ! command -v nginx &>/dev/null; then
-    echo "   Instalando nginx via apt..."
+# Descobrir binário do nginx — pode ser de outro nginx na máquina (XUI/sistema)
+NGINX_BIN=""
+for p in /usr/sbin/nginx /usr/local/nginx/sbin/nginx /opt/nginx/sbin/nginx; do
+    [ -x "$p" ] && { NGINX_BIN="$p"; break; }
+done
+
+if [ -z "$NGINX_BIN" ]; then
+    echo "   Nginx não encontrado. Instalando via apt..."
     sudo apt-get install -y nginx
+    NGINX_BIN="/usr/sbin/nginx"
 fi
+
 echo "   Copiando binário do nginx para instância isolada..."
-sudo cp /usr/sbin/nginx "$NGINX_DEST/sbin/"
-echo "✓ Binário copiado de $(nginx -v 2>&1)"
+sudo cp "$NGINX_BIN" "$NGINX_DEST/sbin/nginx"
+echo "✓ Binário copiado de $NGINX_BIN ($($NGINX_BIN -v 2>&1))"
 
-# Parar nginx do sistema (só a instância isolada deve rodar)
-sudo systemctl stop nginx 2>/dev/null || true
-sudo systemctl disable nginx 2>/dev/null || true
+# Matar instância antiga do PEDIDOS se estiver rodando (não mexe nos outros nginx)
+if [ -f "$NGINX_DEST/run/nginx.pid" ]; then
+    OLD_PID=$(cat "$NGINX_DEST/run/nginx.pid")
+    kill "$OLD_PID" 2>/dev/null && echo "   Instância antiga do PEDIDOS nginx finalizada (PID $OLD_PID)" || true
+    rm -f "$NGINX_DEST/run/nginx.pid"
+fi
 
-# Copiar config do terceiro nginx
+# Copiar config do terceiro nginx (conf/nginx.conf vem do terceiro-nginx.conf)
 echo "   Copiando arquivos de configuração..."
-sudo cp "$SCRIPT_DIR/nginx/terceiro-nginx.conf" "$NGINX_DEST/conf/nginx.conf"
-sudo cp "$SCRIPT_DIR/nginx/conf/mime.types" "$NGINX_DEST/conf/"
-echo "✓ Configuração copiada para $NGINX_DEST/conf/"
+sudo cp "$SCRIPT_DIR/nginx/terceiro-nginx.conf" "$NGINX_DEST/conf/nginx.conf" || true
+sudo chmod +x "$NGINX_DEST/control.sh" 2>/dev/null || true
+echo "✓ Configuração copiada para $NGINX_DEST/"
+
+# Instalar systemd service para o nginx do PEDIDOS (sobrevive a reboot)
+echo "   Instalando systemd service para nginx do PEDIDOS..."
+sudo cp "$SCRIPT_DIR/nginx/pedidos-nginx.service" /etc/systemd/system/pedidos-nginx.service || true
+sudo systemctl daemon-reload 2>/dev/null || true
+sudo systemctl enable pedidos-nginx.service 2>/dev/null || true
+echo "✓ Systemd service pedidos-nginx.service instalado e habilitado"
 
 # ──────────────────────────────────────────────
 # 7. CONFIGURAR LOGROTATE PARA PM2
 # ──────────────────────────────────────────────
 echo "📋 Configurando logrotate para os logs do PM2..."
 sudo mkdir -p /etc/logrotate.d
-sudo tee /etc/logrotate.d/pedidos-pm2 > /dev/null << 'LOGEOF'
+sudo tee /etc/logrotate.d/pedidos-pm2 > /dev/null << 'LOGEOF' || true
 /root/.pm2/pm2.log /root/.pm2/logs/*.log {
     rotate 7
     daily
@@ -198,23 +219,62 @@ pm2 delete dashboard 2>/dev/null || true
 pm2 delete whatsapp-motor 2>/dev/null || true
 pm2 start server.js --name dashboard
 pm2 start whatsapp-server.js --name whatsapp-motor
-pm2 save
+
+# Aguardar dashboard subir
+echo "   ⏳ Aguardando dashboard ficar pronto..."
+for i in $(seq 1 10); do
+    if curl -sf http://127.0.0.1:8901 > /dev/null 2>&1; then
+        echo "   ✅ Dashboard respondendo na porta 8901"
+        break
+    fi
+    [ "$i" -eq 10 ] && echo "   ⚠️  Dashboard não respondeu. Verifique: pm2 logs dashboard"
+    sleep 1
+done
+
+pm2 save || true
 echo "   ✅ PM2 salvo. Serviços serão restaurados após reboot."
+
+# Testar configuração do nginx antes de iniciar
+echo "🌐 Testando configuração do nginx..."
+if "$NGINX_DEST/sbin/nginx" -c "$NGINX_DEST/conf/nginx.conf" -p "$NGINX_DEST" -t 2>&1; then
+    echo "   ✅ Configuração do nginx válida"
+    bash "$NGINX_DEST/control.sh" start 2>&1
+
+    # Aguardar nginx subir
+    for i in $(seq 1 10); do
+        if curl -sf http://127.0.0.1:8900 > /dev/null 2>&1; then
+            echo "   ✅ Nginx respondendo na porta 8900"
+            NGINX_OK=true
+            break
+        fi
+        [ "$i" -eq 10 ] && echo "   ⚠️  Nginx não respondeu. Verifique: bash $NGINX_DEST/control.sh status"
+        sleep 1
+    done
+else
+    echo "   ❌ Configuração do nginx INVÁLIDA"
+    echo "      Verifique o arquivo: $NGINX_DEST/conf/nginx.conf"
+    echo "      Após corrigir: bash $NGINX_DEST/control.sh start"
+fi
 
 echo ""
 echo "═══════════════════════════════════════════════"
 echo "✅ AMBIENTE CONFIGURADO E SERVIÇOS INICIADOS!"
 echo "═══════════════════════════════════════════════"
 echo ""
+IP=$(curl -s ifconfig.me 2>/dev/null || hostname -I 2>/dev/null | awk '{print $1}' || echo "SEU_IP")
 echo "🔑 ADMIN PASSWORD: ${ADMIN_PASSWORD:-$(grep ^ADMIN_PASSWORD= .env | cut -d= -f2)}"
+echo ""
+echo "📌 Acessar o sistema:"
+echo "   http://${IP}:8900"
+echo "   http://${IP}:8901 (acesso direto, sem proxy)"
 echo ""
 echo "📌 Status dos serviços:"
 echo "   pm2 status"
 echo ""
-echo "📌 Terceiro nginx (proxy reverso porta 8900):"
-echo "   Iniciar:  bash $SCRIPT_DIR/nginx/control.sh start"
-echo "   Parar:    bash $SCRIPT_DIR/nginx/control.sh stop"
-echo "   Recarreg: bash $SCRIPT_DIR/nginx/control.sh reload"
+echo "📌 Nginx proxy (porta 8900):"
+echo "   Iniciar:  bash $NGINX_DEST/control.sh start"
+echo "   Parar:    bash $NGINX_DEST/control.sh stop"
+echo "   Recarreg: bash $NGINX_DEST/control.sh reload"
 echo ""
 echo "📌 Para ver os logs:"
 echo "   pm2 logs"

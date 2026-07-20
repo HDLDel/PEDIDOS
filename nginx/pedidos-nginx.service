@@ -1,0 +1,17 @@
+[Unit]
+Description=Nginx proxy reverso PEDIDOS (porta 8900)
+After=network.target
+
+[Service]
+Type=forking
+PIDFile=/root/PEDIDOS/nginx/run/nginx.pid
+ExecStartPre=/root/PEDIDOS/nginx/sbin/nginx -c /root/PEDIDOS/nginx/conf/nginx.conf -p /root/PEDIDOS/nginx -t
+ExecStart=/root/PEDIDOS/nginx/sbin/nginx -c /root/PEDIDOS/nginx/conf/nginx.conf -p /root/PEDIDOS/nginx
+ExecReload=/root/PEDIDOS/nginx/sbin/nginx -c /root/PEDIDOS/nginx/conf/nginx.conf -p /root/PEDIDOS/nginx -s reload
+ExecStop=/root/PEDIDOS/nginx/sbin/nginx -c /root/PEDIDOS/nginx/conf/nginx.conf -p /root/PEDIDOS/nginx -s stop
+Restart=on-failure
+RestartSec=5
+PrivateTmp=true
+
+[Install]
+WantedBy=multi-user.target
