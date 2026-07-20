@@ -111,32 +111,26 @@ if [ ! -f "$SCRIPT_DIR/.env" ]; then
     echo "📝 Criando arquivo .env de exemplo — EDITE COM SUAS CREDENCIAIS!"
     
     SESSION_SECRET=$(openssl rand -base64 48)
+    ADMIN_PASSWORD=$(openssl rand -base64 16 | tr -d '=' | tr '/+' '_-')
     WHATSAPP_API_TOKEN=$(openssl rand -hex 32)
     
     cat > "$SCRIPT_DIR/.env" << ENVEOF
-# Segredo para criptografia dos cookies de sessão
 SESSION_SECRET=${SESSION_SECRET}
-
-# Credenciais do Administrador
-ADMIN_USERNAME=seu_usuario_admin
-ADMIN_PASSWORD=sua_senha_forte_aqui
-ADMIN_NAME="<ADMIN_NAME>"
-
-# Chave da API externa
-TMDB_API_KEY=sua_chave_tmdb_aqui
-
-# Configurações do WhatsApp
-WHATSAPP_API_URL=<WHATSAPP_API_URL>
-WHATSAPP_ENABLED=true
-
-# Token de autenticação entre o dashboard e o motor WhatsApp
+ADMIN_USERNAME=admin
+ADMIN_PASSWORD=${ADMIN_PASSWORD}
+ADMIN_NAME=Administrador
+TMDB_API_KEY=sua_key_tmdb
 WHATSAPP_API_TOKEN=${WHATSAPP_API_TOKEN}
+PALANTIR_ENABLED=false
 ENVEOF
     
     sudo chmod 600 "$SCRIPT_DIR/.env"
+    echo "   ✅ Senha do admin gerada: ${ADMIN_PASSWORD}"
+    echo "   ✅ WHATSAPP_API_TOKEN gerado"
     echo ""
     echo "═══════════════════════════════════════════════"
-    echo "🔴 ATENÇÃO: Edite o arquivo .env com suas credenciais reais!"
+    echo "🔴 ATENÇÃO: Edite o .env se quiser mudar as credenciais!"
+    echo "   TMDB_API_KEY precisa ser preenchida manualmente."
     echo "═══════════════════════════════════════════════"
     echo "📄 Caminho: $SCRIPT_DIR/.env"
     echo ""
@@ -147,22 +141,36 @@ if [ -f "$SCRIPT_DIR/.env" ]; then
 fi
 
 # ──────────────────────────────────────────────
+# 5b. EXECUTAR SEED (dados de exemplo: revendedores, pedidos)
+# ──────────────────────────────────────────────
+echo "🌱 Executando seed do banco de dados..."
+cd "$SCRIPT_DIR"
+node seed.js 2>&1 || echo "   ⚠️  Seed falhou (banco pode já existir)"
+
+# ──────────────────────────────────────────────
 # 6. CONFIGURAR TERCEIRO NGINX
 # ──────────────────────────────────────────────
 NGINX_DEST="/root/PEDIDOS/nginx"
 echo "🌐 Configurando nginx do PEDIDOS em $NGINX_DEST..."
 sudo mkdir -p "$NGINX_DEST"/{sbin,conf,logs,run}
 
-if [ -f "/home/xui/bin/nginx/sbin/nginx" ]; then
-    echo "   Copiando binário do nginx existente (XUI)..."
-    sudo cp /home/xui/bin/nginx/sbin/nginx "$NGINX_DEST/sbin/"
-    echo "✓ Binário copiado"
-else
-    echo "⚠️  Nginx do XUI não encontrado em /home/xui/bin/nginx/sbin/nginx"
-    echo "   Copie manualmente um binário do nginx para $NGINX_DEST/sbin/"
+if ! command -v nginx &>/dev/null; then
+    echo "   Instalando nginx via apt..."
+    sudo apt-get install -y nginx
 fi
+echo "   Copiando binário do nginx para instância isolada..."
+sudo cp /usr/sbin/nginx "$NGINX_DEST/sbin/"
+echo "✓ Binário copiado de $(nginx -v 2>&1)"
 
-echo "✓ Diretórios criados em $NGINX_DEST"
+# Parar nginx do sistema (só a instância isolada deve rodar)
+sudo systemctl stop nginx 2>/dev/null || true
+sudo systemctl disable nginx 2>/dev/null || true
+
+# Copiar config do terceiro nginx
+echo "   Copiando arquivos de configuração..."
+sudo cp "$SCRIPT_DIR/nginx/terceiro-nginx.conf" "$NGINX_DEST/conf/nginx.conf"
+sudo cp "$SCRIPT_DIR/nginx/conf/mime.types" "$NGINX_DEST/conf/"
+echo "✓ Configuração copiada para $NGINX_DEST/conf/"
 
 # ──────────────────────────────────────────────
 # 7. CONFIGURAR LOGROTATE PARA PM2
@@ -181,18 +189,27 @@ sudo tee /etc/logrotate.d/pedidos-pm2 > /dev/null << 'LOGEOF'
 }
 LOGEOF
 
+# ──────────────────────────────────────────────
+# 8. INICIAR SERVIÇOS
+# ──────────────────────────────────────────────
+echo "🚀 Iniciando serviços via PM2..."
+cd "$SCRIPT_DIR"
+pm2 delete dashboard 2>/dev/null || true
+pm2 delete whatsapp-motor 2>/dev/null || true
+pm2 start server.js --name dashboard
+pm2 start whatsapp-server.js --name whatsapp-motor
+pm2 save
+echo "   ✅ PM2 salvo. Serviços serão restaurados após reboot."
+
 echo ""
 echo "═══════════════════════════════════════════════"
-echo "✅ AMBIENTE CONFIGURADO!"
+echo "✅ AMBIENTE CONFIGURADO E SERVIÇOS INICIADOS!"
 echo "═══════════════════════════════════════════════"
 echo ""
-echo "📌 Para rodar o sistema (como root):"
-echo "   pm2 start server.js --name 'dashboard'"
-echo "   pm2 start whatsapp-server.js --name 'whatsapp-motor'"
+echo "🔑 ADMIN PASSWORD: ${ADMIN_PASSWORD:-$(grep ^ADMIN_PASSWORD= .env | cut -d= -f2)}"
 echo ""
-echo "📌 Para salvar a configuração do PM2:"
-echo "   pm2 save"
-echo "   pm2 startup"
+echo "📌 Status dos serviços:"
+echo "   pm2 status"
 echo ""
 echo "📌 Terceiro nginx (proxy reverso porta 8900):"
 echo "   Iniciar:  bash $SCRIPT_DIR/nginx/control.sh start"

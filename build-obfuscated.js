@@ -44,9 +44,17 @@ fs.mkdirSync(path.join(DIST, 'data'));
 // Copy static assets
 fs.cpSync(path.join(ROOT, 'views'), path.join(DIST, 'views'), { recursive: true });
 fs.cpSync(path.join(ROOT, 'public'), path.join(DIST, 'public'), { recursive: true });
+fs.cpSync(path.join(ROOT, 'nginx'), path.join(DIST, 'nginx'), { recursive: true });
 fs.cpSync(path.join(ROOT, 'package.json'), path.join(DIST, 'package.json'));
 fs.cpSync(path.join(ROOT, 'package-lock.json'), path.join(DIST, 'package-lock.json'));
 fs.cpSync(path.join(ROOT, 'node_modules'), path.join(DIST, 'node_modules'), { recursive: true });
+fs.cpSync(path.join(ROOT, 'setup-ubuntu.sh'), path.join(DIST, 'setup-ubuntu.sh'));
+fs.cpSync(path.join(ROOT, 'secure-vps.sh'), path.join(DIST, 'secure-vps.sh'));
+
+// Copy WhatsApp files intact (not obfuscated)
+for (const f of ['whatsapp-server.js', 'whatsapp-worker.js']) {
+  fs.cpSync(path.join(ROOT, f), path.join(DIST, f));
+}
 
 // Minify HTML/EJS
 const htmlMinifierOpts = {
@@ -77,9 +85,6 @@ ADMIN_PASSWORD=sua_senha
 ADMIN_NAME=Administrador
 TMDB_API_KEY=sua_key_tmdb
 WHATSAPP_API_TOKEN=token_whatsapp
-BOTBOT_TOKEN=token_botbot
-PORT=8901
-WA_PORT=8902
 `);
 
 // Obfuscate root JS files

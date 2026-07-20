@@ -1,0 +1,79 @@
+=== ARQUIVOS PARA DEPLOY (PEDIDOS/) ===
+
+Gerado pelo build-obfuscated.py (npm run obfuscate)
+Output: pasta PEDIDOS/ na raiz do projeto
+
+--- JS OBFUSCADOS (raiz) ---
+server.js
+db.js
+WhatsAppService.js
+BotBotService.js
+seed.js
+hash-password.js
+add_admin.js
+test_render.js
+
+--- JS OBFUSCADOS (models/) ---
+models/AdminModel.js
+models/M3uModel.js
+models/RequestModel.js
+models/ResellerModel.js
+models/TmdbModel.js
+
+--- JS NAO OFUSCADOS (copiados intactos) ---
+whatsapp-server.js     (addon nativo whatsapp-web.js)
+whatsapp-worker.js     (addon nativo whatsapp-web.js)
+
+--- VIEWS / PUBLIC (copiados intactos, minificados) ---
+views/                  (todos .ejs minificados)
+public/                 (css, assets)
+
+--- CONFIG / INFRA ---
+package.json
+package-lock.json
+node_modules/           (toda a pasta)
+nginx/                  (terceiro nginx: config, control.sh, mime.types)
+.env.example
+setup-ubuntu.sh         (setup de maquina limpa)
+secure-vps.sh           (rotacao de credenciais)
+
+--- PASTAS VAZIAS CRIADAS ---
+data/                   (para vod.sqlite em runtime)
+
+=== ARQUIVOS QUE NAO VAO PARA DEPLOY ===
+
+--- PASTAS IGNORADAS ---
+.agents/
+.cursor/
+.git/
+.vscode/
+.wwebjs_auth/
+.wwebjs_cache/
+doc/
+skills/
+PEDIDOS/                (a propria saida)
+
+--- ARQUIVOS IGNORADOS ---
+.gitignore
+.env / .env.*           (secrets)
+config.json / config.*.json
+deploy.py               (secrets)
+build-obfuscated.py
+build-obfuscated.js
+PROMPT-OFUSCACAO.md
+listagem.md
+README.md
+INSTALL.md
+DEPLOY_MANIFEST.txt     (este arquivo)
+testar_botbot.py
+backup_lista.txt
+grok_logs.csv
+*.mp4 / *.mkv
+*.sqlite / *.sqlite-*
+npm-debug.log*
+test_output.html
+repomix-output.xml
+login.ejs               (arquivo solto na raiz, so o da pasta views/ conta)
+11.17.0                 (pasta residual)
+*.user.js.wwebjs_auth/
+session-*.md

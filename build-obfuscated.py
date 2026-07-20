@@ -54,13 +54,17 @@ def main():
     for d in ['views/admin', 'views/revenda', 'public/css', 'models', 'data']:
         os.makedirs(os.path.join(DIST, d), exist_ok=True)
 
-    for item in ['views', 'public', 'package.json', 'package-lock.json']:
+    for item in ['views', 'public', 'nginx', 'package.json', 'package-lock.json', 'setup-ubuntu.sh', 'secure-vps.sh']:
         src = os.path.join(ROOT, item)
         dst = os.path.join(DIST, item)
         if os.path.isdir(src):
             shutil.copytree(src, dst, dirs_exist_ok=True)
         else:
             shutil.copy2(src, dst)
+
+    # Copy WhatsApp files intact (not obfuscated)
+    for f in ['whatsapp-server.js', 'whatsapp-worker.js']:
+        shutil.copy2(os.path.join(ROOT, f), os.path.join(DIST, f))
 
     minify_opts = [
         '--collapse-whitespace',
@@ -90,9 +94,6 @@ def main():
             'ADMIN_NAME=Administrador\n'
             'TMDB_API_KEY=sua_key_tmdb\n'
             'WHATSAPP_API_TOKEN=token_whatsapp\n'
-            'BOTBOT_TOKEN=token_botbot\n'
-            'PORT=8901\n'
-            'WA_PORT=8902\n'
         )
 
     for f in JS_FILES:
