@@ -81,32 +81,44 @@ export class BotBotService {
             return false;
         }
 
-        try {
-            const response = await fetch(`${this.BOTBOT_API}/sendText`, {
-                method: 'POST',
-                headers: { 
-                    'Content-Type': 'application/json',
-                    'appKey': creds.appKey,
-                    'authKey': creds.authKey
-                },
-                body: JSON.stringify({ 
-                    to: cleanNumber, 
-                    message: message,
-                    typingDelay: 1
-                })
-            });
-            
-            const data = await response.json();
-            if (response.ok) {
-                console.log(`📩 [BotBot] Notificação enviada para ${cleanNumber} com sucesso!`);
-                return true;
-            } else {
-                console.error(`❌ [BotBot] Erro API BotBot:`, data.message || data.error);
-                return false;
+        // Dividir a mensagem em múltiplos blocos por parágrafo (\n\n) para preservar formatação
+        const messages = message.split('\n\n').filter(Boolean);
+        let allSuccess = true;
+
+        for (let i = 0; i < messages.length; i++) {
+            try {
+                const response = await fetch(`${this.BOTBOT_API}/sendText`, {
+                    method: 'POST',
+                    headers: { 
+                        'Content-Type': 'application/json',
+                        'appKey': creds.appKey,
+                        'authKey': creds.authKey
+                    },
+                    body: JSON.stringify({ 
+                        to: cleanNumber, 
+                        message: messages[i],
+                        typingDelay: 1
+                    })
+                });
+                
+                const data = await response.json();
+                if (response.ok) {
+                    console.log(`📩 [BotBot] Notificação ${i + 1}/${messages.length} enviada para ${cleanNumber} com sucesso!`);
+                } else {
+                    console.error(`❌ [BotBot] Erro API BotBot (msg ${i + 1}/${messages.length}):`, data.message || data.error);
+                    allSuccess = false;
+                }
+            } catch (e) {
+                console.error(`⚠️ [BotBot] Falha crítica de conexão (msg ${i + 1}/${messages.length}):`, e.message);
+                allSuccess = false;
             }
-        } catch (e) {
-            console.error('⚠️ [BotBot] Falha crítica de conexão:', e.message);
-            return false;
+
+            // Intervalo de 1.5s entre parágrafos para garantir ordem no WhatsApp
+            if (i < messages.length - 1) {
+                await new Promise(resolve => setTimeout(resolve, 1500));
+            }
         }
+
+        return allSuccess;
     }
 }

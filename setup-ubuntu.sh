@@ -223,9 +223,9 @@ LOGEOF
 # ──────────────────────────────────────────────
 echo "🚀 Iniciando serviços via PM2..."
 cd "$SCRIPT_DIR"
-pm2 delete dashboard 2>/dev/null || true
+pm2 delete pedidos 2>/dev/null || true
 pm2 delete whatsapp-motor 2>/dev/null || true
-pm2 start server.js --name dashboard
+pm2 start server.js --name pedidos
 pm2 start whatsapp-server.js --name whatsapp-motor
 
 # Aguardar dashboard subir
@@ -235,7 +235,7 @@ for i in $(seq 1 10); do
         echo "   ✅ Dashboard respondendo na porta 8901"
         break
     fi
-    [ "$i" -eq 10 ] && echo "   ⚠️  Dashboard não respondeu. Verifique: pm2 logs dashboard"
+    [ "$i" -eq 10 ] && echo "   ⚠️  Dashboard não respondeu. Verifique: pm2 logs pedidos"
     sleep 1
 done
 

@@ -276,7 +276,9 @@ app.get('/admin/dashboard', checkAdminAuth, (req, res) => {
     const groupedRequests = [...groupedMap.values()];
     groupedRequests.sort((a, b) => a.id - b.id);
 
-    res.render('dashboard', { requests: groupedRequests, stats, hasM3uData, palantirEnabled: process.env.PALANTIR_ENABLED !== 'false' });
+    const rejectionReasons = db.prepare('SELECT * FROM rejection_reasons ORDER BY sort_order ASC, id ASC').all();
+
+    res.render('dashboard', { requests: groupedRequests, stats, hasM3uData, palantirEnabled: process.env.PALANTIR_ENABLED !== 'false', rejectionReasons });
 });
 
 // Rota para Conexão do WhatsApp (Página Dedicada)
@@ -1132,6 +1134,38 @@ app.post('/api/config/palantir', checkAdminAuth, express.json(), async (req, res
     } catch (e) {
         console.error("Erro ao salvar .env:", e);
         res.status(500).json({ error: 'Falha ao salvar configurações: ' + e.message });
+    }
+});
+
+// --- APIs DE GERENCIAMENTO DE BOTÕES DE REJEIÇÃO ---
+app.post('/api/config/rejection-reasons', checkAdminAuth, express.json(), (req, res) => {
+    const { id, title, template, sort_order } = req.body;
+    if (!title || !template) {
+        return res.status(400).json({ error: 'Título e Mensagem do modelo são obrigatórios.' });
+    }
+    try {
+        if (id) {
+            db.prepare('UPDATE rejection_reasons SET title = ?, template = ?, sort_order = ? WHERE id = ?')
+              .run(title, template, sort_order || 0, id);
+        } else {
+            db.prepare('INSERT INTO rejection_reasons (title, template, sort_order) VALUES (?, ?, ?)')
+              .run(title, template, sort_order || 0);
+        }
+        res.json({ success: true });
+    } catch (err) {
+        console.error(err);
+        res.status(500).json({ error: 'Erro ao salvar o botão no banco: ' + err.message });
+    }
+});
+
+app.delete('/api/config/rejection-reasons/:id', checkAdminAuth, (req, res) => {
+    const { id } = req.params;
+    try {
+        db.prepare('DELETE FROM rejection_reasons WHERE id = ?').run(id);
+        res.json({ success: true });
+    } catch (err) {
+        console.error(err);
+        res.status(500).json({ error: 'Erro ao deletar o botão no banco: ' + err.message });
     }
 });
 

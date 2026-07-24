@@ -1307,15 +1307,10 @@
     <div id="rejectModal" class="modal-overlay" style="z-index: 3200;">
         <div class="modal-content">
             <h3 class="modal-header">MOTIVO DA REJEIÇÃO DO PEDIDO</h3>
-            <div class="quick-buttons">
-                <button class="btn-quick" onclick="setReason('REPETIDO')">REPETIDO</button>
-                <button class="btn-quick" onclick="setReason('ANTIGO')">ANTIGO</button>
-                <button class="btn-quick" onclick="setReason('INDISPONIVEL')">INDISPONÍVEL</button>
-                <button class="btn-quick" onclick="setReason('ERRO')">ERRO</button>
-                <button class="btn-quick" onclick="setReason('JACONSTA')">JÁ CONSTA</button>
-                <button class="btn-quick" onclick="setReason('EXTERNO')">EXTERNO</button>
-                <button class="btn-quick" onclick="setReason('RECENTE')">RECENTE</button>
-                <button class="btn-quick" onclick="setReason('DUBLADO')">DUBLADO</button>
+            <div class="quick-buttons" id="modalQuickRejectButtons">
+                <% rejectionReasons.forEach(function(reason) { %>
+                    <button class="btn-quick" onclick="setReason('<%= reason.id %>')"><%= reason.title %></button>
+                <% }); %>
             </div>
             <textarea id="rejectionText" rows="15" placeholder="Ou digite um motivo personalizado..."></textarea>
             <div class="modal-footer">
@@ -1508,6 +1503,12 @@
                     <h4>Playlist M3U</h4>
                     <p>Sincronize ou limpe os dados da playlist M3U importada.</p>
                 </div>
+                <!-- Card Respostas Rápidas -->
+                <div class="settings-card" onclick="toggleSettingsSection('rejectionsConfigSection')">
+                    <i class="fas fa-reply" style="color: #ef4444;"></i>
+                    <h4>Respostas Rápidas</h4>
+                    <p>Gerencie os botões rápidos e modelos de texto para rejeição.</p>
+                </div>
                 <!-- Card Revendas -->
                 <a href="/admin/resellers" class="settings-card reseller-card" style="text-decoration: none;">
                     <i class="fas fa-users-cog"></i>
@@ -1650,6 +1651,52 @@
                 </div>
             </div>
 
+            <!-- Seção Expansível para Configuração dos Botões de Rejeição -->
+            <div id="rejectionsConfigSection" class="settings-section-container" style="display: none; border-top: 1px solid rgba(255,255,255,0.05); padding-top: 15px; margin-top: 15px;">
+                <h4 style="color: #fff; font-size: 0.95rem; margin-bottom: 15px; font-weight: 600; display: flex; align-items: center; gap: 8px; border-bottom: 1px solid rgba(255,255,255,0.05); padding-bottom: 10px;">
+                    <i class="fas fa-reply" style="color: #ef4444; font-size: 1.15rem;"></i> Botões de Rejeição Rápida
+                </h4>
+                
+                <!-- Lista de Botões existentes -->
+                <div style="margin-bottom: 15px; background: rgba(0,0,0,0.2); padding: 10px; border-radius: 8px; border: 1px solid rgba(255,255,255,0.03);">
+                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px;">
+                        <span style="font-size: 0.85rem; color: #aaa; font-weight: 600;">Botões Cadastrados:</span>
+                        <button class="btn" style="background: #10b981; color: #fff; border: none; padding: 4px 10px; border-radius: 6px; font-size: 0.75rem; font-weight: 600; cursor: pointer; transition: 0.2s;" onclick="prepareNewRejectReason()">
+                            <i class="fas fa-plus"></i> NOVO BOTÃO
+                        </button>
+                    </div>
+                    <div id="rejectReasonsList" style="max-height: 180px; overflow-y: auto; display: flex; flex-direction: column; gap: 6px; padding-right: 5px;">
+                        <!-- Gerado via JS dinamicamente -->
+                    </div>
+                </div>
+
+                <!-- Formulário de Criação/Edição -->
+                <div id="rejectReasonForm" style="display: none; background: rgba(255,255,255,0.02); border: 1px solid rgba(255,255,255,0.05); padding: 12px; border-radius: 8px; margin-bottom: 15px;">
+                    <h5 id="rejectFormTitle" style="color: #fff; font-size: 0.85rem; margin-bottom: 10px; font-weight: 600; border-bottom: 1px solid rgba(255,255,255,0.03); padding-bottom: 4px;">Editar Botão</h5>
+                    <input type="hidden" id="rejectReasonId" value="">
+                    
+                    <div style="margin-bottom: 10px;">
+                        <label for="rejectReasonTitleInput" style="display: block; font-size: 0.75rem; color: #aaa; margin-bottom: 4px; font-weight: 600;">Título do Botão:</label>
+                        <input type="text" id="rejectReasonTitleInput" style="width: 100%; background: #000; border: 1px solid #333; border-radius: 6px; color: #fff; padding: 6px 10px; font-family: inherit; font-size: 0.85rem;" placeholder="Ex: REPETIDO">
+                    </div>
+                    
+                    <div style="margin-bottom: 10px;">
+                        <label for="rejectReasonTemplateInput" style="display: block; font-size: 0.75rem; color: #aaa; margin-bottom: 4px; font-weight: 600;">Mensagem de Rejeição (Aceita quebras de linha):</label>
+                        <textarea id="rejectReasonTemplateInput" rows="6" style="width: 100%; background: #000; border: 1px solid #333; border-radius: 6px; color: #fff; padding: 6px 10px; font-family: inherit; font-size: 0.85rem; resize: vertical;" placeholder="Texto do modelo..."></textarea>
+                    </div>
+
+                    <div style="margin-bottom: 10px;">
+                        <label for="rejectReasonOrderInput" style="display: block; font-size: 0.75rem; color: #aaa; margin-bottom: 4px; font-weight: 600;">Ordem de Exibição:</label>
+                        <input type="number" id="rejectReasonOrderInput" style="width: 80px; background: #000; border: 1px solid #333; border-radius: 6px; color: #fff; padding: 6px 10px; font-family: inherit; font-size: 0.85rem;" value="0">
+                    </div>
+                    
+                    <div style="display: flex; justify-content: flex-end; gap: 8px;">
+                        <button class="btn" style="background: #333; color: #fff; border: none; padding: 6px 12px; border-radius: 6px; font-size: 0.8rem; font-weight: 600; cursor: pointer; transition: 0.2s;" onclick="cancelRejectReasonForm()">Cancelar</button>
+                        <button class="btn" style="background: #2563eb; color: #fff; border: none; padding: 6px 12px; border-radius: 6px; font-size: 0.8rem; font-weight: 600; cursor: pointer; transition: 0.2s;" onclick="saveRejectReason()">Salvar</button>
+                    </div>
+                </div>
+            </div>
+
             <div style="display: flex; justify-content: flex-end; gap: 10px; border-top: 1px solid rgba(255,255,255,0.05); padding-top: 15px; margin-top: 15px;">
                 <button class="btn"
                     style="background: #333; color: #fff; border: none; padding: 10px 20px; border-radius: 8px; font-weight: 600; cursor: pointer; transition: background 0.2s;"
@@ -1738,6 +1785,7 @@
     </button>
 
     <script>
+        let localRejectionReasons = <%- JSON.stringify(rejectionReasons) %>;
         const requestIdToCardIdMap = new Map();
 
         function initRequestIdMap() {
@@ -2402,42 +2450,9 @@
             document.getElementById('detailsModal').style.display = 'none';
         }
 
-        function setReason(textKey) {
-            let reasonText = '';
-            switch (textKey) {
-                case 'REPETIDO':
-                    reasonText = 'Pedido Repetido.\n\nFavor não repetir os pedidos para não congestionar a fila.';
-                    break;
-                case 'ANTIGO':
-                    if (currentRequestType === 'movie') {
-                        reasonText = `Informamos que, por critérios de qualidade técnica e de padronização do acervo, FILMES produzidos antes do ano de 2000 têm baixíssima ou zero prioridade na fila de adição.\n\nFilmes anteriores a 1980 serão rejeitados.\n\nEssa medida se faz necessária devido a limitações relacionadas à disponibilidade da mídia, resolução de imagem, formatos e compatibilidade com os padrões atuais de reprodução, garantindo assim uma melhor experiência ao público.\n\nAgradecemos a compreensão.`;
-                    } else if (currentRequestType === 'series') {
-                        reasonText = `Informamos que, por critérios de qualidade técnica e de padronização do acervo, SÉRIES produzidas antes do ano de 2000 têm baixíssima ou zero prioridade na fila de adição.\n\nSéries muito antigas serão rejeitadas.\n\nEssa medida se faz necessária devido a limitações relacionadas à disponibilidade da mídia, resolução de imagem, formatos e compatibilidade com os padrões atuais de reprodução, garantindo assim uma melhor experiência ao público.\n\nAgradecemos a compreensão.`;
-                    } else { // Default para tipo genérico ou não especificado
-                        reasonText = `Informamos que, por critérios de qualidade técnica e de padronização do acervo, CONTEÚDOS produzidos antes do ano de 2000 têm baixíssima ou zero prioridade na fila de adição.\n\nEssa medida se faz necessária devido a limitações relacionadas à disponibilidade da mídia, resolução de imagem, formatos e compatibilidade com os padrões atuais de reprodução, garantindo assim uma melhor experiência ao público.\n\nAgradecemos a compreensão.`;
-                    }
-                    break;
-                case 'INDISPONIVEL':
-                    reasonText = 'Conteúdo Indisponível dublado ou legendado.';
-                    break;
-                case 'ERRO':
-                    reasonText = `Poderia fornecer detalhes adicionais sobre o erro?\n\nPreciso identificar a obra (filme ou série), o número do episódio e o momento exato da falha.\n\nPor exemplo: 'No filme X ou no episódio Y da 1ª temporada, ocorre um erro a partir dos 10:30'.\n\nAlém disso, descreva o que aparece na tela (código de erro, travamento ou tela preta).`;
-                    break;
-                case 'JACONSTA':
-                    reasonText = `*Já Consta no Servidor.*\n\nFavor pesquisar nas categorias *All* ou todas as categorias individuais antes de solicitar os conteúdos.\n\nOs pedidos seguem uma ordem que vai da fila de chegada a data de lançamento e disponibilidade, isso pode variar, então não podemos dar prazos para a inserção do conteúdo na grade.\n\nSempre que um Revendedor faz um pedido sem consultar a grade de conteúdos antes ele congestiona ainda mais a fila de pedidos com conteúdos que já estão na grade, atrasando ainda mais os pedidos.\n\nPor isso ressaltamos sempre:\n*Pesquisar nas categorias All ou todas as categorias individuais antes de solicitar os conteúdos.*`;
-                    break;
-                case 'EXTERNO':
-                    reasonText = `Erro de reprodução normalmente é codec do aplicativo em versões muito antigas.\n\nComo Configurar o VLC PLAYER EXTERNO:\n\nVá para Configurações do aplicativo (Settings) onde tem um simbolo de engrenagem.\n\nProcure por "Player" ou "Player Padrão", "Jogador externo" ou "Leitor externo".\n\nSelecione "VLC" ou "Player Externo".\n\nSalve as configurações.\n\nQuando abrir um canal ou filme ou serie, escolha "VLC" na lista de apps.\n\nMarque "Sempre" para definir como padrão.\n\nSe não tiver instalado o VLC a playstore vai se abrir.\n\nInstale o VLC Media Player da Play Store.\n\nTente abrir um canal ou filme ou serie, escolha "VLC" na lista de apps.`;
-                    break;
-                case 'RECENTE':
-                    reasonText = 'Filme lançado recentemente no Cinema.\n\nSomente disponível em 1080 FullHD depois de 3 a 5 meses ao sair nos Streamings.\n\nFavor aguardar, o conteúdo será atualizado automaticamente.';
-                    break;
-                case 'DUBLADO':
-                    reasonText = `*🚨 Pedido Rejeitado — Motivo: Conteúdo Incompleto / Sem Dublagem Integral*\n\nInfelizmente, este conteúdo não existe totalmente dublado em português. A dublagem oficial foi realizada apenas até uma parte da obra e, após isso, a exibição no Brasil foi interrompida (geralmente por baixa audiência na TV ou falta de retorno financeiro), deixando o restante dos episódios sem tradução na nossa língua.\n\nEsse problema é muito comum em novelas turcas, mexicanas, doramas e séries/filmes asiáticos pelos seguintes motivos:\n\n*Formato longo e extenso:* Muitas dessas produções estrangeiras (especialmente novelas diárias) possuem centenas de episódios. O processo de dublagem profissional é extremamente caro e demorado, exigindo um investimento que as distribuidoras muitas vezes não conseguem pagar por inteiro.\n\n*Abandono de transmissão:* Quando uma emissora ou plataforma de streaming traz uma produção de nicho para o Brasil e o público não corresponde ao esperado, o projeto é cancelado no meio do caminho para evitar prejuízos.\n\n*Lançamento internacional lento:* Por conta do volume massivo de capítulos, o mercado global prioriza o lançamento de versões apenas legendadas para manter a transmissão ágil. A dublagem, quando acontece, é feita a passos muito lentos por distribuidoras locais.\n\n*Resumo:* O restante dos episódios só está disponível no idioma original com legendas. Como o nosso catálogo foca em conteúdos completos/dublados conforme solicitado, o pedido não poderá ser atendido.\n\nSem detalhes adicionais. Agradecemos a compreensão.`;
-                    break;
-                default:
-                    reasonText = '';
-            }
+        function setReason(id) {
+            const reason = localRejectionReasons.find(r => String(r.id) === String(id));
+            const reasonText = reason ? reason.template : '';
             document.getElementById('rejectionText').value = reasonText;
         }
 
@@ -3112,7 +3127,7 @@
         // --- CONFIGURAÇÃO GERAL MODAL (POPUP) ---
         function openSettingsModal() {
             // Fechar todas as seções por padrão
-            const sections = ['palantirConfigSection', 'whatsappConfigSection', 'botbotConfigSection', 'm3uConfigSection'];
+            const sections = ['palantirConfigSection', 'whatsappConfigSection', 'botbotConfigSection', 'm3uConfigSection', 'rejectionsConfigSection'];
             sections.forEach(id => {
                 const el = document.getElementById(id);
                 if (el) el.classList.remove('open');
@@ -3141,7 +3156,7 @@
         }
 
         function toggleSettingsSection(sectionId) {
-            const sections = ['palantirConfigSection', 'whatsappConfigSection', 'botbotConfigSection', 'm3uConfigSection'];
+            const sections = ['palantirConfigSection', 'whatsappConfigSection', 'botbotConfigSection', 'm3uConfigSection', 'rejectionsConfigSection'];
             sections.forEach(id => {
                 const el = document.getElementById(id);
                 if (!el) return;
@@ -3158,6 +3173,9 @@
                     }
                     if (id === 'm3uConfigSection' && el.classList.contains('open')) {
                         loadM3uConfig();
+                    }
+                    if (id === 'rejectionsConfigSection' && el.classList.contains('open')) {
+                        loadRejectionReasonsConfig();
                     }
                 } else {
                     el.classList.remove('open');
@@ -3453,6 +3471,150 @@
             });
         }
         // --- FIM LOCK ---
+
+        // --- REJEIÇÕES DINÂMICAS ---
+        function loadRejectionReasonsConfig() {
+            renderRejectionsList();
+            cancelRejectReasonForm();
+        }
+
+        function renderRejectionsList() {
+            const listEl = document.getElementById('rejectReasonsList');
+            if (!listEl) return;
+            listEl.innerHTML = '';
+
+            localRejectionReasons.forEach(reason => {
+                const item = document.createElement('div');
+                item.style.display = 'flex';
+                item.style.justifyContent = 'space-between';
+                item.style.alignItems = 'center';
+                item.style.padding = '8px';
+                item.style.background = 'rgba(255, 255, 255, 0.03)';
+                item.style.borderRadius = '6px';
+                item.style.border = '1px solid rgba(255, 255, 255, 0.05)';
+                item.style.fontSize = '0.8rem';
+                
+                item.innerHTML = `
+                    <div style="text-align: left; flex: 1; min-width: 0; padding-right: 10px;">
+                        <strong style="color: #fff; display: block; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">${reason.title}</strong>
+                        <span style="color: #666; font-size: 0.7rem;">Ordem: ${reason.sort_order}</span>
+                    </div>
+                    <div style="display: flex; gap: 6px;">
+                        <button class="btn" style="background: #2563eb; color: #fff; border: none; padding: 4px 8px; border-radius: 4px; font-size: 0.7rem; font-weight: 600; cursor: pointer;" onclick="editRejectReason(${reason.id})">EDITAR</button>
+                        <button class="btn" style="background: #ef4444; color: #fff; border: none; padding: 4px 8px; border-radius: 4px; font-size: 0.7rem; font-weight: 600; cursor: pointer;" onclick="deleteRejectReason(${reason.id})">EXCLUIR</button>
+                    </div>
+                `;
+                listEl.appendChild(item);
+            });
+        }
+
+        function renderModalQuickRejectButtons() {
+            const container = document.getElementById('modalQuickRejectButtons');
+            if (!container) return;
+            container.innerHTML = '';
+            localRejectionReasons.forEach(reason => {
+                const btn = document.createElement('button');
+                btn.className = 'btn-quick';
+                btn.textContent = reason.title;
+                btn.onclick = () => setReason(reason.id);
+                container.appendChild(btn);
+            });
+        }
+
+        function prepareNewRejectReason() {
+            document.getElementById('rejectFormTitle').textContent = 'Novo Botão de Rejeição';
+            document.getElementById('rejectReasonId').value = '';
+            document.getElementById('rejectReasonTitleInput').value = '';
+            document.getElementById('rejectReasonTemplateInput').value = '';
+            document.getElementById('rejectReasonOrderInput').value = localRejectionReasons.length + 1;
+            document.getElementById('rejectReasonForm').style.display = 'block';
+        }
+
+        function editRejectReason(id) {
+            const reason = localRejectionReasons.find(r => r.id === id);
+            if (!reason) return;
+            document.getElementById('rejectFormTitle').textContent = 'Editar Botão';
+            document.getElementById('rejectReasonId').value = reason.id;
+            document.getElementById('rejectReasonTitleInput').value = reason.title;
+            document.getElementById('rejectReasonTemplateInput').value = reason.template;
+            document.getElementById('rejectReasonOrderInput').value = reason.sort_order || 0;
+            document.getElementById('rejectReasonForm').style.display = 'block';
+        }
+
+        function cancelRejectReasonForm() {
+            document.getElementById('rejectReasonForm').style.display = 'none';
+            document.getElementById('rejectReasonId').value = '';
+            document.getElementById('rejectReasonTitleInput').value = '';
+            document.getElementById('rejectReasonTemplateInput').value = '';
+        }
+
+        async function saveRejectReason() {
+            const id = document.getElementById('rejectReasonId').value;
+            const title = document.getElementById('rejectReasonTitleInput').value.trim();
+            const template = document.getElementById('rejectReasonTemplateInput').value.trim();
+            const sort_order = parseInt(document.getElementById('rejectReasonOrderInput').value) || 0;
+
+            if (!title || !template) {
+                alert('Título e Mensagem do modelo são obrigatórios.');
+                return;
+            }
+
+            try {
+                const res = await fetch('/api/config/rejection-reasons', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ id: id ? parseInt(id) : null, title, template, sort_order })
+                });
+
+                if (res.ok) {
+                    alert('Botão de rejeição salvo com sucesso!');
+                    
+                    if (id) {
+                        const index = localRejectionReasons.findIndex(r => r.id === parseInt(id));
+                        if (index !== -1) {
+                            localRejectionReasons[index] = { id: parseInt(id), title, template, sort_order };
+                        }
+                    } else {
+                        // Recarregar a página para obter o ID gerado pelo banco para o novo botão
+                        window.location.reload();
+                        return;
+                    }
+                    
+                    localRejectionReasons.sort((a, b) => a.sort_order - b.sort_order || a.id - b.id);
+                    renderRejectionsList();
+                    renderModalQuickRejectButtons();
+                    cancelRejectReasonForm();
+                } else {
+                    const data = await res.json();
+                    alert('Erro ao salvar: ' + (data.error || 'Erro desconhecido'));
+                }
+            } catch (err) {
+                alert('Erro na requisição: ' + err.message);
+            }
+        }
+
+        async function deleteRejectReason(id) {
+            if (!confirm('Deseja realmente excluir este botão de rejeição?')) return;
+
+            try {
+                const res = await fetch(`/api/config/rejection-reasons/${id}`, {
+                    method: 'DELETE'
+                });
+
+                if (res.ok) {
+                    alert('Botão excluído com sucesso!');
+                    localRejectionReasons = localRejectionReasons.filter(r => r.id !== id);
+                    renderRejectionsList();
+                    renderModalQuickRejectButtons();
+                    cancelRejectReasonForm();
+                } else {
+                    const data = await res.json();
+                    alert('Erro ao excluir: ' + (data.error || 'Erro desconhecido'));
+                }
+            } catch (err) {
+                alert('Erro na requisição: ' + err.message);
+            }
+        }
 
         // Aplica o filtro de status inicial (Pendentes) ao carregar a página
         document.addEventListener('DOMContentLoaded', () => {

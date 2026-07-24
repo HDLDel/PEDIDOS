@@ -103,7 +103,42 @@ db.exec(`
   );
 
   CREATE INDEX IF NOT EXISTS idx_m3u_episodes_norm ON m3u_episodes(series_normalized);
+
+  CREATE TABLE IF NOT EXISTS rejection_reasons (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    title TEXT NOT NULL,
+    template TEXT NOT NULL,
+    sort_order INTEGER DEFAULT 0
+  );
 `);
+
+// --- SEED DE BOTÕES DE REJEIÇÃO PADRÃO ---
+try {
+    const checkEmpty = db.prepare('SELECT COUNT(*) as count FROM rejection_reasons').get();
+    if (checkEmpty && checkEmpty.count === 0) {
+        console.log('🌱 Inicializando botões de rejeição padrão no banco...');
+        const insertStmt = db.prepare('INSERT INTO rejection_reasons (title, template, sort_order) VALUES (?, ?, ?)');
+        const defaultReasons = [
+            { title: 'REPETIDO', template: 'Pedido Repetido.\n\nFavor não repetir os pedidos para não congestionar a fila.', sort_order: 1 },
+            { title: 'ANTIGO (Filmes)', template: `Informamos que, por critérios de qualidade técnica e de padronização do acervo, FILMES produzidos antes do ano de 2000 têm baixíssima ou zero prioridade na fila de adição.\n\nFilmes anteriores a 1980 serão rejeitados.\n\nEssa medida se faz necessária devido a limitações relacionadas à disponibilidade da mídia, resolução de imagem, formatos e compatibilidade com os padrões atuais de reprodução, garantindo assim uma melhor experiência ao público.\n\nAgradecemos a compreensão.`, sort_order: 2 },
+            { title: 'ANTIGO (Séries)', template: `Informamos que, por critérios de qualidade técnica e de padronização do acervo, SÉRIES produzidas antes do ano de 2000 têm baixíssima ou zero prioridade na fila de adição.\n\nSéries muito antigas serão rejeitadas.\n\nEssa medida se faz necessária devido a limitações relacionadas à disponibilidade da mídia, resolução de imagem, formatos e compatibilidade com os padrões atuais de reprodução, garantindo assim uma melhor experiência ao público.\n\nAgradecemos a compreensão.`, sort_order: 3 },
+            { title: 'INDISPONÍVEL', template: 'Conteúdo Indisponível dublado ou legendado.', sort_order: 4 },
+            { title: 'ERRO', template: `Poderia fornecer detalhes adicionais sobre o erro?\n\nPreciso identificar a obra (filme ou série), o número do episódio e o momento exato da falha.\n\nPor exemplo: 'No filme X ou no episódio Y da 1ª temporada, ocorre um erro a partir dos 10:30'.\n\nAlém disso, descreva o que aparece na tela (código de erro, travamento ou tela preta).`, sort_order: 5 },
+            { title: 'JÁ CONSTA', template: `*Já Consta no Servidor.*\n\nFavor pesquisar nas categorias *All* ou todas as categorias individuais antes de solicitar os conteúdos.\n\nOs pedidos seguem uma ordem que vai da fila de chegada a data de lançamento e disponibilidade, isso pode variar, então não podemos dar prazos para a inserção do conteúdo na grade.\n\nSempre que um Revendedor faz um pedido sem consultar a grade de conteúdos antes ele congestiona ainda mais a fila de pedidos com conteúdos que já estão na grade, atrasando ainda mais os pedidos.\n\nPor isso ressaltamos sempre:\n*Pesquisar nas categorias All ou todas as categorias individuais antes de solicitar os conteúdos.*`, sort_order: 6 },
+            { title: 'EXTERNO', template: `Erro de reprodução normalmente é codec do aplicativo em versões muito antigas.\n\nComo Configurar o VLC PLAYER EXTERNO:\n\nVá para Configurações do aplicativo (Settings) onde tem um simbolo de engrenagem.\n\nProcure por "Player" ou "Player Padrão", "Jogador externo" ou "Leitor externo".\n\nSelecione "VLC" ou "Player Externo".\n\nSalve as configurações.\n\nQuando abrir um canal ou filme ou serie, escolha "VLC" na lista de apps.\n\nMarque "Sempre" para definir como padrão.\n\nSe não tiver instalado o VLC a playstore vai se abrir.\n\nInstale o VLC Media Player da Play Store.\n\nTente abrir um canal ou filme ou serie, escolha "VLC" na lista de apps.`, sort_order: 7 },
+            { title: 'RECENTE', template: 'Filme lançado recentemente no Cinema.\n\nSomente disponível em 1080 FullHD depois de 3 a 5 meses ao sair nos Streamings.\n\nFavor aguardar, o conteúdo será atualizado automaticamente.', sort_order: 8 },
+            { title: 'DUBLADO', template: `*🚨 Pedido Rejeitado — Motivo: Conteúdo Incompleto / Sem Dublagem Integral*\n\nInfelizmente, este conteúdo não existe totalmente dublado em português. A dublagem oficial foi realizada apenas até uma parte da obra e, após isso, a exibição no Brasil foi interrompida (geralmente por baixa audiência na TV ou falta de retorno financeiro), deixando o restante dos episódios sem tradução na nossa língua.\n\nEsse problema é muito comum em novelas turcas, mexicanas, doramas e séries/filmes asiáticos pelos seguintes motivos:\n\n*Formato longo e extenso:* Muitas dessas produções estrangeiras (espiritualmente novelas diárias) possuem centenas de episódios. O processo de dublagem profissional é extremamente caro e demorado, exigindo um investimento que as distribuidoras muitas vezes não conseguem pagar por inteiro.\n\n*Abandono de transmissão:* Quando uma emissora ou plataforma de streaming traz uma produção de nicho para o Brasil e o público não corresponde ao esperado, o projeto é cancelado no meio do caminho para evitar prejuízos.\n\n*Lançamento internacional lento:* Por conta do volume massivo de capítulos, o mercado global prioriza o lançamento de versões apenas legendadas para manter a transmissão ágil. A dublagem, quando acontece, é feita a passos muito lentos por distribuidoras locais.\n\n*Resumo:* O restante dos episódios só está disponível no idioma original com legendas. Como o nosso catálogo foca em conteúdos completos/dublados conforme solicitado, o pedido não poderá ser atendido.\n\nSem detalhes adicionais. Agradecemos a compreensão.`, sort_order: 9 }
+        ];
+        db.transaction(() => {
+            for (const r of defaultReasons) {
+                insertStmt.run(r.title, r.template, r.sort_order);
+            }
+        })();
+        console.log('✅ Botões de rejeição padrão inseridos com sucesso!');
+    }
+} catch (err) {
+    console.error('❌ Erro ao rodar seed dos botões de rejeição:', err.message);
+}
 
 // --- SISTEMA DE MIGRAÇÕES SEGURAS (WORLD CLASS) ---
 // Função para adicionar colunas apenas se elas não existirem, sem quebrar o banco
