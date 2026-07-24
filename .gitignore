@@ -29,3 +29,10 @@ doc/planologuin.md
 
 # Build output (obfuscated code)
 PEDIDOS/
+
+# Skills / Agent files
+.agent/
+.agents/
+skills/
+**/SKILL.md
+**/AGENTS.md
