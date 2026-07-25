@@ -138,14 +138,14 @@ def minify_css():
     # Garantir que csso-cli esta disponivel
     try:
         subprocess.run(
-            ["npx", "csso", "--version"],
+            ["./node_modules/.bin/csso", "--version"],
             check=True, capture_output=True, text=True, cwd=PROJECT_DIR,
         )
     except (FileNotFoundError, subprocess.CalledProcessError):
-        log("Instalando csso-cli...")
+        log("Instalando csso...")
         subprocess.run(
-            ["npm", "install", "-g", "csso-cli"],
-            check=True, capture_output=True, text=True,
+            ["npm", "install", "--save-dev", "csso-cli"],
+            check=True, capture_output=True, text=True, cwd=PROJECT_DIR,
         )
 
     count = 0
@@ -157,7 +157,7 @@ def minify_css():
         rel = css_path.relative_to(DEST)
         try:
             result = subprocess.run(
-                ["npx", "csso", str(css_path), "--output", str(css_path)],
+                ["./node_modules/.bin/csso", str(css_path), "--output", str(css_path)],
                 capture_output=True, text=True, timeout=30, cwd=PROJECT_DIR,
             )
             if result.returncode == 0:
@@ -194,16 +194,19 @@ def minify_ejs():
         "--collapse-whitespace",
         "--remove-comments",
         "--minify-css", "true",
-        "--minify-js", "true",
+        "--minify-js", "false",
         "--ignore-custom-fragments", "<%[\\s\\S]*?%>",
     ]
 
     count = 0
     for p in ejs_files:
         rel = p.relative_to(DEST)
+        if p.stat().st_size == 0:
+            log(f"~ ignorado (vazio): {rel}")
+            continue
         try:
             subprocess.run(
-                ["npx", "html-minifier", str(p), "-o", str(p)] + opts,
+                ["./node_modules/.bin/html-minifier", str(p), "-o", str(p)] + opts,
                 check=True, capture_output=True, text=True, timeout=30,
             )
             count += 1
@@ -220,43 +223,72 @@ def obfuscate_js():
     # Verificar se o obfuscator esta disponivel
     try:
         subprocess.run(
-            ["npx", "javascript-obfuscator", "--version"],
+            ["./node_modules/.bin/javascript-obfuscator", "--version"],
             check=True, capture_output=True, text=True, cwd=PROJECT_DIR,
         )
     except (FileNotFoundError, subprocess.CalledProcessError):
         log("Instalando javascript-obfuscator...")
         subprocess.run(
-            ["npm", "install", "-g", "javascript-obfuscator"],
-            check=True, capture_output=True, text=True,
+            ["npm", "install", "--save-dev", "javascript-obfuscator"],
+            check=True, capture_output=True, text=True, cwd=PROJECT_DIR,
         )
 
-    # Ofuscar JS da raiz
+    # Ofuscar JS da raiz (Backend Node.js)
     for f in JS_FILES:
         src = PROJECT_DIR / f
         dst = DEST / f
-        cmd = ["npx", "javascript-obfuscator", str(src),
+        cmd = ["./node_modules/.bin/javascript-obfuscator", str(src),
                "--output", str(dst)] + OBFUSCATOR_OPTS
         try:
             subprocess.run(cmd, check=True, capture_output=True, text=True,
                            cwd=PROJECT_DIR, timeout=120)
-            log(f"✓ ofuscado: {f}")
+            log(f"✓ ofuscado (backend): {f}")
         except subprocess.CalledProcessError as e:
             log(f"⚠ erro: {f} - {e.stderr[:80]}")
             shutil.copy2(src, dst)
 
-    # Ofuscar models
+    # Ofuscar models (Backend Node.js)
     for m in MODEL_FILES:
         src = PROJECT_DIR / "models" / m
         dst = DEST / "models" / m
         dst.parent.mkdir(parents=True, exist_ok=True)
-        cmd = ["npx", "javascript-obfuscator", str(src),
+        cmd = ["./node_modules/.bin/javascript-obfuscator", str(src),
                "--output", str(dst)] + OBFUSCATOR_OPTS
         try:
             subprocess.run(cmd, check=True, capture_output=True, text=True,
                            cwd=PROJECT_DIR, timeout=120)
-            log(f"✓ ofuscado: models/{m}")
+            log(f"✓ ofuscado (backend): models/{m}")
         except subprocess.CalledProcessError as e:
             log(f"⚠ erro: models/{m} - {e.stderr[:80]}")
+            shutil.copy2(src, dst)
+
+    # Ofuscar JS do Browser (Front-End)
+    BROWSER_JS_FILES = [
+        "theme.js", "dashboard.js", "admin-botbot.js", "admin-resellers.js",
+        "admin-whatsapp.js", "revenda-buscar-filme.js", "revenda-solicitar.js",
+        "revenda-dashboard.js"
+    ]
+    
+    # Criar opções específicas de browser a partir de OBFUSCATOR_OPTS
+    browser_opts = OBFUSCATOR_OPTS.copy()
+    try:
+        target_idx = browser_opts.index("--target")
+        browser_opts[target_idx + 1] = "browser"
+    except ValueError:
+        browser_opts += ["--target", "browser"]
+
+    for f in BROWSER_JS_FILES:
+        src = PROJECT_DIR / "public" / "js" / f
+        dst = DEST / "public" / "js" / f
+        dst.parent.mkdir(parents=True, exist_ok=True)
+        cmd = ["./node_modules/.bin/javascript-obfuscator", str(src),
+               "--output", str(dst)] + browser_opts
+        try:
+            subprocess.run(cmd, check=True, capture_output=True, text=True,
+                           cwd=PROJECT_DIR, timeout=120)
+            log(f"✓ ofuscado (browser): public/js/{f}")
+        except subprocess.CalledProcessError as e:
+            log(f"⚠ erro: public/js/{f} - {e.stderr[:80]}")
             shutil.copy2(src, dst)
 
 
