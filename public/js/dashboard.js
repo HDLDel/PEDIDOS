@@ -1371,7 +1371,7 @@ function closePalantirModal() {
 // --- CONFIGURAÇÃO GERAL MODAL (POPUP) ---
 function openSettingsModal() {
     // Fechar todas as seções por padrão
-    const sections = ['palantirConfigSection', 'whatsappConfigSection', 'botbotConfigSection', 'm3uConfigSection', 'rejectionsConfigSection'];
+    const sections = ['palantirConfigSection', 'whatsappConfigSection', 'botbotConfigSection', 'm3uConfigSection', 'rejectionsConfigSection', 'tmdbConfigSection'];
     sections.forEach(id => {
         const el = document.getElementById(id);
         if (el) el.classList.remove('open');
@@ -1390,6 +1390,13 @@ function openSettingsModal() {
         .catch(err => {
             alert('Falha ao carregar configurações do Palantir: ' + err.message);
         });
+
+    fetch('/api/config/tmdb')
+        .then(res => res.json())
+        .then(data => {
+            document.getElementById('tmdbApiKeyInput').value = data.apiKey || '';
+        })
+        .catch(() => {});
 }
 
 function closeSettingsModal() {
@@ -1400,7 +1407,7 @@ function closeSettingsModal() {
 }
 
 function toggleSettingsSection(sectionId) {
-    const sections = ['palantirConfigSection', 'whatsappConfigSection', 'botbotConfigSection', 'm3uConfigSection', 'rejectionsConfigSection'];
+    const sections = ['palantirConfigSection', 'whatsappConfigSection', 'botbotConfigSection', 'm3uConfigSection', 'rejectionsConfigSection', 'tmdbConfigSection'];
     sections.forEach(id => {
         const el = document.getElementById(id);
         if (!el) return;
@@ -1541,6 +1548,55 @@ function savePalantirConfig() {
         msgDiv.style.color = '#ef4444';
         msgDiv.innerHTML = `<i class="fas fa-exclamation-triangle"></i> <span>Erro: ${err.message}</span>`;
     });
+}
+
+// --- FUNÇÕES TMDB API ---
+function saveTmdbConfig() {
+    const apiKey = document.getElementById('tmdbApiKeyInput').value.trim();
+    if (!apiKey) {
+        alert('Por favor, insira a chave de API.');
+        return;
+    }
+
+    const msgDiv = document.getElementById('tmdbSaveMsg');
+    msgDiv.style.color = '#01b4e4';
+    msgDiv.style.display = 'flex';
+    msgDiv.innerHTML = '<i class="fas fa-spinner fa-spin"></i> <span>Salvando...</span>';
+
+    fetch('/api/config/tmdb', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ apiKey })
+    })
+    .then(async res => {
+        const data = await res.json();
+        if (!res.ok) throw new Error(data.error || 'Erro ao salvar.');
+        return data;
+    })
+    .then(data => {
+        msgDiv.style.color = '#10b981';
+        msgDiv.innerHTML = '<i class="fas fa-check-circle"></i> <span>Chave TMDB salva com sucesso!</span>';
+        setTimeout(() => {
+            msgDiv.style.display = 'none';
+            location.reload();
+        }, 1500);
+    })
+    .catch(err => {
+        msgDiv.style.color = '#ef4444';
+        msgDiv.innerHTML = `<i class="fas fa-exclamation-triangle"></i> <span>Erro: ${err.message}</span>`;
+    });
+}
+
+function toggleTmdbKeyVisibility() {
+    const input = document.getElementById('tmdbApiKeyInput');
+    const icon = document.getElementById('tmdbEyeIcon');
+    if (input.type === 'password') {
+        input.type = 'text';
+        icon.classList.replace('fa-eye', 'fa-eye-slash');
+    } else {
+        input.type = 'password';
+        icon.classList.replace('fa-eye-slash', 'fa-eye');
+    }
 }
 
 // --- FUNÇÕES WHATSAPP LOCAL ---
@@ -1921,6 +1977,8 @@ window.loadM3uConfig = loadM3uConfig;
 window.runM3uSyncConfig = runM3uSyncConfig;
 window.runM3uClearConfig = runM3uClearConfig;
 window.savePalantirConfig = savePalantirConfig;
+window.saveTmdbConfig = saveTmdbConfig;
+window.toggleTmdbKeyVisibility = toggleTmdbKeyVisibility;
 window.resetWaConnection = resetWaConnection;
 window.logoutWaConnection = logoutWaConnection;
 window.resendAllWaNotifications = resendAllWaNotifications;

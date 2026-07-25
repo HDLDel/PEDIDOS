@@ -1137,6 +1137,46 @@ app.post('/api/config/palantir', checkAdminAuth, express.json(), async (req, res
     }
 });
 
+// --- API TMDB KEY ---
+app.get('/api/config/tmdb', checkAdminAuth, (req, res) => {
+    res.json({ apiKey: process.env.TMDB_API_KEY || '' });
+});
+
+app.post('/api/config/tmdb', checkAdminAuth, express.json(), async (req, res) => {
+    const { apiKey } = req.body;
+    if (!apiKey) {
+        return res.status(400).json({ error: 'Chave de API é obrigatória.' });
+    }
+    try {
+        const envPath = path.join(__dirname, '.env');
+        let envContent = '';
+        if (fs.existsSync(envPath)) {
+            envContent = fs.readFileSync(envPath, 'utf8');
+        }
+
+        let lines = envContent.split('\n');
+        let found = false;
+
+        lines = lines.map(line => {
+            if (line.startsWith('TMDB_API_KEY=')) {
+                found = true;
+                return `TMDB_API_KEY=${apiKey}`;
+            }
+            return line;
+        });
+
+        if (!found) lines.push(`TMDB_API_KEY=${apiKey}`);
+
+        fs.writeFileSync(envPath, lines.join('\n'), 'utf8');
+        process.env.TMDB_API_KEY = apiKey;
+
+        res.json({ success: true, message: 'Chave TMDB atualizada com sucesso!' });
+    } catch (e) {
+        console.error("Erro ao salvar .env:", e);
+        res.status(500).json({ error: 'Falha ao salvar: ' + e.message });
+    }
+});
+
 // --- APIs DE GERENCIAMENTO DE BOTÕES DE REJEIÇÃO ---
 app.post('/api/config/rejection-reasons', checkAdminAuth, express.json(), (req, res) => {
     const { id, title, template, sort_order } = req.body;
