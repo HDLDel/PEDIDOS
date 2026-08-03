@@ -1961,14 +1961,52 @@ document.addEventListener('DOMContentLoaded', () => {
     }).catch(() => {});
 
     const testPalantirBtn = document.getElementById('btnTestPalantirConfig');
-    if (testPalantirBtn) {
-        testPalantirBtn.addEventListener('click', testPalantirConfig);
-    }
+    if (testPalantirBtn) testPalantirBtn.addEventListener('click', testPalantirConfig);
 
     const savePalantirBtn = document.getElementById('btnSavePalantirConfig');
-    if (savePalantirBtn) {
-        savePalantirBtn.addEventListener('click', savePalantirConfig);
-    }
+    if (savePalantirBtn) savePalantirBtn.addEventListener('click', savePalantirConfig);
+
+    const resetWaBtn = document.getElementById('btnResetWaConnection');
+    if (resetWaBtn) resetWaBtn.addEventListener('click', resetWaConnection);
+
+    const logoutWaBtn = document.getElementById('btnLogoutWaConnection');
+    if (logoutWaBtn) logoutWaBtn.addEventListener('click', logoutWaConnection);
+
+    const resendWaBtn = document.getElementById('btnResendAllWaNotifications');
+    if (resendWaBtn) resendWaBtn.addEventListener('click', resendAllWaNotifications);
+
+    const saveBbBtn = document.getElementById('btnSaveBbConfig');
+    if (saveBbBtn) saveBbBtn.addEventListener('click', saveBbConfig);
+
+    const resendBbBtn = document.getElementById('btnResendAllBbNotifications');
+    if (resendBbBtn) resendBbBtn.addEventListener('click', resendAllBbNotifications);
+
+    const testBbBtn = document.getElementById('btnTestBbConnection');
+    if (testBbBtn) testBbBtn.addEventListener('click', testBbConnection);
+
+    const clearM3uBtn = document.getElementById('m3uClearBtnConfig');
+    if (clearM3uBtn) clearM3uBtn.addEventListener('click', runM3uClearConfig);
+
+    const syncM3uBtn = document.getElementById('m3uSyncConfirmBtnConfig');
+    if (syncM3uBtn) syncM3uBtn.addEventListener('click', runM3uSyncConfig);
+
+    const prepRejectBtn = document.getElementById('btnPrepareNewRejectReason');
+    if (prepRejectBtn) prepRejectBtn.addEventListener('click', prepareNewRejectReason);
+
+    const cancelRejectBtn = document.getElementById('btnCancelRejectReasonForm');
+    if (cancelRejectBtn) cancelRejectBtn.addEventListener('click', cancelRejectReasonForm);
+
+    const saveRejectBtn = document.getElementById('btnSaveRejectReason');
+    if (saveRejectBtn) saveRejectBtn.addEventListener('click', saveRejectReason);
+
+    const toggleTmdbBtn = document.getElementById('btnToggleTmdbKeyVisibility');
+    if (toggleTmdbBtn) toggleTmdbBtn.addEventListener('click', toggleTmdbKeyVisibility);
+
+    const saveTmdbBtn = document.getElementById('btnSaveTmdbConfig');
+    if (saveTmdbBtn) saveTmdbBtn.addEventListener('click', saveTmdbConfig);
+
+    const closeSettingsBtn = document.getElementById('btnCloseSettingsModal');
+    if (closeSettingsBtn) closeSettingsBtn.addEventListener('click', closeSettingsModal);
 });
 
 

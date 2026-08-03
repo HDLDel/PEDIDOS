@@ -1038,42 +1038,59 @@ textarea:focus {
 .settings-actions {
     display: flex;
     justify-content: flex-end;
+    align-items: center;
+    flex-wrap: wrap;
     gap: 10px;
     margin-top: 15px;
+    width: 100%;
+    box-sizing: border-box;
 }
 
-.btn-palantir-test,
-.btn-settings-save {
-    height: auto;
-    min-height: 36px;
-    padding: 8px 16px;
-    font-size: 0.82rem;
-    white-space: nowrap;
+.btn-settings-action {
     display: inline-flex;
     align-items: center;
     justify-content: center;
-    gap: 8px;
+    gap: 6px;
+    padding: 0 16px;
     border-radius: 8px;
     font-weight: 600;
+    font-size: 0.82rem !important;
+    line-height: 1;
     cursor: pointer;
     border: none;
-    transition: background 0.2s;
+    height: 38px !important;
+    box-sizing: border-box;
+    transition: background 0.2s, opacity 0.2s;
 }
 
-.btn-palantir-test {
+.btn-settings-action.primary {
     background: #3b82f6;
     color: #fff;
 }
-
-.btn-palantir-test:hover {
+.btn-settings-action.primary:hover {
     background: #2563eb;
 }
 
-.btn-settings-save {
+.btn-settings-action.danger {
     background: #ef4444;
     color: #fff;
 }
-
-.btn-settings-save:hover {
+.btn-settings-action.danger:hover {
     background: #dc2626;
+}
+
+.btn-settings-action.dark {
+    background: #333;
+    color: #fff;
+}
+.btn-settings-action.dark:hover {
+    background: #444;
+}
+
+.btn-settings-action.success {
+    background: #10b981;
+    color: #fff;
+}
+.btn-settings-action.success:hover {
+    background: #059669;
 }
