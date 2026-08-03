@@ -1073,6 +1073,25 @@ app.post('/api/tmdb/fetch', checkAdminAuth, async (req, res) => {
     res.json(result);
 });
 
+app.post('/api/palantir/test-connection', checkAdminAuth, express.json(), async (req, res) => {
+    let { url, token } = req.body;
+    if (!url || !token) {
+        return res.status(400).json({ error: 'URL e Token são obrigatórios para testar a conexão.' });
+    }
+    url = url.trim().replace(/\/+$/, '');
+    token = token.trim();
+    try {
+        const response = await fetch(`${url}/api/external/progress?token=${token}`, { signal: AbortSignal.timeout(10000) });
+        if (!response.ok) {
+            const text = await response.text();
+            return res.status(response.status).json({ error: `Palantir respondeu HTTP ${response.status}: ${text || 'Não autorizado/inválido'}` });
+        }
+        res.json({ success: true, message: 'Conexão estabelecida com sucesso! Instância Palantir ativa e token válido.' });
+    } catch (e) {
+        res.status(502).json({ error: 'Falha ao conectar com Palantir: ' + e.message });
+    }
+});
+
 app.get('/api/config/palantir', checkAdminAuth, (req, res) => {
     res.json({
         url: process.env.PALANTIR_API_URL || '',

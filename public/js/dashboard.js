@@ -1550,6 +1550,40 @@ function savePalantirConfig() {
     });
 }
 
+function testPalantirConfig() {
+    const url = document.getElementById('palantirUrlInput').value.trim();
+    const token = document.getElementById('palantirTokenInput').value.trim();
+    
+    if (!url || !token) {
+        alert('Por favor, preencha a URL e o Token antes de testar a conexão.');
+        return;
+    }
+    
+    const msgDiv = document.getElementById('palantirSaveMsg');
+    msgDiv.style.color = '#3b82f6';
+    msgDiv.style.display = 'flex';
+    msgDiv.innerHTML = '<i class="fas fa-spinner fa-spin"></i> <span>Testando conexão com a instância do Palantir...</span>';
+    
+    fetch('/api/palantir/test-connection', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ url, token })
+    })
+    .then(async res => {
+        const data = await res.json();
+        if (!res.ok) throw new Error(data.error || 'Erro ao conectar.');
+        return data;
+    })
+    .then(data => {
+        msgDiv.style.color = '#10b981';
+        msgDiv.innerHTML = `<i class="fas fa-check-circle"></i> <span>${data.message || 'Conexão estabelecida com sucesso!'}</span>`;
+    })
+    .catch(err => {
+        msgDiv.style.color = '#ef4444';
+        msgDiv.innerHTML = `<i class="fas fa-exclamation-triangle"></i> <span>${err.message}</span>`;
+    });
+}
+
 // --- FUNÇÕES TMDB API ---
 function saveTmdbConfig() {
     const apiKey = document.getElementById('tmdbApiKeyInput').value.trim();
@@ -1925,6 +1959,11 @@ document.addEventListener('DOMContentLoaded', () => {
     fetch('/api/lock').then(r => r.json()).then(d => {
         document.getElementById('lockBtnLabel').textContent = d.enabled ? 'LOCK 🔒' : 'LOCK';
     }).catch(() => {});
+
+    const testPalantirBtn = document.getElementById('btnTestPalantirConfig');
+    if (testPalantirBtn) {
+        testPalantirBtn.addEventListener('click', testPalantirConfig);
+    }
 });
 
 
@@ -1977,6 +2016,7 @@ window.loadM3uConfig = loadM3uConfig;
 window.runM3uSyncConfig = runM3uSyncConfig;
 window.runM3uClearConfig = runM3uClearConfig;
 window.savePalantirConfig = savePalantirConfig;
+window.testPalantirConfig = testPalantirConfig;
 window.saveTmdbConfig = saveTmdbConfig;
 window.toggleTmdbKeyVisibility = toggleTmdbKeyVisibility;
 window.resetWaConnection = resetWaConnection;
