@@ -1035,17 +1035,45 @@ textarea:focus {
     }
 }
 
-.btn-palantir-test {
-    background: #3b82f6;
-    color: #fff;
-    border: none;
+.settings-actions {
+    display: flex;
+    justify-content: flex-end;
+    gap: 10px;
+    margin-top: 15px;
+}
+
+.btn-palantir-test,
+.btn-settings-save {
+    height: auto;
+    min-height: 36px;
     padding: 8px 16px;
+    font-size: 0.82rem;
+    white-space: nowrap;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
     border-radius: 8px;
     font-weight: 600;
     cursor: pointer;
+    border: none;
     transition: background 0.2s;
+}
+
+.btn-palantir-test {
+    background: #3b82f6;
+    color: #fff;
 }
 
 .btn-palantir-test:hover {
     background: #2563eb;
+}
+
+.btn-settings-save {
+    background: #ef4444;
+    color: #fff;
+}
+
+.btn-settings-save:hover {
+    background: #dc2626;
 }

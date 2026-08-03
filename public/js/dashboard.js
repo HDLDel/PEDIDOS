@@ -1964,6 +1964,11 @@ document.addEventListener('DOMContentLoaded', () => {
     if (testPalantirBtn) {
         testPalantirBtn.addEventListener('click', testPalantirConfig);
     }
+
+    const savePalantirBtn = document.getElementById('btnSavePalantirConfig');
+    if (savePalantirBtn) {
+        savePalantirBtn.addEventListener('click', savePalantirConfig);
+    }
 });
 
 
