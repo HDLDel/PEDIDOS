@@ -2086,6 +2086,24 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     }
 
+    const btnPalantirCloseX = document.getElementById('btnPalantirCloseX');
+    if (btnPalantirCloseX) btnPalantirCloseX.addEventListener('click', closePalantirModal);
+
+    const btnClosePalantirModal = document.getElementById('btnClosePalantirModal');
+    if (btnClosePalantirModal) btnClosePalantirModal.addEventListener('click', closePalantirModal);
+
+    const btnPalantirProgressCloseX = document.getElementById('btnPalantirProgressCloseX');
+    if (btnPalantirProgressCloseX) btnPalantirProgressCloseX.addEventListener('click', closePalantirProgressModal);
+
+    const btnClosePalantirProgressModal = document.getElementById('btnClosePalantirProgressModal');
+    if (btnClosePalantirProgressModal) btnClosePalantirProgressModal.addEventListener('click', closePalantirProgressModal);
+
+    const palantirSelectAll = document.getElementById('palantirSelectAll');
+    if (palantirSelectAll) palantirSelectAll.addEventListener('change', togglePalantirSelectAll);
+
+    const btnPalantirDownload = document.getElementById('btnPalantirDownload');
+    if (btnPalantirDownload) btnPalantirDownload.addEventListener('click', startPalantirDownload);
+
     // Delegação de cliques nos Cards da Grade
     const grid = document.querySelector('.requests-grid');
     if (grid) {
@@ -2093,30 +2111,30 @@ document.addEventListener('DOMContentLoaded', () => {
             const btn = e.target.closest('button, span, a');
             if (!btn) return;
 
+            const card = btn.closest('.request-card, .card');
+
             if (btn.classList.contains('m3u-present')) {
                 showM3uDetails(btn);
             } else if (btn.classList.contains('btn-action-tmdb')) {
-                const card = btn.closest('.card');
-                const title = card ? card.dataset.title : '';
-                if (title) window.open(`https://www.themoviedb.org/search?query=${title}`, '_blank');
+                const rawTitle = btn.dataset.rawTitle ? decodeURIComponent(btn.dataset.rawTitle) : (card ? card.dataset.title : '');
+                if (rawTitle) window.open(`https://www.themoviedb.org/search?query=${encodeURIComponent(rawTitle)}`, '_blank');
             } else if (btn.classList.contains('btn-action-jw')) {
-                const card = btn.closest('.card');
-                const title = card ? card.dataset.title : '';
-                if (title) window.open(`https://www.justwatch.com/br/busca?q=${title}`, '_blank');
+                const rawTitle = btn.dataset.rawTitle ? decodeURIComponent(btn.dataset.rawTitle) : (card ? card.dataset.title : '');
+                if (rawTitle) window.open(`https://www.justwatch.com/br/busca?q=${encodeURIComponent(rawTitle)}`, '_blank');
             } else if (btn.classList.contains('btn-action-palantir')) {
-                const card = btn.closest('.card');
-                if (card) searchPalantir(card.dataset.id, card.dataset.tmdbId, card.dataset.title, card.dataset.type);
+                if (card) {
+                    const title = btn.dataset.rawTitle || card.dataset.title || '';
+                    const type = card.dataset.m3uType || card.dataset.category || 'movie';
+                    searchPalantir(card.dataset.id, card.dataset.tmdbId, title, type);
+                }
             } else if (btn.classList.contains('btn-action-chat')) {
-                const card = btn.closest('.card');
                 if (card) openChatModal(card.dataset.title, card.dataset.chatDesc);
             } else if (btn.classList.contains('btn-action-details')) {
                 if (btn.dataset.details) openDetailsModal(btn.dataset.details);
             } else if (btn.classList.contains('btn-action-approve')) {
-                const card = btn.closest('.card');
                 if (card) updateStatus(card.dataset.id, 'approved', null, card.dataset.countPending > 1);
             } else if (btn.classList.contains('btn-action-reject')) {
-                const card = btn.closest('.card');
-                if (card) openRejectModal(card.dataset.id, card.dataset.type, card.dataset.countPending > 1);
+                if (card) openRejectModal(card.dataset.id, card.dataset.type || card.dataset.category, card.dataset.countPending > 1);
             }
         });
     }

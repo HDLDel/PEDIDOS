@@ -181,19 +181,19 @@
 
                         <div class="card-actions">
                             <div class="card-search-buttons">
-                                <button type="button" class="btn btn-tmdb btn-action-tmdb">
+                                <button type="button" class="btn btn-tmdb btn-action-tmdb" data-raw-title="<%= encodeURIComponent(req.title) %>">
                                     <i class="fas fa-search"></i> TMDB
                                 </button>
-                                <button type="button" class="btn btn-justwatch btn-action-jw">
+                                <button type="button" class="btn btn-justwatch btn-action-jw" data-raw-title="<%= encodeURIComponent(req.title) %>">
                                     <i class="fas fa-play"></i> JW
                                 </button>
                                 <% if (typeof palantirEnabled === 'undefined' || palantirEnabled) { %>
-                                <button type="button" class="btn btn-palantir btn-action-palantir" class="<%= req.tmdb_id ? '' : 'is-hidden' %>">
+                                <button type="button" class="btn btn-palantir btn-action-palantir <%= req.tmdb_id ? '' : 'is-hidden' %>" data-raw-title="<%= encodeURIComponent(req.title) %>">
                                     <i class="fas fa-satellite-dish"></i> Palantir
                                 </button>
                                 <% } %>
                             </div>
-                            <button type="button" class="btn btn-chat-history btn-action-chat" class="<%= hasChatHistory ? '' : 'is-hidden' %>">
+                            <button type="button" class="btn btn-chat-history btn-action-chat <%= hasChatHistory ? '' : 'is-hidden' %>">
                                 <i class="fas fa-comments"></i> Conversa / Histórico
                             </button>
                             <button type="button" class="btn btn-details-action btn-action-details" data-details="<%= encodeURIComponent(JSON.stringify(allReqs)) %>">
@@ -613,26 +613,27 @@
     </div>
 
     <!-- Modal Palantir -->
-    <div id="palantirModal" class="modal-overlay" style="z-index: 3500;">
-        <div class="modal-content" style="max-width: 650px; width: 90%;">
+    <div id="palantirModal" class="modal-overlay">
+        <div class="modal-content modal-md">
             <div class="modal-header">
                 <h3 id="palantirModalTitle">🔍 Busca no Palantir</h3>
-                <button class="modal-close" onclick="closePalantirModal()">&times;</button>
+                <button type="button" class="modal-close" id="btnPalantirCloseX">&times;</button>
             </div>
-            <div id="palantirModalBody" style="padding: 20px; min-height: 120px;">
-                <div id="palantirLoading" style="text-align: center; padding: 30px;">
-                    <i class="fas fa-spinner fa-spin" style="font-size: 2rem; color: #8b5cf6;"></i>
-                    <p style="margin-top: 15px; color: var(--text-muted);">Consultando disponibilidade no Palantir...</p>
+            <div id="palantirModalBody">
+                <div id="palantirLoading">
+                    <i class="fas fa-spinner fa-spin"></i>
+                    <p>Consultando disponibilidade no Palantir...</p>
                 </div>
-                <div id="palantirResults" style="display: none;"></div>
-                <div id="palantirError" style="display: none; color: #ef4444; text-align: center; padding: 20px;"></div>
+                <div id="palantirResults" class="is-hidden"></div>
+                <div id="palantirError" class="is-hidden"></div>
             </div>
-            <div id="palantirModalFooter" style="padding: 15px 20px; border-top: 1px solid var(--border); display: none; justify-content: space-between; align-items: center; gap: 10px;">
-                <label style="color: var(--text-muted); font-size: 13px; cursor: pointer; display: flex; align-items: center; gap: 6px;">
-                    <input type="checkbox" id="palantirSelectAll" onchange="togglePalantirSelectAll()">
+            <div id="palantirModalFooter" class="settings-actions is-hidden">
+                <label>
+                    <input type="checkbox" id="palantirSelectAll">
                     Selecionar Todos
                 </label>
-                <button class="btn" style="background: #8b5cf6; color: #fff; border: none; padding: 10px 24px; border-radius: 8px; font-weight: 600; cursor: pointer;" id="btnPalantirDownload" onclick="startPalantirDownload()">
+                <button type="button" class="btn-settings-action dark" id="btnClosePalantirModal">FECHAR</button>
+                <button type="button" class="btn-settings-action primary" id="btnPalantirDownload">
                     <i class="fas fa-download"></i> Baixar Selecionados (<span id="palantirSelectedCount">0</span>)
                 </button>
             </div>
@@ -640,11 +641,11 @@
     </div>
 
     <!-- Modal Progresso Palantir -->
-    <div id="palantirProgressModal" class="modal-overlay" style="z-index: 3600;">
-        <div class="modal-content" style="max-width: 520px; width: 90%;">
+    <div id="palantirProgressModal" class="modal-overlay">
+        <div class="modal-content modal-md">
             <div class="modal-header">
                 <h3>⏳ Download em Andamento</h3>
-                <button class="modal-close" onclick="closePalantirProgressModal()">&times;</button>
+                <button type="button" class="modal-close" id="btnPalantirProgressCloseX">&times;</button>
             </div>
             <div style="padding: 20px;">
                 <div style="text-align: center; margin-bottom: 15px;">
@@ -660,6 +661,9 @@
                 <div id="palantirProgressQueue" style="max-height: 180px; overflow-y: auto; border-top: 1px solid var(--border); padding-top: 10px;">
                     <div style="font-size: 11px; color: var(--text-muted); font-weight: 600; margin-bottom: 6px;">Fila de Downloads</div>
                     <div id="palantirProgressQueueList" style="font-size: 12px;"></div>
+                </div>
+                <div class="settings-actions" style="margin-top: 15px;">
+                    <button type="button" class="btn-settings-action dark" id="btnClosePalantirProgressModal">FECHAR</button>
                 </div>
             </div>
         </div>
