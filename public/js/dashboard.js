@@ -1960,6 +1960,43 @@ document.addEventListener('DOMContentLoaded', () => {
         document.getElementById('lockBtnLabel').textContent = d.enabled ? 'LOCK 🔒' : 'LOCK';
     }).catch(() => {});
 
+    // Header buttons
+    const m3uSyncBtn = document.getElementById('m3uSyncBtn');
+    if (m3uSyncBtn) m3uSyncBtn.addEventListener('click', startM3uSyncHeader);
+
+    const configMenuBtn = document.getElementById('configMenuBtn');
+    if (configMenuBtn) configMenuBtn.addEventListener('click', openSettingsModal);
+
+    const lockMenuBtn = document.getElementById('lockMenuBtn');
+    if (lockMenuBtn) lockMenuBtn.addEventListener('click', openLockModal);
+
+    const themeToggleBtn = document.getElementById('themeToggleBtn');
+    if (themeToggleBtn) themeToggleBtn.addEventListener('click', toggleTheme);
+
+    // Filter Tabs & Stat Pills
+    document.querySelectorAll('.tabs .tab').forEach(tab => {
+        tab.addEventListener('click', () => {
+            if (tab.dataset.category) filterCategory(tab.dataset.category);
+        });
+    });
+
+    document.querySelectorAll('.stats-summary .stat-pill').forEach(pill => {
+        pill.addEventListener('click', () => {
+            if (pill.dataset.status) filterStatus(pill.dataset.status);
+        });
+    });
+
+    // Toolbar controls
+    const searchInput = document.getElementById('searchInput');
+    if (searchInput) searchInput.addEventListener('keyup', debouncedApplyFilters);
+
+    const m3uFilterSelect = document.getElementById('m3uFilterSelect');
+    if (m3uFilterSelect) m3uFilterSelect.addEventListener('change', applyFilters);
+
+    const sortSelect = document.getElementById('sortSelect');
+    if (sortSelect) sortSelect.addEventListener('change', sortCards);
+
+    // Settings Modal buttons
     const testPalantirBtn = document.getElementById('btnTestPalantirConfig');
     if (testPalantirBtn) testPalantirBtn.addEventListener('click', testPalantirConfig);
 
@@ -2007,6 +2044,82 @@ document.addEventListener('DOMContentLoaded', () => {
 
     const closeSettingsBtn = document.getElementById('btnCloseSettingsModal');
     if (closeSettingsBtn) closeSettingsBtn.addEventListener('click', closeSettingsModal);
+
+    // Modals secundários
+    const cancelRejectModalBtn = document.getElementById('btnCancelRejectModal');
+    if (cancelRejectModalBtn) cancelRejectModalBtn.addEventListener('click', closeRejectModal);
+
+    const closeDetailsModalBtn = document.getElementById('btnCloseDetailsModal');
+    if (closeDetailsModalBtn) closeDetailsModalBtn.addEventListener('click', closeDetailsModal);
+
+    const optionsBtnPending = document.getElementById('optionsBtnPending');
+    if (optionsBtnPending) optionsBtnPending.addEventListener('click', handleOptionsPending);
+
+    const optionsBtnAddNote = document.getElementById('optionsBtnAddNote');
+    if (optionsBtnAddNote) optionsBtnAddNote.addEventListener('click', handleOptionsAddNote);
+
+    const optionsBtnDelete = document.getElementById('optionsBtnDelete');
+    if (optionsBtnDelete) optionsBtnDelete.addEventListener('click', handleOptionsDelete);
+
+    const closeOptionsModalBtn = document.getElementById('btnCloseOptionsModal');
+    if (closeOptionsModalBtn) closeOptionsModalBtn.addEventListener('click', closeOptionsModal);
+
+    const closeChatModalBtn = document.getElementById('btnCloseChatModal');
+    if (closeChatModalBtn) closeChatModalBtn.addEventListener('click', closeChatModal);
+
+    const closeNoteModalBtn = document.getElementById('btnCloseNoteModal');
+    if (closeNoteModalBtn) closeNoteModalBtn.addEventListener('click', closeNoteModal);
+
+    const closeM3uDetailsModalBtn = document.getElementById('btnCloseM3uDetailsModal');
+    if (closeM3uDetailsModalBtn) closeM3uDetailsModalBtn.addEventListener('click', closeM3uDetailsModal);
+
+    const m3uCloseXBtn = document.getElementById('btnM3uCloseX');
+    if (m3uCloseXBtn) m3uCloseXBtn.addEventListener('click', closeM3uDetailsModal);
+
+    const quickRejectButtons = document.getElementById('modalQuickRejectButtons');
+    if (quickRejectButtons) {
+        quickRejectButtons.addEventListener('click', (e) => {
+            const btn = e.target.closest('.btn-quick');
+            if (btn && btn.dataset.reasonId && typeof window.setReason === 'function') {
+                window.setReason(btn.dataset.reasonId);
+            }
+        });
+    }
+
+    // Delegação de cliques nos Cards da Grade
+    const grid = document.querySelector('.requests-grid');
+    if (grid) {
+        grid.addEventListener('click', (e) => {
+            const btn = e.target.closest('button, span, a');
+            if (!btn) return;
+
+            if (btn.classList.contains('m3u-present')) {
+                showM3uDetails(btn);
+            } else if (btn.classList.contains('btn-action-tmdb')) {
+                const card = btn.closest('.card');
+                const title = card ? card.dataset.title : '';
+                if (title) window.open(`https://www.themoviedb.org/search?query=${title}`, '_blank');
+            } else if (btn.classList.contains('btn-action-jw')) {
+                const card = btn.closest('.card');
+                const title = card ? card.dataset.title : '';
+                if (title) window.open(`https://www.justwatch.com/br/busca?q=${title}`, '_blank');
+            } else if (btn.classList.contains('btn-action-palantir')) {
+                const card = btn.closest('.card');
+                if (card) searchPalantir(card.dataset.id, card.dataset.tmdbId, card.dataset.title, card.dataset.type);
+            } else if (btn.classList.contains('btn-action-chat')) {
+                const card = btn.closest('.card');
+                if (card) openChatModal(card.dataset.title, card.dataset.chatDesc);
+            } else if (btn.classList.contains('btn-action-details')) {
+                if (btn.dataset.details) openDetailsModal(btn.dataset.details);
+            } else if (btn.classList.contains('btn-action-approve')) {
+                const card = btn.closest('.card');
+                if (card) updateStatus(card.dataset.id, 'approved', null, card.dataset.countPending > 1);
+            } else if (btn.classList.contains('btn-action-reject')) {
+                const card = btn.closest('.card');
+                if (card) openRejectModal(card.dataset.id, card.dataset.type, card.dataset.countPending > 1);
+            }
+        });
+    }
 });
 
 

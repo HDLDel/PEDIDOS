@@ -16,34 +16,28 @@
 <body data-rejection-reasons="<%= JSON.stringify(rejectionReasons) %>">
     <header class="header-fixed">
         <div class="logo">
-            <h2 style="color: var(--accent-red);">IMPERIO <span style="color: white;">APPS</span></h2>
+            <h2 class="logo-title">IMPERIO <span>APPS</span></h2>
         </div>
-        <div class="user-info" style="display: flex; align-items: center; gap: 20px;">
-            <div id="waStatusBtn" class="whatsapp-status-btn wa-off" style="cursor: default;">
+        <div class="user-info">
+            <div id="waStatusBtn" class="whatsapp-status-btn wa-off">
                 <i class="fab fa-whatsapp"></i> <span>OFFLINE</span>
             </div>
-            <div id="bbStatusBtn" class="whatsapp-status-btn wa-off" style="cursor: default;">
+            <div id="bbStatusBtn" class="whatsapp-status-btn wa-off">
                 <i class="fas fa-robot"></i> <span>OFFLINE</span>
             </div>
-            <button id="m3uSyncBtn" class="whatsapp-status-btn wa-m3u"
-                style="border: none; cursor: pointer; text-decoration: none;" onclick="startM3uSyncHeader()">
+            <button id="m3uSyncBtn" class="whatsapp-status-btn wa-m3u">
                 <i class="fas fa-list-ul"></i> <span>M3U</span>
             </button>
-            <button id="configMenuBtn" class="whatsapp-status-btn"
-                style="border: 1px solid var(--border); background: var(--bg-card); cursor: pointer; text-decoration: none; color: var(--text-primary);" onclick="openSettingsModal()">
+            <button id="configMenuBtn" class="whatsapp-status-btn btn-header-config">
                 <i class="fas fa-cog"></i> <span>CONFIGURAÇÃO</span>
             </button>
-            <button id="lockMenuBtn" class="whatsapp-status-btn"
-                style="border: 1px solid var(--border); background: var(--bg-card); cursor: pointer; text-decoration: none; color: var(--text-primary);" onclick="openLockModal()">
+            <button id="lockMenuBtn" class="whatsapp-status-btn btn-header-config">
                 <i class="fas fa-lock"></i> <span id="lockBtnLabel">LOCK</span>
             </button>
-            <button id="themeToggleBtn"
-                style="background: transparent; border: none; color: var(--text-primary); font-size: 1.15rem; cursor: pointer; display: inline-flex; align-items: center; justify-content: center; width: 35px; height: 35px; border-radius: 50%; transition: background 0.3s; margin-left: 5px;"
-                onclick="toggleTheme()" title="Alternar Tema">
-                <i class="fas fa-sun" id="themeIcon" style="color: #f59e0b;"></i>
+            <button id="themeToggleBtn" class="btn-theme-toggle" title="Alternar Tema">
+                <i class="fas fa-sun" id="themeIcon"></i>
             </button>
-            <a href="/admin/logout"
-                style="color: var(--text-muted); text-decoration: none; font-size: 0.85rem; font-weight: 600; display: inline-flex; align-items: center; gap: 5px;">
+            <a href="/admin/logout" class="link-logout">
                 <i class="fas fa-sign-out-alt"></i> Sair do Painel
             </a>
         </div>
@@ -51,35 +45,34 @@
 
     <div class="dashboard-control-panel">
         <nav class="tabs">
-            <a onclick="filterCategory('all')" id="tab-all" class="tab active">TODOS (<span id="count-all">0</span>)</a>
-            <a onclick="filterCategory('series')" id="tab-series" class="tab">SÉRIES (<span id="count-series">0</span>)</a>
-            <a onclick="filterCategory('movie')" id="tab-movie" class="tab">FILMES (<span id="count-movie">0</span>)</a>
-            <a onclick="filterCategory('error')" id="tab-error" class="tab">ERROS (<span id="count-error">0</span>)</a>
+            <a id="tab-all" class="tab active" data-category="all">TODOS (<span id="count-all">0</span>)</a>
+            <a id="tab-series" class="tab" data-category="series">SÉRIES (<span id="count-series">0</span>)</a>
+            <a id="tab-movie" class="tab" data-category="movie">FILMES (<span id="count-movie">0</span>)</a>
+            <a id="tab-error" class="tab" data-category="error">ERROS (<span id="count-error">0</span>)</a>
         </nav>
 
         <div class="stats-summary">
-            <div onclick="filterStatus('pending')" id="stat-pending" class="stat-pill active">📊 PENDENTES: <strong>
+            <div id="stat-pending" class="stat-pill active" data-status="pending">📊 PENDENTES: <strong>
                     <%= stats.pending %>
                 </strong></div>
-            <div onclick="filterStatus('approved')" id="stat-approved" class="stat-pill">✅ APROVADOS: <strong>
+            <div id="stat-approved" class="stat-pill" data-status="approved">✅ APROVADOS: <strong>
                     <%= stats.approved %>
                 </strong></div>
-            <div onclick="filterStatus('rejected')" id="stat-rejected" class="stat-pill">❌ REJEITADOS: <strong>
+            <div id="stat-rejected" class="stat-pill" data-status="rejected">❌ REJEITADOS: <strong>
                     <%= stats.rejected %>
                 </strong></div>
-            <div onclick="filterStatus('all')" id="stat-all" class="stat-pill">📋 TODOS</div>
+            <div id="stat-all" class="stat-pill" data-status="all">📋 TODOS</div>
         </div>
 
         <!-- Barra de Busca e Ordenação -->
         <div class="toolbar">
-            <input type="text" id="searchInput" placeholder="Buscar por título do pedido ou nome da revenda..."
-                onkeyup="debouncedApplyFilters()">
-            <select id="m3uFilterSelect" onchange="applyFilters()">
+            <input type="text" id="searchInput" placeholder="Buscar por título do pedido ou nome da revenda...">
+            <select id="m3uFilterSelect">
                 <option value="all" selected>Todos (M3U)</option>
                 <option value="present">Presentes na M3U</option>
                 <option value="absent">Ausentes na M3U</option>
             </select>
-            <select id="sortSelect" onchange="sortCards()">
+            <select id="sortSelect">
                 <option value="yearDesc" selected>Ano de Lançamento (Novo - Antigo)</option>
                 <option value="yearAsc">Ano de Lançamento (Antigo - Novo)</option>
                 <option value="oldest">Mais Antigos (Data de Pedido)</option>
@@ -155,137 +148,105 @@
                     </div>
 
                     <div class="card-body">
-                        <div style="font-size: 0.65rem; text-transform: uppercase; color: var(--text-muted); font-weight: 800; letter-spacing: 0.5px; margin-bottom: 2px;">TÍTULO</div>
+                        <div class="card-subtitle">TÍTULO</div>
                         <h4 class="card-title" title="<%= req.title %>">
                             <%= req.title %>
                         </h4>
                         <% if (req.requestType !=='error' && typeof hasM3uData !=='undefined' && hasM3uData) { %>
-                            <div style="margin-bottom: 10px;">
+                            <div class="m3u-status-container">
                                 <% if (req.inM3u) { %>
-                                    <span onclick="showM3uDetails(this)"
-                                        style="display: inline-flex; align-items: center; gap: 4px; background: rgba(16, 185, 129, 0.15); color: #10b981; border: 1px solid rgba(16, 185, 129, 0.3); padding: 4px 8px; border-radius: 6px; font-size: 11px; font-weight: 700; cursor: pointer;"
-                                        title="Clique para ver detalhes na M3U">
+                                    <span class="m3u-badge m3u-present" title="Clique para ver detalhes na M3U">
                                         <i class="fas fa-check-circle"></i> Presentes na M3U <%= req.m3uTitle &&
                                             req.m3uTitle.toLowerCase() !==req.title.toLowerCase() ?
                                             `(como "${req.m3uTitle}" )` : '' %>
                                     </span>
-                                    <% } else { %>
-                                        <span
-                                            style="display: inline-flex; align-items: center; gap: 4px; background: rgba(239, 68, 68, 0.1); color: #f87171; border: 1px solid rgba(239, 68, 68, 0.2); padding: 4px 8px; border-radius: 6px; font-size: 11px; font-weight: 700;">
-                                            <i class="fas fa-times-circle"></i> Ausentes na M3U
-                                        </span>
-                                        <% } %>
-                            </div>
-                            <% } %>
-                                <div class="info-item"><i class="fas fa-calendar-day"></i> Lançamento: <%= req.year
-                                        || 'N/A' %>
-                                </div>
-                                <div class="info-item"><i class="fas fa-tag"></i>
-                                    <%= req.action %>
-                                </div>
-                                <% if(req.season) { %>
-                                    <div class="info-item"><i class="fas fa-list-ol"></i> T: <%= req.season %> | <%= req.episode ? 'E: ' + req.episode : 'Completa' %>
-                                    </div>
+                                <% } else { %>
+                                    <span class="m3u-badge m3u-absent">
+                                        <i class="fas fa-times-circle"></i> Ausentes na M3U
+                                    </span>
                                 <% } %>
+                            </div>
+                        <% } %>
+                        <div class="info-item"><i class="fas fa-calendar-day"></i> Lançamento: <%= req.year || 'N/A' %></div>
+                        <div class="info-item"><i class="fas fa-tag"></i> <%= req.action %></div>
+                        <% if(req.season) { %>
+                            <div class="info-item"><i class="fas fa-list-ol"></i> T: <%= req.season %> | <%= req.episode ? 'E: ' + req.episode : 'Completa' %></div>
+                        <% } %>
 
+                        <div class="info-item"><i class="fas fa-user-tag"></i> <%= req.reseller %></div>
+                        <div class="info-item status-wa-info">
+                            <i class="fab fa-whatsapp"></i> <%= req.whatsapp %>
+                            <div class="info-item"><i class="far fa-calendar-alt"></i> <%= req.date %></div>
+                        </div>
 
-
-                                                <div class="info-item"><i class="fas fa-user-tag"></i>
-                                                    <%= req.reseller %>
-                                                </div>
-                                                <div class="info-item" style="color: var(--status-approved);">
-                                                    <i class="fab fa-whatsapp"></i>
-                                                    <%= req.whatsapp %>
-                                                            <div class="info-item"><i class="far fa-calendar-alt"></i>
-                                                                <%= req.date %>
-                                                            </div>
-                                                </div>
-
-                                                <div class="card-actions">
-                                                     <div style="display: flex; gap: 5px; margin-bottom: 5px;">
-                                                          <button class="btn btn-tmdb"
-                                                              onclick="window.open('https://www.themoviedb.org/search?query=<%= encodeURIComponent(req.title).replace(/'/g, "%27") %>', '_blank')">
-                                                              <i class="fas fa-search"></i> TMDB
-                                                          </button>
-                                                          <button class="btn btn-justwatch"
-                                                              onclick="window.open('https://www.justwatch.com/br/busca?q=<%= encodeURIComponent(req.title).replace(/'/g, "%27") %>', '_blank')">
-                                                              <i class="fas fa-play"></i> JW
-                                                          </button>
-                                                          <% if (typeof palantirEnabled === 'undefined' || palantirEnabled) { %>
-                                                           <button class="btn btn-palantir"
-                                                               style="<%= req.tmdb_id ? '' : 'display: none;' %>"
-                                                               onclick="searchPalantir(<%= req.id %>, '<%= req.tmdb_id %>', '<%= encodeURIComponent(req.title).replace(/'/g, "\\'") %>', '<%= req.type || 'movie' %>')">
-                                                               <i class="fas fa-satellite-dish"></i> Palantir
-                                                           </button>
-                                                           <% } %>
-                                                     </div>
-                                                    <button class="btn btn-chat-history"
-                                                        style="<%= hasChatHistory ? 'display: flex;' : 'display: none;' %>"
-                                                        onclick="openChatModal('<%= encodeURIComponent(req.title).replace(/'/g, "%27") %>', '<%= encodeURIComponent(chatDescription).replace(/'/g, "%27") %>')">
-                                                            <i class="fas fa-comments"></i> Conversa / Histórico
-                                                    </button>
-                                                    <button class="btn btn-details-action"
-                                                        style="margin-bottom: 5px; width: 100%; <%= allReqs.length > 1 ? 'background: rgba(59, 130, 246, 0.08); color: #60a5fa; border-color: rgba(59, 130, 246, 0.3);' : 'background: rgba(245, 158, 11, 0.08); color: #fbbf24; border-color: rgba(245, 158, 11, 0.3);' %>"
-                                                        data-details="<%= encodeURIComponent(JSON.stringify(allReqs)) %>"
-                                                        onclick="openDetailsModal(this.dataset.details)">
-                                                        <% if (allReqs.length > 1) { %>
-                                                            <i class="fas fa-list"></i> Histórico de Pedidos
-                                                        <% } else { %>
-                                                            <i class="fas fa-cog"></i> Opções do Pedido
-                                                        <% } %>
-                                                    </button>
-                                                    <div class="btn-group approval-btn-group"
-                                                        id="btnGroup-<%= req.id %>"
-                                                        style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px; width: 100%; <%= hasAnyPending ? '' : 'display: none;' %>">
-                                                        <button class="btn btn-approve"
-                                                            onclick="updateStatus(<%= req.id %>, 'approved', null, <%= countPending > 1 %>)">
-                                                            <%= countPending > 1 ? 'Aprovar Pendentes' : 'Aprovar' %>
-                                                        </button>
-                                                        <button class="btn btn-reject"
-                                                            onclick="openRejectModal(<%= req.id %>, '<%= req.type %>', <%= countPending > 1 %>)">
-                                                            <%= countPending > 1 ? 'Rejeitar Pendentes' : 'Rejeitar' %>
-                                                        </button>
-                                                    </div>
-                                                </div>
+                        <div class="card-actions">
+                            <div class="card-search-buttons">
+                                <button type="button" class="btn btn-tmdb btn-action-tmdb">
+                                    <i class="fas fa-search"></i> TMDB
+                                </button>
+                                <button type="button" class="btn btn-justwatch btn-action-jw">
+                                    <i class="fas fa-play"></i> JW
+                                </button>
+                                <% if (typeof palantirEnabled === 'undefined' || palantirEnabled) { %>
+                                <button type="button" class="btn btn-palantir btn-action-palantir" class="<%= req.tmdb_id ? '' : 'is-hidden' %>">
+                                    <i class="fas fa-satellite-dish"></i> Palantir
+                                </button>
+                                <% } %>
+                            </div>
+                            <button type="button" class="btn btn-chat-history btn-action-chat" class="<%= hasChatHistory ? '' : 'is-hidden' %>">
+                                <i class="fas fa-comments"></i> Conversa / Histórico
+                            </button>
+                            <button type="button" class="btn btn-details-action btn-action-details" data-details="<%= encodeURIComponent(JSON.stringify(allReqs)) %>">
+                                <% if (allReqs.length > 1) { %>
+                                    <i class="fas fa-list"></i> Histórico de Pedidos
+                                <% } else { %>
+                                    <i class="fas fa-cog"></i> Opções do Pedido
+                                <% } %>
+                            </button>
+                            <div class="btn-group approval-btn-group" id="btnGroup-<%= req.id %>">
+                                <button type="button" class="btn btn-approve btn-action-approve">
+                                    <%= countPending > 1 ? 'Aprovar Pendentes' : 'Aprovar' %>
+                                </button>
+                                <button type="button" class="btn btn-reject btn-action-reject">
+                                    <%= countPending > 1 ? 'Rejeitar Pendentes' : 'Rejeitar' %>
+                                </button>
+                            </div>
+                        </div>
                     </div>
             </article>
             <% }); %>
     </main>
 
     <!-- Modal de Rejeição -->
-    <div id="rejectModal" class="modal-overlay" style="z-index: 3200;">
+    <div id="rejectModal" class="modal-overlay">
         <div class="modal-content">
             <h3 class="modal-header">MOTIVO DA REJEIÇÃO DO PEDIDO</h3>
             <div class="quick-buttons" id="modalQuickRejectButtons">
                 <% rejectionReasons.forEach(function(reason) { %>
-                    <button class="btn-quick" onclick="setReason('<%= reason.id %>')"><%= reason.title %></button>
+                    <button type="button" class="btn-quick" data-reason-id="<%= reason.id %>"><%= reason.title %></button>
                 <% }); %>
             </div>
             <textarea id="rejectionText" rows="15" placeholder="Ou digite um motivo personalizado..."></textarea>
             <div class="modal-footer">
-                <button class="btn" style="background: #333; color: #fff;"
-                    onclick="closeRejectModal()">CANCELAR</button>
-                <button class="btn btn-reject" style="background: var(--status-rejected); color: #fff;"
-                    id="confirmRejectBtn">CONFIRMAR</button>
+                <button type="button" class="btn btn-settings-action dark" id="btnCancelRejectModal">CANCELAR</button>
+                <button type="button" class="btn btn-reject btn-settings-action danger" id="confirmRejectBtn">CONFIRMAR</button>
             </div>
         </div>
     </div>
 
     <!-- Modal de Detalhes Agrupados -->
-    <div id="detailsModal" class="modal-overlay" style="z-index: 3000;">
-        <div class="modal-content" style="max-width: 1300px; width: 95%;">
+    <div id="detailsModal" class="modal-overlay">
+        <div class="modal-content modal-lg">
             <h3 class="modal-header">📦 Detalhes dos Pedidos Agrupados</h3>
-            <div
-                style="max-height: 65vh; overflow-y: auto; overflow-x: auto; width: 100%; background: #000; border-radius: 8px; border: 1px solid var(--border); margin-bottom: 0.6rem;">
-                <table style="width: 100%; border-collapse: collapse; text-align: left; font-size: 0.9rem;">
-                    <thead style="background: #111; position: sticky; top: 0;">
+            <div class="details-table-wrapper">
+                <table class="details-table">
+                    <thead>
                         <tr>
-                            <th style="padding: 12px 15px; color: var(--text-muted);">Revendedor</th>
-                            <th style="padding: 12px 15px; color: var(--text-muted);">Ação</th>
-                            <th style="padding: 12px 15px; color: var(--text-muted);">Detalhes (Temp/Ep/Erro)</th>
-                            <th style="padding: 12px 15px; color: var(--text-muted);">Data</th>
-                            <th style="padding: 12px 15px; color: var(--text-muted); text-align: center; width: 300px;">
-                                Ações</th>
+                            <th>Revendedor</th>
+                            <th>Ação</th>
+                            <th>Detalhes (Temp/Ep/Erro)</th>
+                            <th>Data</th>
+                            <th class="text-center">Ações</th>
                         </tr>
                     </thead>
                     <tbody id="detailsTableBody">
@@ -293,134 +254,106 @@
                 </table>
             </div>
             <div class="modal-footer">
-                <button class="btn" style="background: #333; color: #fff;" onclick="closeDetailsModal()">FECHAR</button>
+                <button type="button" class="btn btn-settings-action dark" id="btnCloseDetailsModal">FECHAR</button>
             </div>
         </div>
     </div>
 
     <!-- Modal de Opções Unificado -->
-    <div id="optionsModal" class="modal-overlay" style="z-index: 3100;">
-        <div class="modal-content" style="max-width: 550px; width: 95%;">
-            <h3 class="modal-header" id="optionsModalHeader" style="display: flex; align-items: center; gap: 10px;"><i
-                    class="fas fa-cog"></i> Opções do Pedido</h3>
+    <div id="optionsModal" class="modal-overlay">
+        <div class="modal-content modal-md">
+            <h3 class="modal-header" id="optionsModalHeader"><i class="fas fa-cog"></i> Opções do Pedido</h3>
 
-            <div
-                style="background: #0d0d0d; border: 1px solid var(--border); padding: 12px; border-radius: 8px; margin-bottom: 0.6rem;">
-                <p style="font-size: 0.95rem; margin-bottom: 4px;"><strong>Título:</strong> <span id="optionsModalTitle"
-                        style="color: #fff;"></span></p>
-                <p style="font-size: 0.95rem; margin-bottom: 4px;"><strong>Revenda:</strong> <span
-                        id="optionsModalReseller" style="color: #fff;"></span></p>
-                <p style="font-size: 0.95rem; display: flex; align-items: center; gap: 10px;">
+            <div class="options-summary-box">
+                <p><strong>Título:</strong> <span id="optionsModalTitle"></span></p>
+                <p><strong>Revenda:</strong> <span id="optionsModalReseller"></span></p>
+                <p class="options-status-row">
                     <strong>Status:</strong>
-                    <span id="optionsModalStatusBadge" class="badge-status"
-                        style="position: static; padding: 4px 8px; font-size: 0.7rem;"></span>
+                    <span id="optionsModalStatusBadge" class="badge-status"></span>
                 </p>
             </div>
 
-            <div style="display: flex; flex-direction: column; gap: 10px;">
-                <button id="optionsBtnPending" class="btn"
-                    style="background: transparent; border: 1px solid var(--status-pending); color: var(--status-pending); width: 100%; padding: 12px; font-size: 0.85rem;"
-                    onclick="handleOptionsPending()">
+            <div class="options-buttons-stack">
+                <button type="button" id="optionsBtnPending" class="btn btn-options-item btn-options-pending">
                     <i class="fas fa-undo"></i> Retornar para Pendente
                 </button>
-                <button id="optionsBtnAddNote" class="btn"
-                    style="background: transparent; border: 1px solid #f59e0b; color: #f59e0b; width: 100%; padding: 12px; font-size: 0.85rem; display: flex; align-items: center; justify-content: center; gap: 8px;"
-                    onclick="handleOptionsAddNote()">
+                <button type="button" id="optionsBtnAddNote" class="btn btn-options-item btn-options-note">
                     <i class="fas fa-comment-dots"></i> Pedir Explicação / Add Nota
                 </button>
-                <button id="optionsBtnDelete" class="btn"
-                    style="background: rgba(220, 38, 38, 0.15); border: 1px solid #dc2626; color: #f87171; width: 100%; padding: 12px; font-size: 0.85rem; transition: 0.3s;"
-                    onmouseover="this.style.backgroundColor='#dc2626'; this.style.color='white';"
-                    onmouseout="this.style.backgroundColor='rgba(220, 38, 38, 0.15)'; this.style.color='#f87171';"
-                    onclick="handleOptionsDelete()">
+                <button type="button" id="optionsBtnDelete" class="btn btn-options-item btn-options-delete">
                     <i class="fas fa-trash-alt"></i> Excluir Pedido
                 </button>
             </div>
 
             <div class="modal-footer">
-                <button class="btn" style="background: #333; color: #fff; padding: 10px 20px;"
-                    onclick="closeOptionsModal()">FECHAR</button>
+                <button type="button" class="btn btn-settings-action dark" id="btnCloseOptionsModal">FECHAR</button>
             </div>
         </div>
     </div>
 
     <!-- Modal de Histórico de Conversa (Chat) -->
-    <div id="chatModal" class="modal-overlay" style="z-index: 3300;">
-        <div class="modal-content" style="max-width: 800px; width: 95%;">
+    <div id="chatModal" class="modal-overlay">
+        <div class="modal-content modal-lg">
             <h3 class="modal-header">
                 <i class="fas fa-comments" style="color: #3b82f6;"></i> Histórico de Conversa
             </h3>
 
-            <p style="font-size: 0.95rem; margin-bottom: 8px; color: #aaa;"><strong>Pedido:</strong> <span
-                    id="chatModalTitle" style="color: #fff; font-weight: bold;"></span></p>
+            <p class="chat-title-info"><strong>Pedido:</strong> <span id="chatModalTitle"></span></p>
 
-            <div id="chatMessagesContainer"
-                style="max-height: 60vh; overflow-y: auto; display: flex; flex-direction: column; gap: 8px; padding: 10px; background: #050505; border-radius: 8px; border: 1px solid var(--border);">
+            <div id="chatMessagesContainer">
                 <!-- Mensagens injetadas dinamicamente -->
             </div>
 
             <div class="modal-footer">
-                <button class="btn" style="background: #333; color: #fff; padding: 10px 20px;"
-                    onclick="closeChatModal()">FECHAR</button>
+                <button type="button" class="btn btn-settings-action dark" id="btnCloseChatModal">FECHAR</button>
             </div>
         </div>
     </div>
 
     <!-- Modal de Adicionar Nota / Pedir Explicação (Customizado) -->
-    <div id="noteModal" class="modal-overlay" style="z-index: 3400;">
-        <div class="modal-content" style="max-width: 700px; width: 95%;">
-            <h3 class="modal-header" id="noteModalHeader"
-                style="color: #fff; margin-bottom: 8px; font-weight: 700; display: flex; align-items: center; gap: 10px; border-bottom: none; padding-bottom: 0;">
+    <div id="noteModal" class="modal-overlay">
+        <div class="modal-content modal-md">
+            <h3 class="modal-header" id="noteModalHeader">
                 <i class="fas fa-comment-dots" style="color: #f59e0b;"></i> Pedir Explicação / Add Nota
             </h3>
-            <p style="font-size: 0.9rem; color: #aaa; margin-bottom: 8px;">
-                <strong>Pedido:</strong> <span id="noteModalTitle" style="color: #fff;"></span>
+            <p class="note-title-info">
+                <strong>Pedido:</strong> <span id="noteModalTitle"></span>
             </p>
-            <textarea id="noteModalText" rows="6"
-                style="width: 100%; background: #000; border: 1px solid #333; border-radius: 8px; color: #fff; padding: 12px; font-family: inherit; font-size: 0.9rem; margin-bottom: 8px; resize: vertical;"
-                placeholder="Escreva a sua pergunta ou observação para o revendedor..."></textarea>
-            <div style="display: flex; justify-content: flex-end; gap: 10px;">
-                <button class="btn"
-                    style="background: #333; color: #fff; padding: 10px 20px; border-radius: 8px; font-weight: 600; cursor: pointer;"
-                    onclick="closeNoteModal()">CANCELAR</button>
-                <button class="btn"
-                    style="background: #2563eb; color: #fff; border: none; padding: 10px 20px; border-radius: 8px; font-weight: 600; cursor: pointer;"
-                    id="noteModalConfirmBtn">SALVAR</button>
+            <textarea id="noteModalText" rows="6" placeholder="Escreva a sua pergunta ou observação para o revendedor..."></textarea>
+            <div class="settings-actions">
+                <button type="button" class="btn-settings-action dark" id="btnCloseNoteModal">CANCELAR</button>
+                <button type="button" class="btn-settings-action primary" id="noteModalConfirmBtn">SALVAR</button>
             </div>
         </div>
     </div>
 
-
-
     <!-- Modal de Detalhes M3U -->
-    <div id="m3uDetailsModal" class="modal-overlay" style="z-index: 3200; display: none;">
-        <div class="modal-content" style="max-width: 650px; width: 95%;">
-            <div class="modal-header" style="display: flex; align-items: center; justify-content: space-between; border-bottom: none; padding-bottom: 0;">
-                <h3 style="color: #fff; font-weight: 700; display: flex; align-items: center; gap: 10px; margin: 0;">
+    <div id="m3uDetailsModal" class="modal-overlay">
+        <div class="modal-content modal-md">
+            <div class="modal-header modal-header-flex">
+                <h3>
                     <i class="fas fa-list-ul" style="color: #10b981;"></i> <span id="m3uDetailsTitle">Dados da M3U</span>
                 </h3>
-                <button class="modal-close" onclick="closeM3uDetailsModal()" style="background: none; border: none; color: #999; font-size: 24px; cursor: pointer; padding: 0; line-height: 1;">&times;</button>
+                <button type="button" class="modal-close" id="btnM3uCloseX">&times;</button>
             </div>
 
-            <div id="m3uDetailsBody" style="margin-top: 12px;">
-                <div id="m3uDetailsLoading" style="text-align: center; padding: 30px; color: #999;">
-                    <i class="fas fa-spinner fa-spin" style="font-size: 24px;"></i>
-                    <p style="margin-top: 10px;">Carregando...</p>
+            <div id="m3uDetailsBody">
+                <div id="m3uDetailsLoading" class="m3u-loading-box">
+                    <i class="fas fa-spinner fa-spin"></i>
+                    <p>Carregando...</p>
                 </div>
-                <div id="m3uDetailsContent" style="display: none;"></div>
+                <div id="m3uDetailsContent" class="is-hidden"></div>
             </div>
 
-            <div style="display: flex; justify-content: flex-end; gap: 10px; margin-top: 16px;">
-                <button class="btn"
-                    style="background: #333; color: #fff; padding: 10px 20px; border-radius: 8px; font-weight: 600; cursor: pointer;"
-                    onclick="closeM3uDetailsModal()">FECHAR</button>
+            <div class="settings-actions">
+                <button type="button" class="btn-settings-action dark" id="btnCloseM3uDetailsModal">FECHAR</button>
             </div>
         </div>
     </div>
 
     <!-- Modal de Configuração Geral (Popup) -->
     <div id="settingsModal" class="modal-overlay glass-modal" style="z-index: 3600; display: none;">
-        <div class="modal-content" style="max-width: 600px; width: 95%; border-radius: 16px; border: 1px solid rgba(255,255,255,0.08); background: rgba(13, 13, 17, 0.95); box-shadow: 0 20px 50px rgba(0,0,0,0.5);">
+        <div class="modal-content" style="max-width: 750px; width: 95%; border-radius: 16px; border: 1px solid rgba(255,255,255,0.08); background: rgba(13, 13, 17, 0.95); box-shadow: 0 20px 50px rgba(0,0,0,0.5);">
             <h3 class="modal-header"
                 style="color: #fff; margin-bottom: 20px; font-weight: 700; display: flex; align-items: center; gap: 10px; border-bottom: 1px solid rgba(255,255,255,0.05); padding-bottom: 15px;">
                 <i class="fas fa-sliders-h" style="color: var(--accent-red);"></i> Painel de Configurações
