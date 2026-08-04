@@ -617,25 +617,26 @@
         <div class="modal-content modal-md">
             <div class="modal-header">
                 <h3 id="palantirModalTitle">🔍 Busca no Palantir</h3>
-                <button type="button" class="modal-close" id="btnPalantirCloseX">&times;</button>
             </div>
             <div id="palantirModalBody">
-                <div id="palantirLoading">
+                <div id="palantirLoading" style="text-align: center; padding: 20px;">
                     <i class="fas fa-spinner fa-spin"></i>
                     <p>Consultando disponibilidade no Palantir...</p>
                 </div>
-                <div id="palantirResults" class="is-hidden"></div>
-                <div id="palantirError" class="is-hidden"></div>
+                <div id="palantirResults" style="display: none;"></div>
+                <div id="palantirError" style="display: none;"></div>
             </div>
-            <div id="palantirModalFooter" class="settings-actions is-hidden">
-                <label>
-                    <input type="checkbox" id="palantirSelectAll">
-                    Selecionar Todos
-                </label>
+            <div class="settings-actions">
+                <div id="palantirModalFooterControls" style="display: none; align-items: center; gap: 10px; margin-right: auto;">
+                    <label style="color: var(--text-muted); font-size: 13px; cursor: pointer; display: flex; align-items: center; gap: 6px;">
+                        <input type="checkbox" id="palantirSelectAll">
+                        Selecionar Todos
+                    </label>
+                    <button type="button" class="btn-settings-action primary" id="btnPalantirDownload">
+                        <i class="fas fa-download"></i> Baixar Selecionados (<span id="palantirSelectedCount">0</span>)
+                    </button>
+                </div>
                 <button type="button" class="btn-settings-action dark" id="btnClosePalantirModal">FECHAR</button>
-                <button type="button" class="btn-settings-action primary" id="btnPalantirDownload">
-                    <i class="fas fa-download"></i> Baixar Selecionados (<span id="palantirSelectedCount">0</span>)
-                </button>
             </div>
         </div>
     </div>
@@ -645,7 +646,6 @@
         <div class="modal-content modal-md">
             <div class="modal-header">
                 <h3>⏳ Download em Andamento</h3>
-                <button type="button" class="modal-close" id="btnPalantirProgressCloseX">&times;</button>
             </div>
             <div style="padding: 20px;">
                 <div style="text-align: center; margin-bottom: 15px;">
@@ -662,7 +662,7 @@
                     <div style="font-size: 11px; color: var(--text-muted); font-weight: 600; margin-bottom: 6px;">Fila de Downloads</div>
                     <div id="palantirProgressQueueList" style="font-size: 12px;"></div>
                 </div>
-                <div class="settings-actions" style="margin-top: 15px;">
+                <div class="settings-actions">
                     <button type="button" class="btn-settings-action dark" id="btnClosePalantirProgressModal">FECHAR</button>
                 </div>
             </div>

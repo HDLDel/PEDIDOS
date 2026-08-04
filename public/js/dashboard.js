@@ -1078,7 +1078,8 @@ async function searchPalantir(requestId, tmdbId, titleEncoded, type) {
     document.getElementById('palantirLoading').style.display = 'block';
     document.getElementById('palantirResults').style.display = 'none';
     document.getElementById('palantirError').style.display = 'none';
-    document.getElementById('palantirModalFooter').style.display = 'none';
+    const footerControls = document.getElementById('palantirModalFooterControls');
+    if (footerControls) footerControls.style.display = 'none';
     document.getElementById('palantirModal').style.display = 'flex';
 
     try {
@@ -1136,7 +1137,7 @@ async function searchPalantir(requestId, tmdbId, titleEncoded, type) {
             });
             html += opts.length > 10 ? `<div style="text-align: center; margin-top: 6px;"><label style="font-size: 12px; color: var(--text-muted); cursor: pointer;"><input type="checkbox" id="palantirSelectAllInline" onchange="togglePalantirSelectAll()"> Selecionar Todos (${opts.length})</label></div>` : '';
             resultsDiv.innerHTML = html;
-            document.getElementById('palantirModalFooter').style.display = 'flex';
+            if (footerControls) footerControls.style.display = 'flex';
             updatePalantirCount();
         } else {
             let html = `<div style="background: rgba(239, 68, 68, 0.1); border: 1px solid #ef4444; border-radius: 10px; padding: 20px; text-align: center;">
