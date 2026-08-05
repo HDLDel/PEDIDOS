@@ -1,7 +1,12 @@
 #!/bin/bash
 set -euo pipefail
 
-NGINX_DIR="/root/PEDIDOS/nginx"
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+if [ "$(basename "$SCRIPT_DIR")" = "script" ] && [ -f "$SCRIPT_DIR/../server.js" ]; then
+    SCRIPT_DIR="$(dirname "$SCRIPT_DIR")"
+fi
+
+NGINX_DIR="$SCRIPT_DIR/nginx"
 NGINX_BIN="$NGINX_DIR/sbin/nginx"
 NGINX_CONF="$NGINX_DIR/conf/nginx.conf"
 

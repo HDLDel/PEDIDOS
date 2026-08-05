@@ -8,6 +8,15 @@ echo "════════════════════════�
 echo ""
 
 # ────────────────────────────────────────────
+# AUTO-LOCALIZAÇÃO DA RAIZ DO PROJETO
+# ────────────────────────────────────────────
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+if [ "$(basename "$SCRIPT_DIR")" = "script" ] && [ -f "$SCRIPT_DIR/../server.js" ]; then
+    SCRIPT_DIR="$(dirname "$SCRIPT_DIR")"
+fi
+cd "$SCRIPT_DIR"
+
+# ────────────────────────────────────────────
 # VERIFICAÇÕES
 # ────────────────────────────────────────────
 if [ ! -f .env ]; then

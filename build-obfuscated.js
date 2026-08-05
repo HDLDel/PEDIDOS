@@ -48,8 +48,10 @@ fs.cpSync(path.join(ROOT, 'nginx'), path.join(DIST, 'nginx'), { recursive: true 
 fs.cpSync(path.join(ROOT, 'package.json'), path.join(DIST, 'package.json'));
 fs.cpSync(path.join(ROOT, 'package-lock.json'), path.join(DIST, 'package-lock.json'));
 fs.cpSync(path.join(ROOT, 'node_modules'), path.join(DIST, 'node_modules'), { recursive: true });
-fs.cpSync(path.join(ROOT, 'setup-ubuntu.sh'), path.join(DIST, 'setup-ubuntu.sh'));
-fs.cpSync(path.join(ROOT, 'secure-vps.sh'), path.join(DIST, 'secure-vps.sh'));
+fs.mkdirSync(path.join(DIST, 'script'), { recursive: true });
+fs.cpSync(path.join(ROOT, 'script/setup-ubuntu.sh'), path.join(DIST, 'script/setup-ubuntu.sh'));
+fs.cpSync(path.join(ROOT, 'script/secure-vps.sh'), path.join(DIST, 'script/secure-vps.sh'));
+fs.cpSync(path.join(ROOT, 'script/control.sh'), path.join(DIST, 'script/control.sh'));
 
 // Copy WhatsApp files intact (not obfuscated)
 for (const f of ['whatsapp-server.js', 'whatsapp-worker.js']) {

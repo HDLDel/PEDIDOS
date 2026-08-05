@@ -102,6 +102,10 @@ fi
 # ──────────────────────────────────────────────
 echo "📁 Instalando dependências do Node.js..."
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+# Se estiver em script/, sobe um nível para a raiz do projeto
+if [ "$(basename "$SCRIPT_DIR")" = "script" ] && [ -f "$SCRIPT_DIR/../server.js" ]; then
+    SCRIPT_DIR="$(dirname "$SCRIPT_DIR")"
+fi
 cd "$SCRIPT_DIR"
 
 npm install
@@ -153,7 +157,7 @@ node seed.js 2>&1 || echo "   ⚠️  Seed falhou (banco pode já existir)"
 # ──────────────────────────────────────────────
 # 6. CONFIGURAR TERCEIRO NGINX (instância 100% isolada)
 # ──────────────────────────────────────────────
-NGINX_DEST="/root/PEDIDOS/nginx"
+NGINX_DEST="$SCRIPT_DIR/nginx"
 echo "🌐 Configurando nginx do PEDIDOS em $NGINX_DEST..."
 sudo mkdir -p "$NGINX_DEST"/{sbin,conf,logs,run}
 
@@ -191,7 +195,7 @@ if [ ! -f "$NGINX_DEST/conf/mime.types" ]; then
         fi
     done
 fi
-sudo chmod +x "$NGINX_DEST/control.sh" 2>/dev/null || true
+sudo chmod +x "$SCRIPT_DIR/script/control.sh" 2>/dev/null || true
 echo "✓ Configuração copiada para $NGINX_DEST/"
 
 # Instalar systemd service para o nginx do PEDIDOS (sobrevive a reboot)
@@ -247,7 +251,7 @@ echo "   ✅ PM2 salvo. Serviços serão restaurados após reboot."
 echo "🌐 Testando configuração do nginx..."
 if "$NGINX_DEST/sbin/nginx" -c "$NGINX_DEST/conf/nginx.conf" -p "$NGINX_DEST" -t 2>&1; then
     echo "   ✅ Configuração do nginx válida"
-    sudo systemctl restart pedidos-nginx.service 2>/dev/null || bash "$NGINX_DEST/control.sh" start 2>&1
+    sudo systemctl restart pedidos-nginx.service 2>/dev/null || bash "$SCRIPT_DIR/script/control.sh" start 2>&1
 
     # Aguardar nginx subir
     for i in $(seq 1 10); do
@@ -256,13 +260,13 @@ if "$NGINX_DEST/sbin/nginx" -c "$NGINX_DEST/conf/nginx.conf" -p "$NGINX_DEST" -t
             NGINX_OK=true
             break
         fi
-        [ "$i" -eq 10 ] && echo "   ⚠️  Nginx não respondeu. Verifique: bash $NGINX_DEST/control.sh status"
+        [ "$i" -eq 10 ] && echo "   ⚠️  Nginx não respondeu. Verifique: bash $SCRIPT_DIR/script/control.sh status"
         sleep 1
     done
 else
     echo "   ❌ Configuração do nginx INVÁLIDA"
     echo "      Verifique o arquivo: $NGINX_DEST/conf/nginx.conf"
-    echo "      Após corrigir: bash $NGINX_DEST/control.sh start"
+    echo "      Após corrigir: bash $SCRIPT_DIR/script/control.sh start"
 fi
 
 echo ""
@@ -281,9 +285,9 @@ echo "📌 Status dos serviços:"
 echo "   pm2 status"
 echo ""
 echo "📌 Nginx proxy (porta 8900):"
-echo "   Iniciar:  bash $NGINX_DEST/control.sh start"
-echo "   Parar:    bash $NGINX_DEST/control.sh stop"
-echo "   Recarreg: bash $NGINX_DEST/control.sh reload"
+echo "   Iniciar:  bash $SCRIPT_DIR/script/control.sh start"
+echo "   Parar:    bash $SCRIPT_DIR/script/control.sh stop"
+echo "   Recarreg: bash $SCRIPT_DIR/script/control.sh reload"
 echo ""
 echo "📌 Para ver os logs:"
 echo "   pm2 logs"

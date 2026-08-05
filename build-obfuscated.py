@@ -5,7 +5,7 @@ Build script: gera pasta PEDIDOS/ com codigo ofuscado para deploy.
 - .js → javascript-obfuscator (target node, ignore-imports)
 - .ejs → html-minifier (preserva fragmentos EJS)
 - Assets (views/, public/) → copiados intactos
-- Infra (nginx/, setup-ubuntu.sh, etc.) → copiados intactos
+- Infra (nginx/, script/, etc.) → copiados intactos
 - WhatsApp (whatsapp-server.js, whatsapp-worker.js) → copiados intactos (addon nativo)
 - Gera .env.example
 - Remove arquivos .md
@@ -40,11 +40,12 @@ STATIC_DIRS = ["views", "public"]
 
 # Arquivos de infraestrutura (copiados intactos)
 INFRA_FILES = [
-    "setup-ubuntu.sh", "secure-vps.sh",
     "package.json", "package-lock.json",
 ]
+# Scripts shell (auto-localizados em script/)
+SCRIPT_FILES = ["setup-ubuntu.sh", "secure-vps.sh", "control.sh"]
 # Arquivos nginx copiados para deploy
-NGINX_FILES = ["control.sh", "pedidos-nginx.service", "terceiro-nginx.conf", "mime.types"]
+NGINX_FILES = ["pedidos-nginx.service", "terceiro-nginx.conf", "mime.types"]
 NGINX_DIRS = ["conf"]
 
 # Opcoes do javascript-obfuscator
@@ -98,6 +99,15 @@ def copy_infrastructure():
         if src.exists():
             shutil.copy2(src, DEST / f)
             log(f"✓ copiado: {f}")
+
+    # Scripts shell (pasta script/)
+    script_dst = DEST / "script"
+    script_dst.mkdir(parents=True, exist_ok=True)
+    for f in SCRIPT_FILES:
+        src = PROJECT_DIR / "script" / f
+        if src.exists():
+            shutil.copy2(src, script_dst / f)
+            log(f"✓ copiado: script/{f}")
 
     # Nginx - copiar apenas arquivos essenciais (nao os de sistema)
     nginx_dst = DEST / "nginx"
@@ -364,7 +374,7 @@ def main():
     print(" Deploy:")
     print("   scp -r PEDIDOS/ root@SEU_IP:/root/")
     print("   ssh root@SEU_IP")
-    print("   cd /root/PEDIDOS && bash setup-ubuntu.sh")
+    print("   cd /root/PEDIDOS && bash script/setup-ubuntu.sh")
     print("=" * 50)
 
 
