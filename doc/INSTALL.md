@@ -61,7 +61,7 @@ cd /root/PEDIDOS
 Dentro da pasta do projeto no servidor:
 
 ```bash
-bash setup-ubuntu.sh
+bash script/setup-ubuntu.sh
 ```
 
 Esse script faz tudo sozinho:
@@ -120,7 +120,7 @@ pm2 start server.js --name "dashboard"
 pm2 start whatsapp-server.js --name "whatsapp-motor"
 
 # Ligar o nginx (porta 8900)
-bash nginx/control.sh start
+bash script/control.sh start
 
 # Salvar pro PM2 ligar sozinho se o servidor reiniciar
 pm2 save
@@ -155,7 +155,7 @@ Seu sistema já deve estar no ar. Se algo der errado, veja os logs:
 
 ```bash
 pm2 logs          # logs do Node
-bash nginx/control.sh status   # status do nginx
+bash script/control.sh status   # status do nginx
 ```
 
 ---
