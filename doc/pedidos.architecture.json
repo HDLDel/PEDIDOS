@@ -1,0 +1,49 @@
+{
+  "schema_version": 1,
+  "diagram_type": "architecture",
+  "meta": {
+    "title": "Arquitetura Sistema de Pedidos",
+    "output": "architecture.html",
+    "quality_profile": "showcase",
+    "views": [
+      {
+        "id": "order-flow",
+        "label": "Fluxo Principal de Pedidos",
+        "focus": ["customer", "nginx_proxy", "express_core", "sqlite_db"],
+        "note": "Entrada de pedidos via web e processamento centralizado na API."
+      },
+      {
+        "id": "whatsapp-automation",
+        "label": "Automação e Mensagens WhatsApp",
+        "focus": ["customer", "wa_gateway", "wa_service", "express_core"],
+        "note": "Atendimento automatizado, disparo de notificações e sincronização de status."
+      }
+    ]
+  },
+  "components": [
+    { "id": "customer", "type": "external", "label": "Cliente Final", "sublabel": "Web Mobile / WhatsApp", "pos": [40, 260], "size": [130, 60] },
+    { "id": "nginx_proxy", "type": "cloud", "label": "Nginx Proxy", "sublabel": "Reverse Proxy & SSL", "pos": [230, 260], "size": [150, 60] },
+    { "id": "express_core", "type": "backend", "label": "API Express & EJS", "sublabel": "Controle de Pedidos", "pos": [450, 260], "size": [160, 60] },
+    { "id": "wa_service", "type": "backend", "label": "WhatsApp Bot Engine", "sublabel": "Workers & Automação", "pos": [450, 440], "size": [160, 60] },
+    { "id": "sqlite_db", "type": "database", "label": "Base de Dados", "sublabel": "SQLite / Sequelize Models", "pos": [700, 140], "size": [160, 60] },
+    { "id": "wa_gateway", "type": "external", "label": "Gateway WhatsApp", "sublabel": "Sessões & QR Code", "pos": [700, 440], "size": [160, 60] },
+    { "id": "admin_panel", "type": "external", "label": "Painel Admin", "sublabel": "Gestor de Pedidos", "pos": [960, 260], "size": [150, 60] }
+  ],
+  "boundaries": [
+    { "kind": "region", "label": "Servidor de Aplicação Pedidos", "wraps": ["nginx_proxy", "express_core", "wa_service", "sqlite_db"] }
+  ],
+  "connections": [
+    { "id": "c-proxy", "from": "customer", "to": "nginx_proxy", "label": "HTTPS", "variant": "emphasis" },
+    { "id": "proxy-core", "from": "nginx_proxy", "to": "express_core", "label": "Proxy HTTP" },
+    { "id": "core-db", "from": "express_core", "to": "sqlite_db", "label": "CRUD Pedidos", "fromSide": "top", "toSide": "left" },
+    { "id": "core-wa", "from": "express_core", "to": "wa_service", "label": "Status Pedido", "fromSide": "bottom", "toSide": "top", "labelDy": 40 },
+    { "id": "wa-gw", "from": "wa_service", "to": "wa_gateway", "label": "Envio" },
+    { "id": "core-adm", "from": "express_core", "to": "admin_panel", "label": "Painel Gestão" },
+    { "id": "gw-cust", "from": "wa_gateway", "to": "customer", "label": "Notificação", "fromSide": "bottom", "toSide": "bottom", "via": [[780, 540], [105, 540]] }
+  ],
+  "cards": [
+    { "dot": "cyan", "title": "Cardápio & Pedidos", "items": ["Interface web otimizada para pedidos rápidos via dispositivo móvel", "Rotas protegidas com Nginx e Express"] },
+    { "dot": "emerald", "title": "Gestão & Persistência", "items": ["Modelagem ORM com Sequelize para produtos, clientes e pedidos", "Histórico persistente e relatórios de vendas"] },
+    { "dot": "amber", "title": "Integração WhatsApp", "items": ["Envio automatizado de status do pedido para o WhatsApp do cliente", "Workers dedicados para evitar bloqueios de fila"] }
+  ]
+}
