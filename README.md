@@ -222,14 +222,6 @@ Solução de problemas comuns: [`doc/README.md`](doc/README.md).
 
 ---
 
-## 🔒 Segurança
-
-- `.env`, bancos SQLite, `config.json`, `sessions.json` e `login_attempts.json` são ignorados pelo Git.
-- Nunca coloque chaves, senhas ou telefones diretamente no código ou na documentação.
-- Se alguma credencial já foi versionada, **rotacione-a no servidor**: limpar o histórico do Git não revoga a credencial.
-
----
-
 ## 📚 Documentação
 
 - [Visão geral e solução de problemas](doc/README.md)
