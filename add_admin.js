@@ -3,11 +3,11 @@ import bcrypt from 'bcryptjs'; // Necessário para o hashing da senha
 import db from './db.js'; // Conexão com o banco de dados
 import { AdminModel } from './models/AdminModel.js'; // O modelo do administrador
 
-const newAdminUsername = '<ADMIN_USERNAME>'; // Usando a parte do e-mail como username
-const newAdminPassword = '<SENHA_ADMIN>';
+const newAdminUsername = process.env.ADMIN_USERNAME || ''; // Definido via variavel de ambiente
+const newAdminPassword = process.env.ADMIN_PASSWORD || '';
 const newAdminName = 'CYBER';
-const newAdminEmail = '<ADMIN_USERNAME>@gmail.com';
-const newAdminPhone = '<TELEFONE_ADMIN>';
+const newAdminEmail = process.env.ADMIN_EMAIL || '';
+const newAdminPhone = process.env.ADMIN_PHONE || '';
 
 console.log(`🚀 Tentando adicionar novo administrador: ${newAdminUsername}...`);
 

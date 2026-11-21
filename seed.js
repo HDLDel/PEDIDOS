@@ -14,16 +14,16 @@ if (resellerCount > 0) {
 
 // Dados dos revendedores
 const resellersData = [
-  { name: '<DADO_SEED>', email: '<DADO_SEED>', phone: '<DADO_SEED>', whatsapp: '<DADO_SEED>', password: '<SENHA>' },
-  { name: '<DADO_SEED>', email: '<DADO_SEED>', phone: '<DADO_SEED>', whatsapp: '<DADO_SEED>', password: '<SENHA>' },
-  { name: '<DADO_SEED>', email: '<DADO_SEED>@email.com', phone: '<DADO_SEED>', whatsapp: '<DADO_SEED>', password: '<SENHA>' },
-  { name: '<DADO_SEED>', email: '<DADO_SEED>', phone: '<DADO_SEED>', whatsapp: '<DADO_SEED>', password: '<SENHA>' },
-  { name: '<DADO_SEED>', email: '<DADO_SEED>', phone: '<DADO_SEED>', whatsapp: '<DADO_SEED>', password: '<SENHA>' },
-  { name: '<DADO_SEED>', email: '<DADO_SEED>', phone: '(06) 98765-<SENHA>4', whatsapp: '(06) 98765-<SENHA>4', password: '<SENHA>' },
-  { name: '<DADO_SEED>', email: '<DADO_SEED>', phone: '<DADO_SEED>', whatsapp: '<DADO_SEED>', password: '<SENHA>' },
-  { name: '<DADO_SEED>', email: '<DADO_SEED>', phone: '<DADO_SEED>', whatsapp: '<DADO_SEED>', password: '<SENHA>' },
-  { name: '<DADO_SEED>', email: '<DADO_SEED>', phone: '<DADO_SEED>', whatsapp: '<DADO_SEED>', password: '<SENHA>' },
-  { name: '<DADO_SEED>', email: '<DADO_SEED>', phone: '<DADO_SEED>', whatsapp: '<DADO_SEED>', password: '<SENHA>' }
+  { name: 'Usuario Exemplo', email: 'exemplo@example.com', phone: '(00) 00000-0000', whatsapp: '(00) 00000-0000', password: '<SENHA>' },
+  { name: 'Usuario Exemplo', email: 'exemplo@example.com', phone: '(00) 00000-0000', whatsapp: '(00) 00000-0000', password: '<SENHA>' },
+  { name: 'Usuario Exemplo', email: 'exemplo@example.com', phone: '(00) 00000-0000', whatsapp: '(00) 00000-0000', password: '<SENHA>' },
+  { name: 'Usuario Exemplo', email: 'exemplo@example.com', phone: '(00) 00000-0000', whatsapp: '(00) 00000-0000', password: '<SENHA>' },
+  { name: 'Usuario Exemplo', email: 'exemplo@example.com', phone: '(00) 00000-0000', whatsapp: '(00) 00000-0000', password: '<SENHA>' },
+  { name: 'Usuario Exemplo', email: 'exemplo@example.com', phone: '(00) 00000-0000', whatsapp: '(00) 00000-0000', password: '<SENHA>' },
+  { name: 'Usuario Exemplo', email: 'exemplo@example.com', phone: '(00) 00000-0000', whatsapp: '(00) 00000-0000', password: '<SENHA>' },
+  { name: 'Usuario Exemplo', email: 'exemplo@example.com', phone: '(00) 00000-0000', whatsapp: '(00) 00000-0000', password: '<SENHA>' },
+  { name: 'Usuario Exemplo', email: 'exemplo@example.com', phone: '(00) 00000-0000', whatsapp: '(00) 00000-0000', password: '<SENHA>' },
+  { name: 'Usuario Exemplo', email: 'exemplo@example.com', phone: '(00) 00000-0000', whatsapp: '(00) 00000-0000', password: '<SENHA>' },
 ];
 
 // Criar revendedores e mapear nome -> id

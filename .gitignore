@@ -40,3 +40,16 @@ skills/
 # Graphify Knowledge Graph
 graphify-out/
 
+# Segredos e dados sensiveis
+*.db
+*.sqlite
+*.sqlite-wal
+*.sqlite-shm
+data/
+sessions.json
+login_attempts.json
+credentials.json
+*.log
+.config/
+*.pem
+*.key
